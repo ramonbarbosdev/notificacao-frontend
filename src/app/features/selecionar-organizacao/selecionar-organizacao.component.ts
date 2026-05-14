@@ -10,7 +10,7 @@ import { Organizacao } from '../../shared/types/dtos';
   standalone: true,
   imports: [CommonModule],
   template: `
-    <div class="min-h-screen bg-slate-950 flex items-center justify-center p-4">
+    <div class="min-h-screen app-page flex items-center justify-center p-4">
 
       <div class="absolute inset-0 overflow-hidden pointer-events-none">
         <div class="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2
@@ -22,7 +22,7 @@ import { Organizacao } from '../../shared/types/dtos';
         <!-- Header -->
         <div class="text-center mb-8">
           <div class="inline-flex items-center justify-center w-12 h-12 rounded-xl
-                      bg-slate-800 border border-slate-700 mb-4">
+                      app-surface-muted border mb-4">
             <svg class="w-5 h-5 text-indigo-400" fill="none" viewBox="0 0 24 24"
                  stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -31,8 +31,8 @@ import { Organizacao } from '../../shared/types/dtos';
                        10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
             </svg>
           </div>
-          <h1 class="text-xl font-bold text-white">Selecione a Organização</h1>
-          <p class="text-slate-400 text-sm mt-1">
+          <h1 class="text-xl font-bold app-title">Selecione a Organização</h1>
+          <p class="app-muted text-sm mt-1">
             Escolha para qual organização deseja acessar
           </p>
         </div>
@@ -49,7 +49,7 @@ import { Organizacao } from '../../shared/types/dtos';
             >
               <div class="flex items-center justify-between">
                 <div>
-                  <p class="text-white font-medium text-sm group-hover:text-indigo-300
+                  <p class="app-title font-medium text-sm group-hover:text-indigo-300
                              transition-colors">
                     {{ org.nmOrganizacao }}
                   </p>
@@ -65,7 +65,7 @@ import { Organizacao } from '../../shared/types/dtos';
                       <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
                     </svg>
                   } @else {
-                    <svg class="w-4 h-4 text-slate-600 group-hover:text-indigo-400 transition-colors"
+                    <svg class="w-4 h-4 app-faint group-hover:text-indigo-400 transition-colors"
                          fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M9 5l7 7-7 7" />
@@ -78,15 +78,15 @@ import { Organizacao } from '../../shared/types/dtos';
         </div>
 
         @if (erro()) {
-          <div class="mt-4 bg-red-950 border border-red-800 rounded-xl px-4 py-3">
-            <p class="text-red-400 text-sm">{{ erro() }}</p>
+          <div class="mt-4 app-alert-danger border rounded-xl px-4 py-3">
+            <p class="app-alert-danger-text text-sm">{{ erro() }}</p>
           </div>
         }
 
         <!-- Logout link -->
         <div class="text-center mt-6">
           <button (click)="authService.logout()"
-                  class="text-slate-500 hover:text-slate-300 text-sm transition-colors">
+                  class="app-subtle hover:text-slate-300 text-sm transition-colors">
             ← Sair da conta
           </button>
         </div>

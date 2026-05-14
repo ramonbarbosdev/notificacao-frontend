@@ -1,0 +1,143 @@
+/* Charcoal & Amber — Carvão neutro com âmbar quente — analytics, dashboards */
+@theme {
+  /* Neutrals */
+  --color-bg-base:        #0e0e0c;
+  --color-surface:        #1a1a18;
+  --color-surface-muted:  #242422;
+  --color-border:         #38382e;
+  --color-border-strong:  #4a4a3e;
+
+  /* Text */
+  --color-text:           #f5f5f0;
+  --color-text-muted:     #a8a89a;
+  --color-text-subtle:    #787868;
+  --color-text-faint:     #585848;
+
+  /* Brand / primary */
+  --color-primary:        #d97706;
+  --color-primary-hover:  #b45309;
+  --color-primary-soft:   #fbbf24;
+
+  /* Success */
+  --color-success:        #34d399;
+  --color-success-bg:     #012c1a;
+  --color-success-border: #065f30;
+
+  /* Danger */
+  --color-danger:         #f87171;
+  --color-danger-bg:      #2c0a0a;
+  --color-danger-border:  #7a2020;
+
+  /* Sidebar */
+  --color-sidebar-bg:     #0a0a08;
+  --color-sidebar-border: #242422;
+  --color-sidebar-active: #28200a;
+  --color-sidebar-active-text: #fbbf24;
+  --color-sidebar-text:   #a8a89a;
+
+  /* Accent soft (badge bg, icon bg) */
+  --color-accent-soft:    #281400;
+}
+
+:root {
+  color-scheme: dark;
+  --app-bg:               var(--color-bg-base);
+  --app-surface:          var(--color-surface);
+  --app-surface-muted:    var(--color-surface-muted);
+  --app-border:           var(--color-border);
+  --app-border-strong:    var(--color-border-strong);
+  --app-text:             var(--color-text);
+  --app-text-muted:       var(--color-text-muted);
+  --app-text-subtle:      var(--color-text-subtle);
+  --app-text-faint:       var(--color-text-faint);
+  --app-primary:          var(--color-primary);
+  --app-primary-hover:    var(--color-primary-hover);
+  --app-primary-muted:    var(--color-primary-soft);
+  --app-success:          var(--color-success);
+  --app-success-bg:       var(--color-success-bg);
+  --app-success-border:   var(--color-success-border);
+  --app-danger:           var(--color-danger);
+  --app-danger-bg:        var(--color-danger-bg);
+  --app-danger-border:    var(--color-danger-border);
+}
+
+@layer components {
+  .app-page {
+    background: var(--app-bg);
+    color: var(--app-text);
+  }
+
+  .app-header-surface {
+    background: color-mix(in srgb, var(--app-bg) 80%, transparent);
+  }
+
+  .app-surface {
+    background: var(--app-surface);
+    border-color: var(--app-border);
+  }
+
+  .app-surface-muted {
+    background: var(--app-surface-muted);
+    border-color: var(--app-border-strong);
+  }
+
+  .app-title {
+    color: var(--app-text);
+  }
+
+  .app-muted {
+    color: var(--app-text-muted);
+  }
+
+  .app-subtle {
+    color: var(--app-text-subtle);
+  }
+
+  .app-faint {
+    color: var(--app-text-faint);
+  }
+
+  .app-input {
+    background: var(--app-surface-muted);
+    border-color: var(--app-border-strong);
+    color: var(--app-text);
+  }
+
+  .app-input::placeholder {
+    color: var(--app-text-subtle);
+  }
+
+  .app-button-primary {
+    background: var(--app-primary);
+    color: var(--app-text);
+  }
+
+  .app-button-primary:hover:not(:disabled) {
+    background: var(--app-primary-hover);
+  }
+
+  .app-button-success {
+    background: var(--color-emerald-600);
+    color: var(--app-text);
+  }
+
+  .app-button-success:hover:not(:disabled) {
+    background: var(--color-emerald-500);
+  }
+
+  .app-alert-danger {
+    background: var(--app-danger-bg);
+    border-color: var(--app-danger-border);
+    color: var(--app-danger);
+  }
+
+  .app-alert-danger-text {
+    color: var(--app-danger);
+  }
+
+  .app-alert-info {
+    background: var(--app-bg);
+    border-color: var(--app-border);
+    color: var(--color-slate-300);
+  }
+}

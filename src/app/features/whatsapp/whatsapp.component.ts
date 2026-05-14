@@ -19,26 +19,26 @@ import {
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, SidebarComponent, HeaderComponent],
   template: `
-    <div class="min-h-screen bg-slate-950">
+    <div class="min-h-screen app-page">
       <app-sidebar />
       <app-header />
 
       <main class="pl-64 pt-16">
         <div class="p-8 max-w-4xl mx-auto">
           <div class="mb-8">
-            <h1 class="text-2xl font-bold text-white">WhatsApp</h1>
-            <p class="text-slate-400 text-sm mt-1">
+            <h1 class="text-2xl font-bold app-title">WhatsApp</h1>
+            <p class="app-muted text-sm mt-1">
               Gerencie a sessao e envie mensagens diretamente
             </p>
           </div>
 
           <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6">
+            <div class="app-surface border rounded-2xl p-6">
               <div class="flex items-center justify-between mb-6">
-                <h2 class="text-white font-semibold">Status da Sessao</h2>
+                <h2 class="app-title font-semibold">Status da Sessao</h2>
                 <button (click)="atualizarStatus()"
                         [disabled]="carregando()"
-                        class="text-slate-400 hover:text-white disabled:opacity-40
+                        class="app-muted hover:text-[var(--app-text)] disabled:opacity-40
                                transition-colors p-1.5 rounded-lg hover:bg-slate-800">
                   <svg class="w-4 h-4" [class.animate-spin]="carregando()"
                        fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -58,7 +58,7 @@ import {
                      [class.border-slate-700]="!status()?.conectado">
                   <svg class="w-7 h-7"
                        [class.text-emerald-400]="status()?.conectado"
-                       [class.text-slate-500]="!status()?.conectado"
+                       [class.app-subtle]="!status()?.conectado"
                        fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                           d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03
@@ -67,22 +67,22 @@ import {
                   </svg>
                 </div>
                 <div>
-                  <p class="text-white font-semibold text-lg">
+                  <p class="app-title font-semibold text-lg">
                     {{ status()?.status ?? '-' }}
                   </p>
                   @if (status()?.telefone) {
-                    <p class="text-slate-500 text-sm">{{ status()!.telefone }}</p>
+                    <p class="app-subtle text-sm">{{ status()!.telefone }}</p>
                   } @else if (tentativaEmAndamento()) {
-                    <p class="text-slate-500 text-sm">Tentativa de conexao em andamento</p>
+                    <p class="app-subtle text-sm">Tentativa de conexao em andamento</p>
                   } @else {
-                    <p class="text-slate-600 text-sm">Nenhum telefone vinculado</p>
+                    <p class="app-faint text-sm">Nenhum telefone vinculado</p>
                   }
                 </div>
               </div>
 
               @if (status()?.qrImagem) {
                 <div class="mb-6">
-                  <p class="text-slate-400 text-sm mb-3 flex items-center gap-2">
+                  <p class="app-muted text-sm mb-3 flex items-center gap-2">
                     <span class="w-2 h-2 bg-amber-400 rounded-full animate-pulse"></span>
                     Escaneie o QR Code no WhatsApp
                   </p>
@@ -95,19 +95,19 @@ import {
               }
 
               @if (status()?.erro) {
-                <div class="mb-4 bg-red-950 border border-red-800 rounded-xl px-4 py-3">
-                  <p class="text-red-400 text-sm">{{ status()!.erro }}</p>
+                <div class="mb-4 app-alert-danger border rounded-xl px-4 py-3">
+                  <p class="app-alert-danger-text text-sm">{{ status()!.erro }}</p>
                 </div>
               }
 
               @if (erroConexao()) {
-                <div class="mb-4 bg-red-950 border border-red-800 rounded-xl px-4 py-3">
-                  <p class="text-red-400 text-sm">{{ erroConexao() }}</p>
+                <div class="mb-4 app-alert-danger border rounded-xl px-4 py-3">
+                  <p class="app-alert-danger-text text-sm">{{ erroConexao() }}</p>
                 </div>
               }
 
               @if (mensagemEvento()) {
-                <div class="mb-4 bg-slate-950 border border-slate-800 rounded-xl px-4 py-3">
+                <div class="mb-4 app-page border border-slate-800 rounded-xl px-4 py-3">
                   <p class="text-slate-300 text-sm">{{ mensagemEvento() }}</p>
                 </div>
               }
@@ -117,7 +117,7 @@ import {
                   <button
                     type="button"
                     disabled
-                    class="w-full bg-slate-800 border border-slate-700 opacity-80
+                    class="w-full app-surface-muted border opacity-80
                            text-slate-300 font-semibold py-2.5 rounded-xl text-sm
                            flex items-center justify-center gap-2"
                   >
@@ -133,15 +133,15 @@ import {
                           [disabled]="carregando()"
                           class="w-full bg-slate-800 hover:bg-red-950 hover:border-red-800
                                  border border-slate-700 disabled:opacity-50 disabled:cursor-not-allowed
-                                 text-slate-300 hover:text-red-400 font-semibold py-2.5
+                                 text-slate-300 hover:text-[var(--app-danger)] font-semibold py-2.5
                                  rounded-xl transition-all duration-200 text-sm">
                     Cancelar conexao
                   </button>
                 } @else if (!status()?.conectado) {
                   <button (click)="conectar()"
                           [disabled]="conectarBloqueado()"
-                          class="w-full bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50
-                                 disabled:cursor-not-allowed text-white font-semibold py-2.5
+                          class="w-full app-button-success disabled:opacity-50
+                                 disabled:cursor-not-allowed app-title font-semibold py-2.5
                                  rounded-xl transition-all duration-200 text-sm flex items-center
                                  justify-center gap-2">
                     @if (carregando()) {
@@ -155,7 +155,7 @@ import {
                   </button>
 
                   @if (segundosRestantes() > 0) {
-                    <p class="text-center text-slate-600 text-xs">
+                    <p class="text-center app-faint text-xs">
                       Aguarde {{ segundosRestantes() }}s para tentar novamente
                     </p>
                   }
@@ -164,7 +164,7 @@ import {
                           [disabled]="carregando()"
                           class="w-full bg-slate-800 hover:bg-red-950 hover:border-red-800
                                  border border-slate-700 disabled:opacity-50 disabled:cursor-not-allowed
-                                 text-slate-300 hover:text-red-400 font-semibold py-2.5
+                                 text-slate-300 hover:text-[var(--app-danger)] font-semibold py-2.5
                                  rounded-xl transition-all duration-200 text-sm">
                     Desconectar
                   </button>
@@ -172,8 +172,8 @@ import {
               </div>
             </div>
 
-            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6">
-              <h2 class="text-white font-semibold mb-6">Enviar Mensagem</h2>
+            <div class="app-surface border rounded-2xl p-6">
+              <h2 class="app-title font-semibold mb-6">Enviar Mensagem</h2>
 
               <form [formGroup]="formMensagem" (ngSubmit)="enviarMensagem()" class="space-y-4">
                 <div>
@@ -183,16 +183,16 @@ import {
                   <input formControlName="telefone"
                          type="text"
                          placeholder="5571991180200"
-                         class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3
-                                text-white placeholder-slate-500 text-sm
+                         class="w-full app-surface-muted border rounded-xl px-4 py-3
+                                app-title placeholder-slate-500 text-sm
                                 focus:outline-none focus:ring-2 focus:ring-indigo-500
                                 focus:border-transparent transition-all duration-200" />
                   @if (formMensagem.get('telefone')?.invalid && formMensagem.get('telefone')?.touched) {
-                    <p class="text-red-400 text-xs mt-1">
+                    <p class="app-alert-danger-text text-xs mt-1">
                       Informe o telefone no formato internacional (ex: 5571991180200)
                     </p>
                   }
-                  <p class="text-slate-600 text-xs mt-1">
+                  <p class="app-faint text-xs mt-1">
                     Codigo do pais + DDD + numero, sem espacos
                   </p>
                 </div>
@@ -204,13 +204,13 @@ import {
                   <textarea formControlName="mensagem"
                             rows="5"
                             placeholder="Digite a mensagem que sera enviada..."
-                            class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3
-                                   text-white placeholder-slate-500 text-sm resize-none
+                            class="w-full app-surface-muted border rounded-xl px-4 py-3
+                                   app-title placeholder-slate-500 text-sm resize-none
                                    focus:outline-none focus:ring-2 focus:ring-indigo-500
                                    focus:border-transparent transition-all duration-200">
                   </textarea>
                   @if (formMensagem.get('mensagem')?.invalid && formMensagem.get('mensagem')?.touched) {
-                    <p class="text-red-400 text-xs mt-1">Mensagem obrigatoria</p>
+                    <p class="app-alert-danger-text text-xs mt-1">Mensagem obrigatoria</p>
                   }
                 </div>
 
@@ -227,23 +227,23 @@ import {
                 }
 
                 @if (respostaMensagem()?.sucesso === false) {
-                  <div class="bg-red-950 border border-red-800 rounded-xl px-4 py-3">
-                    <p class="text-red-400 text-sm">
+                  <div class="app-alert-danger border rounded-xl px-4 py-3">
+                    <p class="app-alert-danger-text text-sm">
                       {{ respostaMensagem()?.erro ?? 'Erro ao enviar mensagem.' }}
                     </p>
                   </div>
                 }
 
                 @if (erroEnvio()) {
-                  <div class="bg-red-950 border border-red-800 rounded-xl px-4 py-3">
-                    <p class="text-red-400 text-sm">{{ erroEnvio() }}</p>
+                  <div class="app-alert-danger border rounded-xl px-4 py-3">
+                    <p class="app-alert-danger-text text-sm">{{ erroEnvio() }}</p>
                   </div>
                 }
 
                 <button type="submit"
                         [disabled]="formMensagem.invalid || enviando() || !status()?.conectado"
-                        class="w-full bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50
-                               disabled:cursor-not-allowed text-white font-semibold py-3
+                        class="w-full app-button-primary disabled:opacity-50
+                               disabled:cursor-not-allowed app-title font-semibold py-3
                                rounded-xl transition-all duration-200 text-sm flex items-center
                                justify-center gap-2">
                   @if (enviando()) {
@@ -263,7 +263,7 @@ import {
                 </button>
 
                 @if (!status()?.conectado) {
-                  <p class="text-center text-slate-600 text-xs">
+                  <p class="text-center app-faint text-xs">
                     Conecte o WhatsApp antes de enviar mensagens
                   </p>
                 }
@@ -357,7 +357,6 @@ export class WhatsappComponent implements OnInit, OnDestroy {
         this.status.set(s);
         this.carregando.set(false);
         this.sincronizarBotaoComStatus(s);
-        console.log(s)
       },
       error: (err: HttpErrorResponse) => {
         this.carregando.set(false);

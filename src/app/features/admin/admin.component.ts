@@ -9,7 +9,7 @@ import { HeaderComponent, SidebarComponent } from '../../core/layout/layout.comp
   standalone: true,
   imports: [CommonModule, SidebarComponent, HeaderComponent],
   template: `
-    <div class="min-h-screen bg-slate-950">
+    <div class="min-h-screen app-page">
       <app-sidebar />
       <app-header />
 
@@ -27,17 +27,17 @@ import { HeaderComponent, SidebarComponent } from '../../core/layout/layout.comp
               </svg>
             </div>
             <div>
-              <h1 class="text-2xl font-bold text-white">Painel Administrativo</h1>
-              <p class="text-slate-400 text-sm">Acesso restrito - Super Admin</p>
+              <h1 class="text-2xl font-bold app-title">Painel Administrativo</h1>
+              <p class="app-muted text-sm">Acesso restrito - Super Admin</p>
             </div>
           </div>
 
-          <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6">
+          <div class="app-surface border rounded-2xl p-6">
             <div class="flex items-center justify-between mb-4">
-              <h2 class="text-white font-semibold">Status do Sistema</h2>
+              <h2 class="app-title font-semibold">Status do Sistema</h2>
               <button (click)="carregarStatus()"
                       [disabled]="carregando()"
-                      class="text-slate-400 hover:text-white disabled:opacity-50 transition-colors text-sm">
+                      class="app-muted hover:text-[var(--app-text)] disabled:opacity-50 transition-colors text-sm">
                 Atualizar
               </button>
             </div>
@@ -49,14 +49,14 @@ import { HeaderComponent, SidebarComponent } from '../../core/layout/layout.comp
                           stroke="currentColor" stroke-width="4"/>
                   <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
                 </svg>
-                <p class="text-slate-400 text-sm">Consultando API...</p>
+                <p class="app-muted text-sm">Consultando API...</p>
               </div>
             } @else if (statusData()) {
-              <pre class="bg-slate-950 border border-slate-800 rounded-xl p-4
-                         text-xs text-slate-400 overflow-x-auto font-mono">{{ statusData() | json }}</pre>
+              <pre class="app-page border border-slate-800 rounded-xl p-4
+                         text-xs app-muted overflow-x-auto font-mono">{{ statusData() | json }}</pre>
             } @else if (erro()) {
-              <div class="bg-red-950 border border-red-800 rounded-xl px-4 py-3">
-                <p class="text-red-400 text-sm">{{ erro() }}</p>
+              <div class="app-alert-danger border rounded-xl px-4 py-3">
+                <p class="app-alert-danger-text text-sm">{{ erro() }}</p>
               </div>
             }
           </div>

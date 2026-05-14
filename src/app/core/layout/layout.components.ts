@@ -15,27 +15,27 @@ interface NavItem {
   standalone: true,
   imports: [CommonModule, RouterModule],
   template: `
-    <aside class="fixed left-0 top-0 h-screen w-64 bg-slate-950 border-r border-slate-800
+    <aside class="fixed left-0 top-0 h-screen w-64 app-page border-r border-slate-800
                   flex flex-col z-40 transition-transform duration-300"
            [class.-translate-x-full]="!aberta()"
     >
       <!-- Brand -->
       <div class="flex items-center gap-3 px-6 py-5 border-b border-slate-800">
         <div class="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center flex-shrink-0">
-          <svg class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg class="w-4 h-4 app-title" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002
                      6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388
                      6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
           </svg>
         </div>
-        <span class="text-white font-semibold text-sm tracking-tight">Notificação API</span>
+        <span class="app-title font-semibold text-sm tracking-tight">Notificação API</span>
       </div>
 
       <!-- Nav -->
       <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
 
-        <p class="px-3 text-xs font-semibold text-slate-600 uppercase tracking-widest mb-2">
+        <p class="px-3 text-xs font-semibold app-faint uppercase tracking-widest mb-2">
           Principal
         </p>
 
@@ -44,7 +44,7 @@ interface NavItem {
             <a [routerLink]="item.rota"
                routerLinkActive="bg-indigo-600/15 text-indigo-400 border-indigo-500/30"
                class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm
-                      text-slate-400 hover:text-white hover:bg-slate-800
+                      app-muted hover:text-[var(--app-text)] hover:bg-slate-800
                       border border-transparent transition-all duration-150 group">
               <span class="w-4 h-4 flex-shrink-0" [innerHTML]="item.icon"></span>
               {{ item.label }}
@@ -62,16 +62,16 @@ interface NavItem {
             </span>
           </div>
           <div class="flex-1 min-w-0">
-            <p class="text-white text-sm font-medium truncate">
+            <p class="app-title text-sm font-medium truncate">
               {{ authService.nomeUsuario() ?? 'Usuário' }}
             </p>
-            <p class="text-slate-500 text-xs truncate">
+            <p class="app-subtle text-xs truncate">
               {{ authService.usuario()?.role ?? '' }}
             </p>
           </div>
           <button (click)="authService.logout()"
                   title="Sair"
-                  class="text-slate-600 hover:text-red-400 transition-colors">
+                  class="app-faint hover:text-[var(--app-danger)] transition-colors">
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3
@@ -147,14 +147,14 @@ export class SidebarComponent {
   standalone: true,
   imports: [CommonModule],
   template: `
-    <header class="fixed top-0 left-64 right-0 h-16 bg-slate-950/80 backdrop-blur-md
+    <header class="fixed top-0 left-64 right-0 h-16 app-header-surface backdrop-blur-md
                    border-b border-slate-800 flex items-center justify-between
                    px-6 z-30">
 
       <!-- Organização atual -->
       <div class="flex items-center gap-2">
         @if (authService.organizacaoAtual()) {
-          <div class="flex items-center gap-2 bg-slate-800 border border-slate-700
+          <div class="flex items-center gap-2 app-surface-muted border
                       rounded-lg px-3 py-1.5">
             <span class="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></span>
             <span class="text-slate-300 text-sm font-medium">
@@ -174,17 +174,17 @@ export class SidebarComponent {
       <div class="flex items-center gap-4">
         <!-- Usuário -->
         <div class="text-right hidden sm:block">
-          <p class="text-white text-sm font-medium leading-none">
+          <p class="app-title text-sm font-medium leading-none">
             {{ authService.nomeUsuario() ?? '...' }}
           </p>
-          <p class="text-slate-500 text-xs mt-0.5">
+          <p class="app-subtle text-xs mt-0.5">
             {{ authService.emailUsuario() ?? '' }}
           </p>
         </div>
 
         <!-- Avatar -->
         <div class="w-8 h-8 bg-indigo-600 rounded-full flex items-center justify-center">
-          <span class="text-xs font-bold text-white">
+          <span class="text-xs font-bold app-title">
             {{ (authService.nomeUsuario() ?? 'U')[0].toUpperCase() }}
           </span>
         </div>

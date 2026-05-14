@@ -10,7 +10,7 @@ import { AuthService } from '../../core/auth/auth.service';
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
   template: `
-    <div class="min-h-screen bg-slate-950 flex items-center justify-center p-4">
+    <div class="min-h-screen app-page flex items-center justify-center p-4">
 
       <!-- Glow de fundo -->
       <div class="absolute inset-0 overflow-hidden pointer-events-none">
@@ -24,7 +24,7 @@ import { AuthService } from '../../core/auth/auth.service';
         <div class="text-center mb-10">
           <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl
                       bg-indigo-600 shadow-lg shadow-indigo-600/40 mb-4">
-            <svg class="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg class="w-7 h-7 app-title" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002
                        6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6
@@ -32,12 +32,12 @@ import { AuthService } from '../../core/auth/auth.service';
                        0v1a3 3 0 11-6 0v-1m6 0H9" />
             </svg>
           </div>
-          <h1 class="text-2xl font-bold text-white tracking-tight">Notificação API</h1>
-          <p class="text-slate-400 text-sm mt-1">Acesse sua conta para continuar</p>
+          <h1 class="text-2xl font-bold app-title tracking-tight">Notificação API</h1>
+          <p class="app-muted text-sm mt-1">Acesse sua conta para continuar</p>
         </div>
 
         <!-- Card -->
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-8 shadow-2xl">
+        <div class="app-surface border rounded-2xl p-8 shadow-2xl">
 
           <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-5">
 
@@ -50,13 +50,13 @@ import { AuthService } from '../../core/auth/auth.service';
                 formControlName="login"
                 type="text"
                 placeholder="000.000.000-00 ou seu@email.com"
-                class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3
-                       text-white placeholder-slate-500 text-sm
+                class="w-full app-surface-muted border rounded-xl px-4 py-3
+                       app-title placeholder-slate-500 text-sm
                        focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent
                        transition-all duration-200"
               />
               @if (form.get('login')?.invalid && form.get('login')?.touched) {
-                <p class="text-red-400 text-xs mt-1">Campo obrigatório</p>
+                <p class="app-alert-danger-text text-xs mt-1">Campo obrigatório</p>
               }
             </div>
 
@@ -67,20 +67,20 @@ import { AuthService } from '../../core/auth/auth.service';
                 formControlName="senha"
                 type="password"
                 placeholder="••••••••"
-                class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3
-                       text-white placeholder-slate-500 text-sm
+                class="w-full app-surface-muted border rounded-xl px-4 py-3
+                       app-title placeholder-slate-500 text-sm
                        focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent
                        transition-all duration-200"
               />
               @if (form.get('senha')?.invalid && form.get('senha')?.touched) {
-                <p class="text-red-400 text-xs mt-1">Campo obrigatório</p>
+                <p class="app-alert-danger-text text-xs mt-1">Campo obrigatório</p>
               }
             </div>
 
             <!-- Erro geral -->
             @if (erro()) {
-              <div class="bg-red-950 border border-red-800 rounded-xl px-4 py-3">
-                <p class="text-red-400 text-sm">{{ erro() }}</p>
+              <div class="app-alert-danger border rounded-xl px-4 py-3">
+                <p class="app-alert-danger-text text-sm">{{ erro() }}</p>
               </div>
             }
 
@@ -88,8 +88,8 @@ import { AuthService } from '../../core/auth/auth.service';
             <button
               type="submit"
               [disabled]="form.invalid || authService.carregando()"
-              class="w-full bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50
-                     disabled:cursor-not-allowed text-white font-semibold py-3 px-4
+              class="w-full app-button-primary disabled:opacity-50
+                     disabled:cursor-not-allowed app-title font-semibold py-3 px-4
                      rounded-xl transition-all duration-200 text-sm
                      shadow-lg shadow-indigo-600/20 hover:shadow-indigo-500/30"
             >
@@ -111,7 +111,7 @@ import { AuthService } from '../../core/auth/auth.service';
           </form>
         </div>
 
-        <p class="text-center text-slate-600 text-xs mt-6">
+        <p class="text-center app-faint text-xs mt-6">
           © {{ ano }} Notificação API · Todos os direitos reservados
         </p>
       </div>
