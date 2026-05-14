@@ -44,6 +44,7 @@ export interface UsuarioAtual {
 export type WhatsappStatus =
   | 'NAO_INICIADO'
   | 'CONECTANDO'
+  | 'CONNECTING'
   | 'PENDING_QR'
   | 'AGUARDANDO_QR'
   | 'CONECTADO'
@@ -55,11 +56,28 @@ export interface WhatsappStatusResponse {
   sucesso: boolean;
   idOrganizacao: number;
   status: WhatsappStatus;
-  conectado: boolean;
+  conectado: boolean | null;
   qr: string | null;
   qrImagem: string | null;   // data URL ou base64 da imagem do QR
   telefone: string | null;
   erro: string | null;
+}
+
+export type WhatsappEventoTipo =
+  | 'TENTATIVA_INICIADA'
+  | 'TENTATIVA_BLOQUEADA'
+  | 'STATUS_ATUALIZADO'
+  | 'CONEXAO_LIBERADA'
+  | 'CONEXAO_CANCELADA';
+
+export interface WhatsappEvento {
+  idOrganizacao: number;
+  tipo: WhatsappEventoTipo;
+  status: WhatsappStatus | null;
+  podeConectar: boolean;
+  segundosRestantes: number;
+  mensagem: string;
+  dataHora: string;
 }
 
 export interface EnviarMensagemRequest {

@@ -24,6 +24,10 @@ export class WhatsappService {
     return this.http.post<WhatsappStatusResponse>(`${this.base}/conectar`, {});
   }
 
+  cancelarConexao(): Observable<WhatsappStatusResponse> {
+    return this.http.post<WhatsappStatusResponse>(`${this.base}/cancelar-conexao`, {});
+  }
+
   desconectar(): Observable<WhatsappStatusResponse> {
     return this.http.post<WhatsappStatusResponse>(`${this.base}/desconectar`, {});
   }
