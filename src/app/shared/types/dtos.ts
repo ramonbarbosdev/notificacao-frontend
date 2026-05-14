@@ -120,3 +120,41 @@ export interface SystemStatus {
   uptime: number;
   version: string;
 }
+
+export type RoleOrganizacao = 'ADMIN' | 'USER';
+
+export interface CriarOrganizacaoRequest {
+  nmOrganizacao: string;
+  dsDocumento: string;
+}
+
+export interface AtualizarOrganizacaoRequest {
+  nmOrganizacao: string;
+  dsDocumento: string;
+}
+
+export interface OrganizacaoAdminResponse {
+  idOrganizacao: number;
+  nmOrganizacao: string;
+  dsDocumento: string;
+  flAtivo: boolean;
+}
+
+export interface CriarUsuarioOrganizacaoRequest {
+  nuCpf: string;
+  nmUsuario: string;
+  nmEmail: string;
+  senha: string;
+  role: RoleOrganizacao;
+}
+
+export interface UsuarioOrganizacaoResponse {
+  idUsuario: number;
+  nuCpf: string;
+  nmUsuario: string;
+  nmEmail: string;
+  idOrganizacao: number;
+  nmOrganizacao: string;
+  role: RoleOrganizacao;
+  flAtivo: boolean;
+}

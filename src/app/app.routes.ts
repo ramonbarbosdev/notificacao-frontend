@@ -54,21 +54,27 @@ export const routes: Routes = [
     path: 'admin/organizacoes',
     canActivate: [authGuard, superAdminGuard],
     loadComponent: () =>
-      import('./features/admin/admin.component').then((m) => m.AdminComponent),
+      import('./features/admin/nova-organizacao/nova-organizacao.component').then(
+        (m) => m.NovaOrganizacaoComponent
+      ),
   },
 
   {
     path: 'admin/usuarios',
     canActivate: [authGuard, superAdminGuard],
     loadComponent: () =>
-      import('./features/admin/admin.component').then((m) => m.AdminComponent),
+      import('./features/admin/usuarios-organizacao/usuarios-organizacao.component').then(
+        (m) => m.UsuariosOrganizacaoComponent
+      ),
   },
 
   {
     path: 'admin/definir-admin',
     canActivate: [authGuard, superAdminGuard],
     loadComponent: () =>
-      import('./features/admin/admin.component').then((m) => m.AdminComponent),
+      import('./features/admin/usuarios-organizacao/usuarios-organizacao.component').then(
+        (m) => m.UsuariosOrganizacaoComponent
+      ),
   },
 
   {

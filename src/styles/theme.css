@@ -107,6 +107,27 @@
     color: var(--app-text-subtle);
   }
 
+  .form-input-admin {
+    width: 100%;
+    border-radius: 0.75rem;
+    border: 1px solid var(--app-border-strong);
+    background: var(--app-surface-muted);
+    color: var(--app-text);
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+    outline: none;
+    transition: box-shadow 150ms ease, border-color 150ms ease;
+  }
+
+  .form-input-admin::placeholder {
+    color: var(--app-text-subtle);
+  }
+
+  .form-input-admin:focus {
+    border-color: transparent;
+    box-shadow: 0 0 0 2px var(--app-primary);
+  }
+
   .app-button-primary {
     background: var(--app-primary);
     color: var(--app-text);

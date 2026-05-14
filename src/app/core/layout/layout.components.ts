@@ -3,13 +3,14 @@ import { Component, inject, signal } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import {
   Bell,
+  Building2,
   LayoutDashboard,
   LogOut,
   LucideAngularModule,
   LucideIconData,
   MessageCircle,
   Send,
-  Settings,
+  UserPlus,
 } from 'lucide-angular';
 import { AuthService } from '../auth/auth.service';
 
@@ -41,21 +42,21 @@ export class SidebarComponent {
       scope: 'ADMIN_GLOBAL',
     },
     {
-      label: 'Organizacoes',
+      label: 'Nova Organizacao',
       rota: '/admin/organizacoes',
-      icon: Settings,
+      icon: Building2,
       scope: 'ADMIN_GLOBAL',
     },
     {
-      label: 'Usuarios',
+      label: 'Usuarios por Organizacao',
       rota: '/admin/usuarios',
-      icon: Send,
+      icon: UserPlus,
       scope: 'ADMIN_GLOBAL',
     },
     {
       label: 'Definir Admin',
       rota: '/admin/definir-admin',
-      icon: Settings,
+      icon: UserPlus,
       scope: 'ADMIN_GLOBAL',
     },
     {

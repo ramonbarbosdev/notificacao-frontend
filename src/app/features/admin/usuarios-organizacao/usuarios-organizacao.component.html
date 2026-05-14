@@ -1,0 +1,197 @@
+<div class="min-h-screen bg-[var(--color-bg-base)]">
+  <app-sidebar />
+  <app-header />
+
+  <main class="pl-64 pt-16">
+    <div class="p-8 max-w-6xl mx-auto">
+      <div class="mb-8 flex items-center gap-3">
+        <div class="w-10 h-10 bg-[var(--color-accent-soft)] rounded-xl flex items-center justify-center">
+          <lucide-icon [img]="userPlusIcon" class="w-5 h-5 text-[var(--color-primary-soft)]" />
+        </div>
+        <div>
+          <h1 class="text-2xl font-bold text-[var(--color-text)]">Usuarios por Organizacao</h1>
+          <p class="text-[var(--color-text-muted)] text-sm">
+            Cadastre ADMIN ou USER informando a organizacao de destino.
+          </p>
+        </div>
+      </div>
+
+      <section class="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-6">
+        <div class="mb-6">
+          <label class="block text-sm font-medium text-[var(--color-text-muted)] mb-2">
+            Organizacao
+          </label>
+          <select [value]="idOrganizacaoSelecionada() ?? ''"
+                  (change)="selecionarOrganizacao($any($event.target).value)"
+                  class="form-input-admin"
+                  [disabled]="carregandoOrganizacoes()">
+            <option value="">Selecione uma organizacao</option>
+            @for (org of organizacoes(); track org.idOrganizacao) {
+              <option [value]="org.idOrganizacao">
+                #{{ org.idOrganizacao }} - {{ org.nmOrganizacao }}
+              </option>
+            }
+          </select>
+
+          @if (erroOrganizacoes()) {
+            <p class="text-[var(--color-danger)] text-xs mt-2">{{ erroOrganizacoes() }}</p>
+          }
+        </div>
+
+        <form [formGroup]="form" (ngSubmit)="criarUsuario()" class="space-y-4">
+          <div class="hidden">
+            <label class="block text-sm font-medium text-[var(--color-text-muted)] mb-2">
+              ID da organizacao
+            </label>
+            <input formControlName="idOrganizacao" type="number" class="form-input-admin" placeholder="100" />
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-[var(--color-text-muted)] mb-2">CPF</label>
+              <input formControlName="nuCpf" type="text" class="form-input-admin" placeholder="22233344455" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-[var(--color-text-muted)] mb-2">Perfil</label>
+              <select formControlName="role" class="form-input-admin">
+                @for (role of roles; track role) {
+                  <option [value]="role">{{ role }}</option>
+                }
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-[var(--color-text-muted)] mb-2">Nome</label>
+            <input formControlName="nmUsuario" type="text" class="form-input-admin" placeholder="Usuario Clinica" />
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-[var(--color-text-muted)] mb-2">E-mail</label>
+            <input formControlName="nmEmail" type="email" class="form-input-admin" placeholder="usuario.clinica@exemplo.com" />
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-[var(--color-text-muted)] mb-2">Senha</label>
+            <input formControlName="senha" type="password" class="form-input-admin" placeholder="123456" />
+          </div>
+
+          @if (erro()) {
+            <div class="bg-[var(--color-danger-bg)] border border-[var(--color-danger-border)] rounded-xl px-4 py-3">
+              <p class="text-[var(--color-danger)] text-sm">{{ erro() }}</p>
+            </div>
+          }
+
+          @if (sucesso()) {
+            <div class="bg-[var(--color-success-bg)] border border-[var(--color-success-border)] rounded-xl px-4 py-3 flex items-center gap-2">
+              <lucide-icon [img]="successIcon" class="w-4 h-4 text-[var(--color-success)]" />
+              <p class="text-[var(--color-success)] text-sm">
+                Usuario {{ sucesso()!.nmUsuario }} cadastrado em {{ sucesso()!.nmOrganizacao }}.
+              </p>
+            </div>
+          }
+
+          <button type="submit"
+                  [disabled]="form.invalid || carregando()"
+                  class="w-full bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)]
+                         disabled:opacity-50 text-[var(--color-text)] font-semibold py-3 rounded-xl
+                         transition-colors text-sm flex items-center justify-center gap-2">
+            @if (carregando()) {
+              <lucide-icon [img]="loaderIcon" class="w-4 h-4 animate-spin" />
+              Cadastrando...
+            } @else {
+              Cadastrar usuario
+            }
+          </button>
+        </form>
+      </section>
+
+      <section class="mt-6 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-6">
+        <div class="flex items-center justify-between gap-4 mb-5">
+          <div>
+            <h2 class="text-[var(--color-text)] font-semibold">Usuarios da organizacao</h2>
+            <p class="text-[var(--color-text-muted)] text-sm mt-1">
+              @if (organizacaoSelecionada()) {
+                {{ organizacaoSelecionada()!.nmOrganizacao }}
+              } @else {
+                Selecione uma organizacao para listar os usuarios.
+              }
+            </p>
+          </div>
+
+          <button type="button"
+                  (click)="carregarUsuarios()"
+                  [disabled]="!idOrganizacaoSelecionada() || carregandoUsuarios()"
+                  class="text-[var(--color-text-muted)] hover:text-[var(--color-text)]
+                         disabled:opacity-50 text-sm transition-colors">
+            Atualizar
+          </button>
+        </div>
+
+        @if (erroUsuarios()) {
+          <div class="bg-[var(--color-danger-bg)] border border-[var(--color-danger-border)] rounded-xl px-4 py-3 mb-4">
+            <p class="text-[var(--color-danger)] text-sm">{{ erroUsuarios() }}</p>
+          </div>
+        }
+
+        @if (carregandoUsuarios()) {
+          <div class="flex items-center gap-2 text-[var(--color-text-muted)] text-sm py-4">
+            <lucide-icon [img]="loaderIcon" class="w-4 h-4 animate-spin" />
+            Carregando usuarios...
+          </div>
+        } @else if (usuarios().length) {
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="border-b border-[var(--color-border)] text-left text-[var(--color-text-muted)]">
+                  <th class="py-3 pr-4 font-medium">ID</th>
+                  <th class="py-3 pr-4 font-medium">CPF</th>
+                  <th class="py-3 pr-4 font-medium">Nome</th>
+                  <th class="py-3 pr-4 font-medium">E-mail</th>
+                  <th class="py-3 pr-4 font-medium">Perfil</th>
+                  <th class="py-3 pr-4 font-medium">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (usuario of usuarios(); track usuario.idUsuario) {
+                  <tr class="border-b border-[var(--color-border)] text-[var(--color-text)]">
+                    <td class="py-3 pr-4">#{{ usuario.idUsuario }}</td>
+                    <td class="py-3 pr-4">{{ usuario.nuCpf }}</td>
+                    <td class="py-3 pr-4">{{ usuario.nmUsuario }}</td>
+                    <td class="py-3 pr-4">{{ usuario.nmEmail }}</td>
+                    <td class="py-3 pr-4">
+                      <span class="px-2 py-0.5 rounded-full text-xs border border-[var(--color-primary)] text-[var(--color-primary-soft)] bg-[var(--color-accent-soft)]">
+                        {{ usuario.role }}
+                      </span>
+                    </td>
+                    <td class="py-3 pr-4">
+                      <span class="px-2 py-0.5 rounded-full text-xs border"
+                            [class.bg-[var(--color-success-bg)]]="usuario.flAtivo"
+                            [class.text-[var(--color-success)]]="usuario.flAtivo"
+                            [class.border-[var(--color-success-border)]]="usuario.flAtivo"
+                            [class.bg-[var(--color-danger-bg)]]="!usuario.flAtivo"
+                            [class.text-[var(--color-danger)]]="!usuario.flAtivo"
+                            [class.border-[var(--color-danger-border)]]="!usuario.flAtivo">
+                        {{ usuario.flAtivo ? 'Ativo' : 'Inativo' }}
+                      </span>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        } @else {
+          <div class="bg-[var(--color-surface-muted)] border border-[var(--color-border)] rounded-xl px-4 py-6">
+            <p class="text-[var(--color-text-muted)] text-sm">
+              @if (idOrganizacaoSelecionada()) {
+                Nenhum usuario encontrado para esta organizacao.
+              } @else {
+                Nenhuma organizacao selecionada.
+              }
+            </p>
+          </div>
+        }
+      </section>
+    </div>
+  </main>
+</div>
