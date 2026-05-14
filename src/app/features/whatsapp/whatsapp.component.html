@@ -1,0 +1,395 @@
+<div class="min-h-screen bg-[var(--color-bg-base)]">
+  <app-sidebar />
+  <app-header />
+
+  <main class="pl-64 pt-16">
+    <div class="p-8 max-w-4xl mx-auto">
+
+      <div class="mb-8">
+        <h1 class="text-2xl font-bold text-[var(--color-text)]">
+          WhatsApp
+        </h1>
+
+        <p class="text-[var(--color-text-muted)] text-sm mt-1">
+          Gerencie a sessão e envie mensagens diretamente
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+        <!-- Status -->
+        <div class="bg-[var(--color-surface)]
+                    border border-[var(--color-border)]
+                    rounded-2xl p-6">
+
+          <div class="flex items-center justify-between mb-6">
+            <h2 class="text-[var(--color-text)] font-semibold">
+              Status da Sessão
+            </h2>
+
+            <button
+              type="button"
+              (click)="atualizarStatus()"
+              [disabled]="carregando()"
+              class="text-[var(--color-text-muted)]
+                     hover:text-[var(--color-text)]
+                     disabled:opacity-40
+                     transition-colors p-1.5 rounded-lg
+                     hover:bg-[var(--color-surface-muted)]">
+
+              <lucide-icon
+                [img]="refreshIcon"
+                class="w-4 h-4"
+                [class.animate-spin]="carregando()" />
+            </button>
+          </div>
+
+          <div class="flex items-center gap-4 mb-6">
+
+            <div class="w-14 h-14 rounded-2xl flex items-center justify-center border"
+                 [class.bg-[var(--color-success-bg)]]="status()?.conectado"
+                 [class.border-[var(--color-success-border)]]="status()?.conectado"
+                 [class.bg-[var(--color-surface-muted)]]="!status()?.conectado"
+                 [class.border-[var(--color-border)]]="!status()?.conectado">
+
+              <lucide-icon
+                [img]="whatsappIcon"
+                class="w-7 h-7"
+                [class.text-[var(--color-success)]]="status()?.conectado"
+                [class.text-[var(--color-text-subtle)]]="!status()?.conectado" />
+            </div>
+
+            <div>
+              <p class="text-[var(--color-text)] font-semibold text-lg">
+                {{ status()?.status ?? '-' }}
+              </p>
+
+              @if (status()?.telefone) {
+                <p class="text-[var(--color-text-subtle)] text-sm">
+                  {{ status()!.telefone }}
+                </p>
+              } @else if (tentativaEmAndamento()) {
+                <p class="text-[var(--color-text-subtle)] text-sm">
+                  Tentativa de conexão em andamento
+                </p>
+              } @else {
+                <p class="text-[var(--color-text-faint)] text-sm">
+                  Nenhum telefone vinculado
+                </p>
+              }
+            </div>
+          </div>
+
+          @if (status()?.qrImagem) {
+            <div class="mb-6">
+
+              <p class="text-[var(--color-text-muted)] text-sm mb-3 flex items-center gap-2">
+                <span class="w-2 h-2 bg-[var(--color-primary-soft)] rounded-full animate-pulse"></span>
+                Escaneie o QR Code no WhatsApp
+              </p>
+
+              <div class="bg-white rounded-2xl p-4 inline-flex shadow-xl">
+                <img
+                  [src]="qrImagemSrc()"
+                  alt="QR Code WhatsApp"
+                  class="w-48 h-48 object-contain" />
+              </div>
+            </div>
+          }
+
+          @if (status()?.erro) {
+            <div class="mb-4
+                        bg-[var(--color-danger-bg)]
+                        border border-[var(--color-danger-border)]
+                        rounded-xl px-4 py-3">
+
+              <p class="text-[var(--color-danger)] text-sm">
+                {{ status()!.erro }}
+              </p>
+            </div>
+          }
+
+          @if (erroConexao()) {
+            <div class="mb-4
+                        bg-[var(--color-danger-bg)]
+                        border border-[var(--color-danger-border)]
+                        rounded-xl px-4 py-3">
+
+              <p class="text-[var(--color-danger)] text-sm">
+                {{ erroConexao() }}
+              </p>
+            </div>
+          }
+
+          @if (mensagemEvento()) {
+            <div class="mb-4
+                        bg-[var(--color-bg-base)]
+                        border border-[var(--color-border)]
+                        rounded-xl px-4 py-3">
+
+              <p class="text-[var(--color-text-muted)] text-sm">
+                {{ mensagemEvento() }}
+              </p>
+            </div>
+          }
+
+          <div class="flex flex-col gap-3">
+
+            @if (!status()?.conectado && tentativaEmAndamento()) {
+
+              <button
+                type="button"
+                disabled
+                class="w-full
+                       bg-[var(--color-surface-muted)]
+                       border border-[var(--color-border)]
+                       opacity-80
+                       text-[var(--color-text-muted)]
+                       font-semibold py-2.5 rounded-xl text-sm
+                       flex items-center justify-center gap-2">
+
+                <lucide-icon
+                  [img]="loaderIcon"
+                  class="animate-spin h-4 w-4" />
+
+                Conexão em andamento
+              </button>
+
+              <button
+                type="button"
+                (click)="cancelarConexao()"
+                [disabled]="carregando()"
+                class="w-full
+                       bg-[var(--color-surface-muted)]
+                       hover:bg-[var(--color-danger-bg)]
+                       hover:border-[var(--color-danger-border)]
+                       border border-[var(--color-border)]
+                       disabled:opacity-50
+                       disabled:cursor-not-allowed
+                       text-[var(--color-text-muted)]
+                       hover:text-[var(--color-danger)]
+                       font-semibold py-2.5 rounded-xl
+                       transition-all duration-200 text-sm">
+
+                Cancelar conexão
+              </button>
+
+            } @else if (!status()?.conectado) {
+
+              <button
+                type="button"
+                (click)="conectar()"
+                [disabled]="conectarBloqueado()"
+                class="w-full
+                       bg-[var(--color-success)]
+                       hover:brightness-110
+                       disabled:opacity-50
+                       disabled:cursor-not-allowed
+                       text-[var(--color-bg-base)]
+                       font-semibold py-2.5 rounded-xl
+                       transition-all duration-200 text-sm
+                       flex items-center justify-center gap-2">
+
+                @if (carregando()) {
+                  <lucide-icon
+                    [img]="loaderIcon"
+                    class="animate-spin h-4 w-4" />
+                } @else {
+                  <lucide-icon
+                    [img]="plugZapIcon"
+                    class="h-4 w-4" />
+                }
+
+                Conectar WhatsApp
+              </button>
+
+              @if (segundosRestantes() > 0) {
+                <p class="text-center text-[var(--color-text-faint)] text-xs">
+                  Aguarde {{ segundosRestantes() }}s para tentar novamente
+                </p>
+              }
+
+            } @else {
+
+              <button
+                type="button"
+                (click)="desconectar()"
+                [disabled]="carregando()"
+                class="w-full
+                       bg-[var(--color-surface-muted)]
+                       hover:bg-[var(--color-danger-bg)]
+                       hover:border-[var(--color-danger-border)]
+                       border border-[var(--color-border)]
+                       disabled:opacity-50
+                       disabled:cursor-not-allowed
+                       text-[var(--color-text-muted)]
+                       hover:text-[var(--color-danger)]
+                       font-semibold py-2.5 rounded-xl
+                       transition-all duration-200 text-sm">
+
+                Desconectar
+              </button>
+            }
+          </div>
+        </div>
+
+        <!-- Enviar mensagem -->
+        <div class="bg-[var(--color-surface)]
+                    border border-[var(--color-border)]
+                    rounded-2xl p-6">
+
+          <h2 class="text-[var(--color-text)] font-semibold mb-6">
+            Enviar Mensagem
+          </h2>
+
+          <form
+            [formGroup]="formMensagem"
+            (ngSubmit)="enviarMensagem()"
+            class="space-y-4">
+
+            <div>
+              <label class="block text-sm font-medium
+                            text-[var(--color-text-muted)] mb-2">
+
+                Telefone
+              </label>
+
+              <input
+                formControlName="telefone"
+                type="text"
+                placeholder="5571991180200"
+                class="w-full
+                       bg-[var(--color-surface-muted)]
+                       border border-[var(--color-border-strong)]
+                       rounded-xl px-4 py-3
+                       text-[var(--color-text)]
+                       placeholder:text-[var(--color-text-subtle)]
+                       text-sm
+                       focus:outline-none
+                       focus:ring-2 focus:ring-[var(--color-primary)]
+                       focus:border-transparent
+                       transition-all duration-200" />
+
+              @if (formMensagem.get('telefone')?.invalid &&
+                   formMensagem.get('telefone')?.touched) {
+
+                <p class="text-[var(--color-danger)] text-xs mt-1">
+                  Informe o telefone no formato internacional (ex: 5571991180200)
+                </p>
+              }
+
+              <p class="text-[var(--color-text-faint)] text-xs mt-1">
+                Código do país + DDD + número, sem espaços
+              </p>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium
+                            text-[var(--color-text-muted)] mb-2">
+
+                Mensagem
+              </label>
+
+              <textarea
+                formControlName="mensagem"
+                rows="5"
+                placeholder="Digite a mensagem que será enviada..."
+                class="w-full
+                       bg-[var(--color-surface-muted)]
+                       border border-[var(--color-border-strong)]
+                       rounded-xl px-4 py-3
+                       text-[var(--color-text)]
+                       placeholder:text-[var(--color-text-subtle)]
+                       text-sm resize-none
+                       focus:outline-none
+                       focus:ring-2 focus:ring-[var(--color-primary)]
+                       focus:border-transparent
+                       transition-all duration-200">
+              </textarea>
+
+              @if (formMensagem.get('mensagem')?.invalid &&
+                   formMensagem.get('mensagem')?.touched) {
+
+                <p class="text-[var(--color-danger)] text-xs mt-1">
+                  Mensagem obrigatória
+                </p>
+              }
+            </div>
+
+            @if (respostaMensagem()?.sucesso === true) {
+              <div class="bg-[var(--color-success-bg)]
+                          border border-[var(--color-success-border)]
+                          rounded-xl px-4 py-3
+                          flex items-center gap-3">
+
+                <lucide-icon
+                  [img]="checkIcon"
+                  class="w-4 h-4 text-[var(--color-success)] flex-shrink-0" />
+
+                <p class="text-[var(--color-success)] text-sm">
+                  Mensagem enviada com sucesso!
+                </p>
+              </div>
+            }
+
+            @if (respostaMensagem()?.sucesso === false) {
+              <div class="bg-[var(--color-danger-bg)]
+                          border border-[var(--color-danger-border)]
+                          rounded-xl px-4 py-3">
+
+                <p class="text-[var(--color-danger)] text-sm">
+                  {{ respostaMensagem()?.erro ?? 'Erro ao enviar mensagem.' }}
+                </p>
+              </div>
+            }
+
+            @if (erroEnvio()) {
+              <div class="bg-[var(--color-danger-bg)]
+                          border border-[var(--color-danger-border)]
+                          rounded-xl px-4 py-3">
+
+                <p class="text-[var(--color-danger)] text-sm">
+                  {{ erroEnvio() }}
+                </p>
+              </div>
+            }
+
+            <button
+              type="submit"
+              [disabled]="formMensagem.invalid || enviando() || !status()?.conectado"
+              class="w-full
+                     bg-[var(--color-primary)]
+                     hover:bg-[var(--color-primary-hover)]
+                     disabled:opacity-50
+                     disabled:cursor-not-allowed
+                     text-[var(--color-text)]
+                     font-semibold py-3 rounded-xl
+                     transition-all duration-200 text-sm
+                     flex items-center justify-center gap-2">
+
+              @if (enviando()) {
+                <lucide-icon
+                  [img]="loaderIcon"
+                  class="animate-spin h-4 w-4" />
+
+                Enviando...
+              } @else {
+                <lucide-icon
+                  [img]="sendIcon"
+                  class="w-4 h-4" />
+
+                Enviar Mensagem
+              }
+            </button>
+
+            @if (!status()?.conectado) {
+              <p class="text-center text-[var(--color-text-faint)] text-xs">
+                Conecte o WhatsApp antes de enviar mensagens
+              </p>
+            }
+          </form>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>

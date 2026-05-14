@@ -1,0 +1,99 @@
+<aside class="fixed left-0 top-0 h-screen w-64
+              bg-[var(--color-sidebar-bg)]
+              border-r border-[var(--color-sidebar-border)]
+              flex flex-col z-40 transition-transform duration-300"
+       [class.-translate-x-full]="!aberta()">
+
+  <!-- Brand -->
+  <div class="flex items-center gap-3 px-6 py-5
+              border-b border-[var(--color-sidebar-border)]">
+
+    <!-- <div class="w-8 h-8
+                bg-[var(--color-primary)]
+                rounded-lg flex items-center justify-center flex-shrink-0">
+
+      <lucide-icon [img]="brandIcon"
+                   class="w-4 h-4 text-[var(--color-text)]" />
+    </div> -->
+
+    <span class="text-[var(--color-text)]
+                 font-semibold text-sm tracking-tight">
+      Gerenciamento Notificacao
+    </span>
+  </div>
+
+  <!-- Nav -->
+  <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+
+    <p class="px-3 text-xs font-semibold
+              text-[var(--color-text-faint)]
+              uppercase tracking-widest mb-2">
+      Principal
+    </p>
+
+    @for (item of navItems; track item.rota) {
+      @if (!item.roles || item.roles.includes(authService.role() ?? '')) {
+
+        <a [routerLink]="item.rota"
+
+         routerLinkActive="bg-[var(--color-sidebar-active)] text-[var(--color-sidebar-active-text)] border-[var(--color-primary)]"
+
+           class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm
+                  text-[var(--color-sidebar-text)]
+                  hover:text-[var(--color-text)]
+                  hover:bg-[var(--color-surface-muted)]
+                  border border-transparent
+                  transition-all duration-150 group">
+
+          <lucide-icon [img]="item.icon"
+                       class="w-4 h-4 flex-shrink-0" />
+
+          {{ item.label }}
+        </a>
+      }
+    }
+  </nav>
+
+  <!-- User info -->
+  <div class="border-t border-[var(--color-sidebar-border)] p-4">
+
+    <div class="flex items-center gap-3">
+
+      <div class="w-8 h-8
+                  bg-[var(--color-surface-muted)]
+                  rounded-full flex items-center justify-center">
+
+        <span class="text-xs font-semibold
+                     text-[var(--color-text-muted)]">
+
+          {{ (authService.nomeUsuario() ?? 'U')[0].toUpperCase() }}
+        </span>
+      </div>
+
+      <div class="flex-1 min-w-0">
+
+        <p class="text-[var(--color-text)]
+                  text-sm font-medium truncate">
+
+          {{ authService.nomeUsuario() ?? 'Usuario' }}
+        </p>
+
+        <p class="text-[var(--color-text-subtle)]
+                  text-xs truncate">
+
+          {{ authService.usuario()?.role ?? '' }}
+        </p>
+      </div>
+
+      <button (click)="authService.logout()"
+              title="Sair"
+              class="text-[var(--color-text-faint)]
+                     hover:text-[var(--color-danger)]
+                     transition-colors">
+
+        <lucide-icon [img]="logoutIcon"
+                     class="w-4 h-4" />
+      </button>
+    </div>
+  </div>
+</aside>

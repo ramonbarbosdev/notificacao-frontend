@@ -1,0 +1,145 @@
+<div class="min-h-screen bg-[var(--color-bg-base)] flex items-center justify-center p-4">
+
+  <!-- Glow de fundo -->
+  <div class="absolute inset-0 overflow-hidden pointer-events-none">
+    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2
+                w-[600px] h-[600px]
+                bg-[var(--color-primary)]/10
+                rounded-full blur-3xl">
+    </div>
+  </div>
+
+  <div class="relative w-full max-w-md">
+
+    <!-- Logo / Brand -->
+    <div class="text-center mb-10">
+      <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl
+                  bg-[var(--color-primary)]
+                  shadow-lg shadow-[var(--color-primary)]/30 mb-4">
+
+        <lucide-icon [img]="brandIcon"
+                     class="w-7 h-7 text-[var(--color-text)]" />
+      </div>
+
+      <h1 class="text-2xl font-bold text-[var(--color-text)] tracking-tight">
+        Notificação
+      </h1>
+
+      <p class="text-[var(--color-text-muted)] text-sm mt-1">
+        Acesse sua conta para continuar
+      </p>
+    </div>
+
+    <!-- Card -->
+    <div class="bg-[var(--color-surface)]
+                border border-[var(--color-border)]
+                rounded-2xl p-8 shadow-2xl">
+
+      <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-5">
+
+        <!-- Login -->
+        <div>
+          <label class="block text-sm font-medium
+                        text-[var(--color-text-muted)] mb-2">
+            CPF
+          </label>
+
+          <input
+            formControlName="login"
+            type="text"
+            placeholder="000.000.000-00"
+            class="w-full
+                   bg-[var(--color-surface-muted)]
+                   border border-[var(--color-border-strong)]
+                   rounded-xl px-4 py-3
+                   text-[var(--color-text)]
+                   placeholder:text-[var(--color-text-subtle)]
+                   text-sm
+                   focus:outline-none
+                   focus:ring-2 focus:ring-[var(--color-primary)]
+                   focus:border-transparent
+                   transition-all duration-200"
+          />
+
+          @if (form.get('login')?.invalid && form.get('login')?.touched) {
+            <p class="text-[var(--color-danger)] text-xs mt-1">
+              Campo obrigatório
+            </p>
+          }
+        </div>
+
+        <!-- Senha -->
+        <div>
+          <label class="block text-sm font-medium
+                        text-[var(--color-text-muted)] mb-2">
+            Senha
+          </label>
+
+          <input
+            formControlName="senha"
+            type="password"
+            placeholder="••••••••"
+            class="w-full
+                   bg-[var(--color-surface-muted)]
+                   border border-[var(--color-border-strong)]
+                   rounded-xl px-4 py-3
+                   text-[var(--color-text)]
+                   placeholder:text-[var(--color-text-subtle)]
+                   text-sm
+                   focus:outline-none
+                   focus:ring-2 focus:ring-[var(--color-primary)]
+                   focus:border-transparent
+                   transition-all duration-200"
+          />
+
+          @if (form.get('senha')?.invalid && form.get('senha')?.touched) {
+            <p class="text-[var(--color-danger)] text-xs mt-1">
+              Campo obrigatório
+            </p>
+          }
+        </div>
+
+        <!-- Erro geral -->
+        @if (erro()) {
+          <div class="bg-[var(--color-danger-bg)]
+                      border border-[var(--color-danger-border)]
+                      rounded-xl px-4 py-3">
+
+            <p class="text-[var(--color-danger)] text-sm">
+              {{ erro() }}
+            </p>
+          </div>
+        }
+
+        <!-- Botão -->
+        <button
+          type="submit"
+          [disabled]="form.invalid || authService.carregando()"
+          class="w-full
+                 bg-[var(--color-primary)]
+                 hover:bg-[var(--color-primary-hover)]
+                 disabled:opacity-50
+                 disabled:cursor-not-allowed
+                 text-[var(--color-text)]
+                 font-semibold py-3 px-4
+                 rounded-xl transition-all duration-200 text-sm
+                 shadow-lg shadow-[var(--color-primary)]/20">
+
+          @if (authService.carregando()) {
+            <span class="flex items-center justify-center gap-2">
+              <lucide-icon [img]="loaderIcon"
+                           class="animate-spin h-4 w-4" />
+              Entrando...
+            </span>
+          } @else {
+            Entrar
+          }
+        </button>
+      </form>
+    </div>
+
+    <p class="text-center text-[var(--color-text-faint)] text-xs mt-6">
+      © {{ ano }} Notificação API · Todos os direitos reservados
+    </p>
+  </div>
+</div>

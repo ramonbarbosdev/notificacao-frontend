@@ -1,0 +1,83 @@
+<header class="fixed top-0 left-64 right-0 h-16
+               bg-[color-mix(in_srgb,var(--color-bg-base)_80%,transparent)]
+               backdrop-blur-md
+               border-b border-[var(--color-border)]
+               flex items-center justify-between
+               px-6 z-30">
+
+  <!-- Organização atual -->
+  <div class="flex items-center gap-2">
+
+    @if (authService.organizacaoAtual()) {
+
+      <div class="flex items-center gap-2
+                  bg-[var(--color-surface-muted)]
+                  border border-[var(--color-border)]
+                  rounded-lg px-3 py-1.5">
+
+        <span class="w-2 h-2
+                     bg-[var(--color-success)]
+                     rounded-full animate-pulse">
+        </span>
+
+        <span class="text-[var(--color-text)]
+                     text-sm font-medium">
+
+          {{ authService.organizacaoAtual() }}
+        </span>
+      </div>
+
+    } @else if (authService.isSuperAdmin()) {
+
+      <div class="flex items-center gap-2
+                  bg-[var(--color-accent-soft)]
+                  border border-[var(--color-primary)]
+                  rounded-lg px-3 py-1.5">
+
+        <span class="w-2 h-2
+                     bg-[var(--color-primary-soft)]
+                     rounded-full">
+        </span>
+
+        <span class="text-[var(--color-primary-soft)]
+                     text-sm font-medium">
+
+          Super Admin
+        </span>
+      </div>
+    }
+  </div>
+
+  <!-- Right -->
+  <div class="flex items-center gap-4">
+
+    <!-- Usuário -->
+    <div class="text-right hidden sm:block">
+
+      <p class="text-[var(--color-text)]
+                text-sm font-medium leading-none">
+
+        {{ authService.nomeUsuario() ?? '...' }}
+      </p>
+
+      <p class="text-[var(--color-text-subtle)]
+                text-xs mt-0.5">
+
+        {{ authService.emailUsuario() ?? '' }}
+      </p>
+    </div>
+
+    <!-- Avatar -->
+    <div class="w-8 h-8
+                bg-[var(--color-primary)]
+                rounded-full
+                flex items-center justify-center">
+
+      <span class="text-xs font-bold
+                   text-[var(--color-text)]">
+
+        {{ (authService.nomeUsuario() ?? 'U')[0].toUpperCase() }}
+      </span>
+    </div>
+  </div>
+</header>

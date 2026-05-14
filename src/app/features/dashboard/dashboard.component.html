@@ -1,0 +1,174 @@
+<div class="min-h-screen bg-[var(--color-bg-base)]">
+  <app-sidebar />
+  <app-header />
+
+  <main class="pl-64 pt-16">
+    <div class="p-8 max-w-7xl mx-auto">
+
+      <div class="mb-8">
+        <h1 class="text-2xl font-bold text-[var(--color-text)]">
+          Bom dia, {{ primeiroNome() }}
+        </h1>
+
+        <p class="text-[var(--color-text-muted)] text-sm mt-1">
+          Aqui está um resumo da sua organização
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5 mb-8">
+
+        <div class="bg-[var(--color-surface)] border rounded-2xl p-5 transition-all duration-200 hover:border-[var(--color-border-strong)]"
+             [class.border-[var(--color-success-border)]]="whatsappStatus()?.conectado"
+             [class.border-[var(--color-border)]]="!whatsappStatus()?.conectado">
+          <div class="flex items-start justify-between mb-4">
+            <div class="w-10 h-10 rounded-xl flex items-center justify-center"
+                 [class.bg-[var(--color-success-bg)]]="whatsappStatus()?.conectado"
+                 [class.bg-[var(--color-surface-muted)]]="!whatsappStatus()?.conectado">
+              <lucide-icon [img]="whatsappIcon"
+                           class="w-5 h-5"
+                           [class.text-[var(--color-success)]]="whatsappStatus()?.conectado"
+                           [class.text-[var(--color-text-subtle)]]="!whatsappStatus()?.conectado" />
+            </div>
+
+            <span class="text-xs px-2 py-0.5 rounded-full border font-medium"
+                  [class.bg-[var(--color-success-bg)]]="whatsappStatus()?.conectado"
+                  [class.text-[var(--color-success)]]="whatsappStatus()?.conectado"
+                  [class.border-[var(--color-success-border)]]="whatsappStatus()?.conectado"
+                  [class.bg-[var(--color-surface-muted)]]="!whatsappStatus()?.conectado"
+                  [class.text-[var(--color-text-muted)]]="!whatsappStatus()?.conectado"
+                  [class.border-[var(--color-border)]]="!whatsappStatus()?.conectado">
+              {{ whatsappStatus()?.conectado ? 'Online' : 'Offline' }}
+            </span>
+          </div>
+
+          <p class="text-[var(--color-text-muted)] text-xs uppercase tracking-widest mb-1">
+            WhatsApp
+          </p>
+
+          <p class="text-[var(--color-text)] font-semibold text-lg">
+            {{ whatsappStatus()?.status ?? (carregandoStatus() ? '...' : 'Desconhecido') }}
+          </p>
+
+          @if (whatsappStatus()?.telefone) {
+            <p class="text-[var(--color-text-subtle)] text-xs mt-1 truncate">
+              {{ whatsappStatus()!.telefone }}
+            </p>
+          }
+        </div>
+
+        <div class="bg-[var(--color-surface)] border border-[var(--color-border)] hover:border-[var(--color-border-strong)] rounded-2xl p-5 transition-all duration-200">
+          <div class="flex items-start justify-between mb-4">
+            <div class="w-10 h-10 bg-[var(--color-accent-soft)] rounded-xl flex items-center justify-center">
+              <lucide-icon [img]="sendIcon"
+                           class="w-5 h-5 text-[var(--color-primary-soft)]" />
+            </div>
+
+            <span class="text-[var(--color-success)] text-xs font-medium">
+              +12% hoje
+            </span>
+          </div>
+
+          <p class="text-[var(--color-text-muted)] text-xs uppercase tracking-widest mb-1">
+            Enviadas
+          </p>
+
+          <p class="text-[var(--color-text)] font-semibold text-2xl">
+            —
+          </p>
+
+          <p class="text-[var(--color-text-faint)] text-xs mt-1">
+            Conecte sua API para ver
+          </p>
+        </div>
+
+        <div class="bg-[var(--color-surface)] border border-[var(--color-border)] hover:border-[var(--color-border-strong)] rounded-2xl p-5 transition-all duration-200">
+          <div class="flex items-start justify-between mb-4">
+            <div class="w-10 h-10 bg-[var(--color-danger-bg)] rounded-xl flex items-center justify-center">
+              <lucide-icon [img]="alertIcon"
+                           class="w-5 h-5 text-[var(--color-danger)]" />
+            </div>
+          </div>
+
+          <p class="text-[var(--color-text-muted)] text-xs uppercase tracking-widest mb-1">
+            Com Erro
+          </p>
+
+          <p class="text-[var(--color-text)] font-semibold text-2xl">
+            —
+          </p>
+
+          <p class="text-[var(--color-text-faint)] text-xs mt-1">
+            Sem erros registrados
+          </p>
+        </div>
+
+        <div class="bg-[var(--color-surface)] border border-[var(--color-border)] hover:border-[var(--color-border-strong)] rounded-2xl p-5 transition-all duration-200">
+          <div class="flex items-start justify-between mb-4">
+            <div class="w-10 h-10 bg-[var(--color-accent-soft)] rounded-xl flex items-center justify-center">
+              <lucide-icon [img]="zapIcon"
+                           class="w-5 h-5 text-[var(--color-primary-soft)]" />
+            </div>
+          </div>
+
+          <p class="text-[var(--color-text-muted)] text-xs uppercase tracking-widest mb-1">
+            Canal Ativo
+          </p>
+
+          <p class="text-[var(--color-text)] font-semibold text-lg">
+            WHATSAPP
+          </p>
+
+          <p class="text-[var(--color-text-faint)] text-xs mt-1">
+            Canal padrão configurado
+          </p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+
+        <a routerLink="/whatsapp"
+           class="group bg-[var(--color-surface)] border border-[var(--color-border)] hover:border-[var(--color-primary)] rounded-2xl p-6 flex items-center gap-5 transition-all duration-200 hover:bg-[var(--color-surface-muted)]">
+          <div class="w-12 h-12 bg-[var(--color-success-bg)] group-hover:bg-[var(--color-success-border)] rounded-xl flex items-center justify-center transition-colors flex-shrink-0">
+            <lucide-icon [img]="whatsappIcon"
+                         class="w-6 h-6 text-[var(--color-success)]" />
+          </div>
+
+          <div>
+            <h3 class="text-[var(--color-text)] font-semibold">
+              Gerenciar WhatsApp
+            </h3>
+
+            <p class="text-[var(--color-text-subtle)] text-sm mt-0.5">
+              Conecte, envie mensagens e veja o status da sessão
+            </p>
+          </div>
+
+          <lucide-icon [img]="chevronRightIcon"
+                       class="w-5 h-5 ml-auto flex-shrink-0 text-[var(--color-text-faint)] group-hover:text-[var(--color-primary-soft)] transition-colors" />
+        </a>
+
+        <a routerLink="/notificacoes"
+           class="group bg-[var(--color-surface)] border border-[var(--color-border)] hover:border-[var(--color-primary)] rounded-2xl p-6 flex items-center gap-5 transition-all duration-200 hover:bg-[var(--color-surface-muted)]">
+          <div class="w-12 h-12 bg-[var(--color-accent-soft)] rounded-xl flex items-center justify-center transition-colors flex-shrink-0">
+            <lucide-icon [img]="sendIcon"
+                         class="w-6 h-6 text-[var(--color-primary-soft)]" />
+          </div>
+
+          <div>
+            <h3 class="text-[var(--color-text)] font-semibold">
+              Enviar Notificação
+            </h3>
+
+            <p class="text-[var(--color-text-subtle)] text-sm mt-0.5">
+              Dispare notificações por WhatsApp, Email, Telegram ou Webhook
+            </p>
+          </div>
+
+          <lucide-icon [img]="chevronRightIcon"
+                       class="w-5 h-5 ml-auto flex-shrink-0 text-[var(--color-text-faint)] group-hover:text-[var(--color-primary-soft)] transition-colors" />
+        </a>
+
+      </div>
+    </div>
+  </main>
+</div>

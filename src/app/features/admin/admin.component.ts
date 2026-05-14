@@ -2,68 +2,15 @@ import { HttpClient } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { environment } from '../../../environments/environment';
-import { HeaderComponent, SidebarComponent } from '../../core/layout/layout.components';
+import {  SidebarComponent } from '../../core/layout/layout.components';
+import { HeaderComponent } from '../../core/layout/header/header.component';
 
 @Component({
   selector: 'app-admin',
   standalone: true,
   imports: [CommonModule, SidebarComponent, HeaderComponent],
-  template: `
-    <div class="min-h-screen app-page">
-      <app-sidebar />
-      <app-header />
+  templateUrl: './admin.component.html',
 
-      <main class="pl-64 pt-16">
-        <div class="p-8 max-w-3xl mx-auto">
-          <div class="mb-8 flex items-center gap-3">
-            <div class="w-10 h-10 bg-violet-950 rounded-xl flex items-center justify-center">
-              <svg class="w-5 h-5 text-violet-400" fill="none" viewBox="0 0 24 24"
-                   stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112
-                         2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02
-                         0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332
-                         9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
-              </svg>
-            </div>
-            <div>
-              <h1 class="text-2xl font-bold app-title">Painel Administrativo</h1>
-              <p class="app-muted text-sm">Acesso restrito - Super Admin</p>
-            </div>
-          </div>
-
-          <div class="app-surface border rounded-2xl p-6">
-            <div class="flex items-center justify-between mb-4">
-              <h2 class="app-title font-semibold">Status do Sistema</h2>
-              <button (click)="carregarStatus()"
-                      [disabled]="carregando()"
-                      class="app-muted hover:text-[var(--app-text)] disabled:opacity-50 transition-colors text-sm">
-                Atualizar
-              </button>
-            </div>
-
-            @if (carregando()) {
-              <div class="flex items-center gap-3 py-4">
-                <svg class="animate-spin h-4 w-4 text-indigo-400" viewBox="0 0 24 24" fill="none">
-                  <circle class="opacity-25" cx="12" cy="12" r="10"
-                          stroke="currentColor" stroke-width="4"/>
-                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
-                </svg>
-                <p class="app-muted text-sm">Consultando API...</p>
-              </div>
-            } @else if (statusData()) {
-              <pre class="app-page border border-slate-800 rounded-xl p-4
-                         text-xs app-muted overflow-x-auto font-mono">{{ statusData() | json }}</pre>
-            } @else if (erro()) {
-              <div class="app-alert-danger border rounded-xl px-4 py-3">
-                <p class="app-alert-danger-text text-sm">{{ erro() }}</p>
-              </div>
-            }
-          </div>
-        </div>
-      </main>
-    </div>
-  `,
 })
 export class AdminComponent implements OnInit {
   private readonly http = inject(HttpClient);
