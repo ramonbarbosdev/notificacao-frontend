@@ -1,6 +1,5 @@
-
 import { Routes } from '@angular/router';
-import { authGuard, organizationGuard, roleGuard } from './core/guards/guards';
+import { authGuard, organizationGuard, roleGuard, superAdminGuard } from './core/guards/guards';
 
 export const routes: Routes = [
   { path: '', redirectTo: '/login', pathMatch: 'full' },
@@ -20,22 +19,24 @@ export const routes: Routes = [
   },
 
   {
-    path: 'dashboard',
+    path: 'app/dashboard',
     canActivate: [authGuard, organizationGuard],
     loadComponent: () =>
       import('./features/dashboard/dashboard.component').then((m) => m.DashboardComponent),
   },
 
   {
-    path: 'whatsapp',
-    canActivate: [authGuard, organizationGuard],
+    path: 'app/whatsapp',
+    canActivate: [authGuard, organizationGuard, roleGuard],
+    data: { roles: ['ADMIN', 'USER'] },
     loadComponent: () =>
       import('./features/whatsapp/whatsapp.component').then((m) => m.WhatsappComponent),
   },
 
   {
-    path: 'notificacoes',
-    canActivate: [authGuard, organizationGuard],
+    path: 'app/notificacoes',
+    canActivate: [authGuard, organizationGuard, roleGuard],
+    data: { roles: ['ADMIN', 'USER'] },
     loadComponent: () =>
       import('./features/notificacoes/notificacoes.component').then(
         (m) => m.NotificacoesComponent
@@ -43,12 +44,48 @@ export const routes: Routes = [
   },
 
   {
-    path: 'admin',
+    path: 'admin/dashboard',
+    canActivate: [authGuard, superAdminGuard],
+    loadComponent: () =>
+      import('./features/admin/admin.component').then((m) => m.AdminComponent),
+  },
+
+  {
+    path: 'admin/organizacoes',
+    canActivate: [authGuard, superAdminGuard],
+    loadComponent: () =>
+      import('./features/admin/admin.component').then((m) => m.AdminComponent),
+  },
+
+  {
+    path: 'admin/usuarios',
+    canActivate: [authGuard, superAdminGuard],
+    loadComponent: () =>
+      import('./features/admin/admin.component').then((m) => m.AdminComponent),
+  },
+
+  {
+    path: 'admin/definir-admin',
+    canActivate: [authGuard, superAdminGuard],
+    loadComponent: () =>
+      import('./features/admin/admin.component').then((m) => m.AdminComponent),
+  },
+
+  {
+    path: 'admin/roles',
     canActivate: [authGuard, roleGuard],
     data: { roles: ['SUPER_ADMIN'] },
     loadComponent: () =>
       import('./features/admin/admin.component').then((m) => m.AdminComponent),
   },
+
+  { path: 'admin', pathMatch: 'full', redirectTo: '/admin/dashboard' },
+  { path: 'app', pathMatch: 'full', redirectTo: '/app/dashboard' },
+
+  // Compatibilidade com rotas antigas.
+  { path: 'dashboard', redirectTo: '/app/dashboard' },
+  { path: 'whatsapp', redirectTo: '/app/whatsapp' },
+  { path: 'notificacoes', redirectTo: '/app/notificacoes' },
 
   { path: '**', redirectTo: '/login' },
 ];

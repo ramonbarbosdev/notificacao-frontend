@@ -3,14 +3,21 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Router, ActivatedRouteSnapshot } from '@angular/router';
 import { TokenService } from '../auth/token.service';
+import { AuthService } from '../auth/auth.service';
 
 export const authGuard: CanActivateFn = () => {
   const tokenService = inject(TokenService);
+  const authService = inject(AuthService);
   const router = inject(Router);
 
   if (tokenService.existe() && !tokenService.estaExpirado()) {
     return true;
   }
+
+  if (authService.possuiSelecaoOrganizacaoPendente()) {
+    return router.createUrlTree(['/selecionar-organizacao']);
+  }
+
   return router.createUrlTree(['/login']);
 };
 
@@ -23,8 +30,8 @@ export const organizationGuard: CanActivateFn = () => {
     return router.createUrlTree(['/login']);
   }
 
-  if (tokenService.tipoGlobal() || tokenService.role() === 'SUPER_ADMIN') {
-    return true;
+  if (tokenService.isSuperAdmin()) {
+    return router.createUrlTree(['/admin/dashboard']);
   }
 
   const idOrg = tokenService.idOrganizacao();
@@ -33,6 +40,23 @@ export const organizationGuard: CanActivateFn = () => {
     return router.createUrlTree(['/selecionar-organizacao']);
   }
   return true;
+};
+
+export const superAdminGuard: CanActivateFn = () => {
+  const tokenService = inject(TokenService);
+  const router = inject(Router);
+
+  if (!tokenService.existe() || tokenService.estaExpirado()) {
+    return router.createUrlTree(['/login']);
+  }
+
+  if (tokenService.isSuperAdmin()) {
+    return true;
+  }
+
+  return router.createUrlTree([
+    tokenService.idOrganizacao() ? '/app/dashboard' : '/selecionar-organizacao',
+  ]);
 };
 
 
@@ -49,8 +73,14 @@ export const roleGuard: CanActivateFn = (route: ActivatedRouteSnapshot) => {
   const rolesPermitidas: string[] = route.data['roles'] ?? [];
   const roleUsuario = tokenService.role();
 
+  if (rolesPermitidas.includes('SUPER_ADMIN') && tokenService.isSuperAdmin()) {
+    return true;
+  }
+
   if (roleUsuario && rolesPermitidas.includes(roleUsuario)) {
     return true;
   }
-  return router.createUrlTree(['/dashboard']);
+  return router.createUrlTree([
+    tokenService.isSuperAdmin() ? '/admin/dashboard' : '/app/dashboard',
+  ]);
 };

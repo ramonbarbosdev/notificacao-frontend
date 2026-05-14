@@ -17,6 +17,7 @@ interface NavItem {
   label: string;
   rota: string;
   icon: LucideIconData;
+  scope: 'ADMIN_GLOBAL' | 'ORG';
   roles?: string[];
 }
 
@@ -34,25 +35,61 @@ export class SidebarComponent {
 
   readonly navItems: NavItem[] = [
     {
-      label: 'Dashboard',
-      rota: '/dashboard',
+      label: 'Dashboard Global',
+      rota: '/admin/dashboard',
       icon: LayoutDashboard,
+      scope: 'ADMIN_GLOBAL',
+    },
+    {
+      label: 'Organizacoes',
+      rota: '/admin/organizacoes',
+      icon: Settings,
+      scope: 'ADMIN_GLOBAL',
+    },
+    {
+      label: 'Usuarios',
+      rota: '/admin/usuarios',
+      icon: Send,
+      scope: 'ADMIN_GLOBAL',
+    },
+    {
+      label: 'Definir Admin',
+      rota: '/admin/definir-admin',
+      icon: Settings,
+      scope: 'ADMIN_GLOBAL',
+    },
+    {
+      label: 'Dashboard',
+      rota: '/app/dashboard',
+      icon: LayoutDashboard,
+      scope: 'ORG',
+      roles: ['ADMIN', 'USER'],
     },
     {
       label: 'WhatsApp',
-      rota: '/whatsapp',
+      rota: '/app/whatsapp',
       icon: MessageCircle,
+      scope: 'ORG',
+      roles: ['ADMIN', 'USER'],
     },
     {
       label: 'Notificacoes',
-      rota: '/notificacoes',
+      rota: '/app/notificacoes',
       icon: Send,
-    },
-    {
-      label: 'Admin',
-      rota: '/admin',
-      roles: ['SUPER_ADMIN'],
-      icon: Settings,
+      scope: 'ORG',
+      roles: ['ADMIN', 'USER'],
     },
   ];
+
+  podeVer(item: NavItem): boolean {
+    if (item.scope === 'ADMIN_GLOBAL' && !this.authService.isSuperAdmin()) {
+      return false;
+    }
+
+    if (item.scope === 'ORG' && this.authService.isSuperAdmin()) {
+      return false;
+    }
+
+    return !item.roles || item.roles.includes(this.authService.role() ?? '');
+  }
 }

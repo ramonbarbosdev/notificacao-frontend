@@ -35,12 +35,19 @@ export class AuthService {
   readonly usuario = this._usuario.asReadonly();
   readonly organizacoes = this._organizacoes.asReadonly();
   readonly carregando = this._carregando.asReadonly();
-  readonly autenticado = computed(() => !!this._usuario());
-  readonly role = computed(() => this._usuario()?.role ?? null);
-  readonly isSuperAdmin = computed(() => this.role() === 'SUPER_ADMIN');
+  readonly autenticado = computed(() => !!this._usuario() || this.tokenService.existe());
+  readonly role = computed(() => this._usuario()?.role ?? this.tokenService.role());
+  readonly tipoGlobal = computed(
+    () => this._usuario()?.tipoGlobal ?? this.tokenService.tipoGlobalValor()
+  );
+  readonly isSuperAdmin = computed(
+    () => this.tipoGlobal() === 'SUPER_ADMIN' || this.role() === 'SUPER_ADMIN'
+  );
   readonly nomeUsuario = computed(() => this._usuario()?.nmUsuario ?? null);
   readonly emailUsuario = computed(() => this._usuario()?.nmEmail ?? null);
-  readonly idOrganizacaoAtual = computed(() => this._usuario()?.idOrganizacao ?? null);
+  readonly idOrganizacaoAtual = computed(
+    () => this._usuario()?.idOrganizacao ?? this.tokenService.idOrganizacao()
+  );
   readonly organizacaoAtual = computed(() => {
     const idOrganizacao = this.idOrganizacaoAtual();
     if (!idOrganizacao) return null;
@@ -56,7 +63,11 @@ export class AuthService {
 
   login(dados: LoginRequest): Observable<LoginResponse> {
     this._carregando.set(true);
+    this.tokenService.remover();
     this.limparTokenTemporario();
+    this.limparCaches();
+    this._usuario.set(null);
+    this._organizacoes.set([]);
 
     return this.http
       .post<LoginResponse>(`${environment.apiUrl}/auth/login`, dados)
@@ -66,6 +77,7 @@ export class AuthService {
             if (!res.deveSelecionarOrganizacao && res.token) {
               this.tokenService.salvar(res.token);
               this.limparOrganizacoesCache();
+              this.limparOrganizacaoAtualCache();
               this.carregarUsuarioAtual().subscribe();
             } else {
               if (res.token) {
@@ -144,6 +156,10 @@ export class AuthService {
     this.router.navigate(['/login']);
   }
 
+  possuiSelecaoOrganizacaoPendente(): boolean {
+    return !!this.obterTokenTemporario() && this._organizacoes().length > 0;
+  }
+
   /** Restaura sessão ao recarregar a página */
   inicializar(): Promise<void> {
     this.restaurarCaches();
@@ -210,6 +226,10 @@ export class AuthService {
 
   private obterOrganizacaoAtualCache(): Organizacao | null {
     return this.lerJson<Organizacao>(localStorage.getItem(CURRENT_ORG_KEY));
+  }
+
+  private limparOrganizacaoAtualCache(): void {
+    localStorage.removeItem(CURRENT_ORG_KEY);
   }
 
   private restaurarCaches(): void {

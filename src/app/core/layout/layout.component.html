@@ -32,7 +32,7 @@
     </p>
 
     @for (item of navItems; track item.rota) {
-      @if (!item.roles || item.roles.includes(authService.role() ?? '')) {
+      @if (podeVer(item)) {
 
         <a [routerLink]="item.rota"
 

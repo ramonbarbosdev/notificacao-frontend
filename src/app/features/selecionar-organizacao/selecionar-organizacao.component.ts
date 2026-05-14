@@ -49,7 +49,7 @@ export class SelecionarOrganizacaoComponent {
       })
       .subscribe({
         next: () => {
-          this.router.navigate(['/dashboard']);
+          this.router.navigate(['/app/dashboard']);
         },
 
         error: (err) => {

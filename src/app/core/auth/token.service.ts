@@ -38,9 +38,19 @@ export class TokenService {
     return (this.payload()?.['role'] as string) ?? null;
   }
 
-  tipoGlobal(): boolean {
+  tipoGlobalValor(): 'SUPER_ADMIN' | 'DEFAULT' | null {
     const tipoGlobal = this.payload()?.['tipoGlobal'];
-    return tipoGlobal === true || tipoGlobal === 'SUPER_ADMIN';
+    if (tipoGlobal === 'SUPER_ADMIN' || tipoGlobal === true) return 'SUPER_ADMIN';
+    if (tipoGlobal === 'DEFAULT' || tipoGlobal === false) return 'DEFAULT';
+    return null;
+  }
+
+  tipoGlobal(): boolean {
+    return this.tipoGlobalValor() === 'SUPER_ADMIN';
+  }
+
+  isSuperAdmin(): boolean {
+    return this.tipoGlobal() || this.role() === 'SUPER_ADMIN';
   }
 
   idOrganizacao(): number | null {
