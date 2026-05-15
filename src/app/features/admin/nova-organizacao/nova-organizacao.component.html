@@ -228,20 +228,14 @@
                         </button>
 
                         <button type="button"
-                                (click)="alternarStatusOrganizacao(org)"
-                                [disabled]="alterandoStatusId() === org.idOrganizacao"
-                                class="px-3 py-1.5 rounded-lg border transition-colors disabled:opacity-50"
+                                disabled
+                                title="Funcionalidade pendente na API"
+                                class="px-3 py-1.5 rounded-lg border transition-colors opacity-50 cursor-not-allowed"
                                 [class.border-[var(--color-danger-border)]]="org.flAtivo"
                                 [class.text-[var(--color-danger)]]="org.flAtivo"
-                                [class.hover:bg-[var(--color-danger-bg)]]="org.flAtivo"
                                 [class.border-[var(--color-success-border)]]="!org.flAtivo"
-                                [class.text-[var(--color-success)]]="!org.flAtivo"
-                                [class.hover:bg-[var(--color-success-bg)]]="!org.flAtivo">
-                          @if (alterandoStatusId() === org.idOrganizacao) {
-                            Alterando...
-                          } @else {
-                            {{ org.flAtivo ? 'Desativar' : 'Ativar' }}
-                          }
+                                [class.text-[var(--color-success)]]="!org.flAtivo">
+                          {{ org.flAtivo ? 'Desativar' : 'Ativar' }}
                         </button>
                       </div>
                     </td>

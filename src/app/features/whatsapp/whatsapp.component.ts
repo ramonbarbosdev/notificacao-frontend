@@ -16,17 +16,18 @@ import {
   QrCode,
 } from 'lucide-angular';
 
-import {  SidebarComponent } from '../../core/layout/layout.components';
+import { SidebarComponent } from '../../core/layout/layout.components';
 import { AuthService } from '../../core/auth/auth.service';
 import { WhatsappEventsService } from '../../core/http/whatsapp-events.service';
-import { WhatsappService } from '../../core/http/services';
 
 import {
   EnviarMensagemResponse,
+  StatusNotificacao,
   WhatsappEvento,
   WhatsappStatusResponse,
 } from '../../shared/types/dtos';
 import { HeaderComponent } from '../../core/layout/header/header.component';
+import { WhatsappService } from '../../core/services/notificacao.service';
 
 @Component({
   selector: 'app-whatsapp',
@@ -85,6 +86,17 @@ export class WhatsappComponent implements OnInit, OnDestroy {
     telefone: ['', [Validators.required, Validators.minLength(10)]],
     mensagem: ['', [Validators.required]],
   });
+
+  readonly statusLabels: Record<StatusNotificacao, string> = {
+    PENDENTE: 'Pendente',
+    PROCESSANDO: 'Processando',
+    ENVIADA: 'Enviada',
+    ENTREGUE: 'Entregue',
+    LIDA: 'Lida',
+    FALHOU: 'Falhou',
+    BLOQUEADA: 'Bloqueada',
+    CANCELADA: 'Cancelada',
+  };
 
   readonly qrImagemSrc = () => {
     const qrImagem = this.status()?.qrImagem;
@@ -234,6 +246,17 @@ export class WhatsappComponent implements OnInit, OnDestroy {
           this.enviando.set(false);
         },
       });
+  }
+
+  labelStatus(status: StatusNotificacao): string {
+    return this.statusLabels[status];
+  }
+
+  ehErroConsentimento(mensagem: string | null | undefined): boolean {
+    if (!mensagem) return false;
+
+    const texto = mensagem.toLowerCase();
+    return texto.includes('consentimento') || texto.includes('opt-in') || texto.includes('opt in') || texto.includes('bloque');
   }
 
   private conectarEventosDaOrganizacao(): void {

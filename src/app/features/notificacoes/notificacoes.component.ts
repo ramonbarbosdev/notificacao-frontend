@@ -16,13 +16,14 @@ import {
 } from 'lucide-angular';
 
 import { SidebarComponent } from '../../core/layout/layout.components';
-import { NotificacaoService } from '../../core/http/services';
 
 import {
   EnviarNotificacaoResponse,
   CanalNotificacao,
+  StatusNotificacao,
 } from '../../shared/types/dtos';
 import { HeaderComponent } from '../../core/layout/header/header.component';
+import { NotificacaoService } from '../../core/services/whatsapp.service';
 
 interface OpcaoCanal {
   valor: CanalNotificacao;
@@ -65,6 +66,17 @@ export class NotificacoesComponent {
     { valor: 'WEBHOOK', label: 'Webhook', icon: Webhook },
   ];
 
+  readonly statusLabels: Record<StatusNotificacao, string> = {
+    PENDENTE: 'Pendente',
+    PROCESSANDO: 'Processando',
+    ENVIADA: 'Enviada',
+    ENTREGUE: 'Entregue',
+    LIDA: 'Lida',
+    FALHOU: 'Falhou',
+    BLOQUEADA: 'Bloqueada',
+    CANCELADA: 'Cancelada',
+  };
+
   readonly form = this.fb.group({
     destinatario: ['', [Validators.required]],
     assunto: [''],
@@ -91,6 +103,25 @@ export class NotificacoesComponent {
 
     this.resposta.set(null);
     this.erroRede.set(null);
+  }
+
+  labelStatus(status: StatusNotificacao): string {
+    return this.statusLabels[status];
+  }
+
+  ehStatusSucesso(status: StatusNotificacao): boolean {
+    return ['PENDENTE', 'PROCESSANDO', 'ENVIADA', 'ENTREGUE', 'LIDA'].includes(status);
+  }
+
+  ehStatusAlerta(status: StatusNotificacao): boolean {
+    return status === 'PENDENTE' || status === 'PROCESSANDO';
+  }
+
+  ehErroConsentimento(mensagem: string | null | undefined): boolean {
+    if (!mensagem) return false;
+
+    const texto = mensagem.toLowerCase();
+    return texto.includes('consentimento') || texto.includes('opt-in') || texto.includes('opt in') || texto.includes('bloque');
   }
 
   enviar(): void {

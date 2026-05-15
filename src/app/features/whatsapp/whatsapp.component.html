@@ -11,7 +11,7 @@
         </h1>
 
         <p class="text-[var(--color-text-muted)] text-sm mt-1">
-          Gerencie a sessão e envie mensagens diretamente
+          Gerencie a sessao e enfileire mensagens manuais com consentimento.
         </p>
       </div>
 
@@ -239,7 +239,7 @@
                     rounded-2xl p-6">
 
           <h2 class="text-[var(--color-text)] font-semibold mb-6">
-            Enviar Mensagem
+            Enfileirar Mensagem
           </h2>
 
           <form
@@ -293,7 +293,7 @@
               <textarea
                 formControlName="mensagem"
                 rows="5"
-                placeholder="Digite a mensagem que será enviada..."
+                placeholder="Digite a mensagem que sera enfileirada..."
                 class="w-full
                        bg-[var(--color-surface-muted)]
                        border border-[var(--color-border-strong)]
@@ -320,15 +320,21 @@
               <div class="bg-[var(--color-success-bg)]
                           border border-[var(--color-success-border)]
                           rounded-xl px-4 py-3
-                          flex items-center gap-3">
+                          flex items-start gap-3">
 
                 <lucide-icon
                   [img]="checkIcon"
-                  class="w-4 h-4 text-[var(--color-success)] flex-shrink-0" />
+                  class="w-4 h-4 text-[var(--color-success)] flex-shrink-0 mt-0.5" />
 
-                <p class="text-[var(--color-success)] text-sm">
-                  Mensagem enviada com sucesso!
-                </p>
+                <div>
+                  <p class="text-[var(--color-success)] text-sm font-medium">
+                    Mensagem enfileirada com sucesso.
+                  </p>
+                  <p class="text-[var(--color-text-muted)] text-xs mt-1">
+                    ID #{{ respostaMensagem()!.idNotificacao }} - Status:
+                    {{ labelStatus(respostaMensagem()!.status) }}
+                  </p>
+                </div>
               </div>
             }
 
@@ -340,6 +346,12 @@
                 <p class="text-[var(--color-danger)] text-sm">
                   {{ respostaMensagem()?.erro ?? 'Erro ao enviar mensagem.' }}
                 </p>
+
+                @if (ehErroConsentimento(respostaMensagem()?.erro)) {
+                  <p class="text-[var(--color-text-muted)] text-xs mt-2">
+                    Cadastre o consentimento do contato, ou verifique se ele esta bloqueado.
+                  </p>
+                }
               </div>
             }
 
@@ -351,6 +363,12 @@
                 <p class="text-[var(--color-danger)] text-sm">
                   {{ erroEnvio() }}
                 </p>
+
+                @if (ehErroConsentimento(erroEnvio())) {
+                  <p class="text-[var(--color-text-muted)] text-xs mt-2">
+                    Oriente o usuario a cadastrar/autorizAR o contato antes de uma nova tentativa.
+                  </p>
+                }
               </div>
             }
 
@@ -372,13 +390,13 @@
                   [img]="loaderIcon"
                   class="animate-spin h-4 w-4" />
 
-                Enviando...
+                Enfileirando...
               } @else {
                 <lucide-icon
                   [img]="sendIcon"
                   class="w-4 h-4" />
 
-                Enviar Mensagem
+                Enfileirar Mensagem
               }
             </button>
 

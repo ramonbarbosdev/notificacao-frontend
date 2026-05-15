@@ -4,353 +4,187 @@
 
   <main class="pl-64 pt-16">
     <div class="p-8 max-w-3xl mx-auto">
-
-      <!-- Título -->
       <div class="mb-8">
-        <h1 class="text-2xl font-bold text-[var(--color-text)]">
-          Notificações
-        </h1>
-
+        <h1 class="text-2xl font-bold text-[var(--color-text)]">Notificacoes</h1>
         <p class="text-[var(--color-text-muted)] text-sm mt-1">
-          Dispare notificações por diferentes canais de comunicação
+          Enfileire notificacoes por canais autorizados e acompanhe o status operacional.
         </p>
       </div>
 
-      <!-- Formulário principal -->
-      <div class="bg-[var(--color-surface)]
-                  border border-[var(--color-border)]
-                  rounded-2xl p-8">
-
-        <form [formGroup]="form"
-              (ngSubmit)="enviar()"
-              class="space-y-6">
-
-          <!-- Seleção de Canal -->
+      <div class="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-8">
+        <form [formGroup]="form" (ngSubmit)="enviar()" class="space-y-6">
           <div>
-            <label class="block text-sm font-medium
-                          text-[var(--color-text-muted)] mb-3">
+            <label class="block text-sm font-medium text-[var(--color-text-muted)] mb-3">
               Canal
             </label>
 
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-
               @for (opcao of canais; track opcao.valor) {
-
                 <button
                   type="button"
                   (click)="selecionarCanal(opcao.valor)"
-                  class="flex flex-col items-center gap-2 p-4 rounded-xl border
-                         transition-all duration-200 text-sm font-medium"
-
+                  class="flex flex-col items-center gap-2 p-4 rounded-xl border transition-all duration-200 text-sm font-medium"
                   [class.bg-[var(--color-sidebar-active)]]="canalSelecionado() === opcao.valor"
                   [class.border-[var(--color-primary)]]="canalSelecionado() === opcao.valor"
                   [class.text-[var(--color-sidebar-active-text)]]="canalSelecionado() === opcao.valor"
-
                   [class.bg-[var(--color-surface-muted)]]="canalSelecionado() !== opcao.valor"
                   [class.border-[var(--color-border)]]="canalSelecionado() !== opcao.valor"
                   [class.text-[var(--color-text-muted)]]="canalSelecionado() !== opcao.valor"
-
                   [class.hover:border-[var(--color-border-strong)]]="canalSelecionado() !== opcao.valor"
                   [class.hover:text-[var(--color-text)]]="canalSelecionado() !== opcao.valor">
-
-                  <lucide-icon
-                    [img]="opcao.icon"
-                    class="w-5 h-5" />
-
+                  <lucide-icon [img]="opcao.icon" class="w-5 h-5" />
                   {{ opcao.label }}
                 </button>
               }
             </div>
           </div>
 
-          <!-- Destinatário -->
           <div>
-            <label class="block text-sm font-medium
-                          text-[var(--color-text-muted)] mb-2">
-
-              Destinatário
+            <label class="block text-sm font-medium text-[var(--color-text-muted)] mb-2">
+              Destinatario
             </label>
-
             <input
               formControlName="destinatario"
               type="text"
               [placeholder]="placeholderDestinatario()"
+              class="w-full bg-[var(--color-surface-muted)] border border-[var(--color-border-strong)] rounded-xl px-4 py-3 text-[var(--color-text)] placeholder:text-[var(--color-text-subtle)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent transition-all duration-200" />
 
-              class="w-full
-                     bg-[var(--color-surface-muted)]
-                     border border-[var(--color-border-strong)]
-                     rounded-xl px-4 py-3
-                     text-[var(--color-text)]
-                     placeholder:text-[var(--color-text-subtle)]
-                     text-sm
-                     focus:outline-none
-                     focus:ring-2 focus:ring-[var(--color-primary)]
-                     focus:border-transparent
-                     transition-all duration-200" />
-
-            @if (form.get('destinatario')?.invalid &&
-                 form.get('destinatario')?.touched) {
-
-              <p class="text-[var(--color-danger)] text-xs mt-1">
-                Campo obrigatório
-              </p>
+            @if (form.get('destinatario')?.invalid && form.get('destinatario')?.touched) {
+              <p class="text-[var(--color-danger)] text-xs mt-1">Campo obrigatorio</p>
             }
           </div>
 
-          <!-- Assunto -->
           <div>
-            <label class="block text-sm font-medium
-                          text-[var(--color-text-muted)] mb-2">
-
+            <label class="block text-sm font-medium text-[var(--color-text-muted)] mb-2">
               Assunto
-
-              <span class="text-[var(--color-text-faint)]
-                           ml-1 font-normal">
-
+              <span class="text-[var(--color-text-faint)] ml-1 font-normal">
                 (opcional para WhatsApp)
               </span>
             </label>
-
             <input
               formControlName="assunto"
               type="text"
-              placeholder="Assunto da notificação"
-
-              class="w-full
-                     bg-[var(--color-surface-muted)]
-                     border border-[var(--color-border-strong)]
-                     rounded-xl px-4 py-3
-                     text-[var(--color-text)]
-                     placeholder:text-[var(--color-text-subtle)]
-                     text-sm
-                     focus:outline-none
-                     focus:ring-2 focus:ring-[var(--color-primary)]
-                     focus:border-transparent
-                     transition-all duration-200" />
+              placeholder="Assunto da notificacao"
+              class="w-full bg-[var(--color-surface-muted)] border border-[var(--color-border-strong)] rounded-xl px-4 py-3 text-[var(--color-text)] placeholder:text-[var(--color-text-subtle)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent transition-all duration-200" />
           </div>
 
-          <!-- Mensagem -->
           <div>
-            <label class="block text-sm font-medium
-                          text-[var(--color-text-muted)] mb-2">
-
+            <label class="block text-sm font-medium text-[var(--color-text-muted)] mb-2">
               Mensagem
             </label>
-
             <textarea
               formControlName="mensagem"
               rows="6"
-              placeholder="Conteúdo da mensagem a ser enviada..."
+              placeholder="Conteudo da mensagem a ser enfileirada..."
+              class="w-full bg-[var(--color-surface-muted)] border border-[var(--color-border-strong)] rounded-xl px-4 py-3 text-[var(--color-text)] placeholder:text-[var(--color-text-subtle)] text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent transition-all duration-200"></textarea>
 
-              class="w-full
-                     bg-[var(--color-surface-muted)]
-                     border border-[var(--color-border-strong)]
-                     rounded-xl px-4 py-3
-                     text-[var(--color-text)]
-                     placeholder:text-[var(--color-text-subtle)]
-                     text-sm resize-none
-                     focus:outline-none
-                     focus:ring-2 focus:ring-[var(--color-primary)]
-                     focus:border-transparent
-                     transition-all duration-200">
-            </textarea>
-
-            @if (form.get('mensagem')?.invalid &&
-                 form.get('mensagem')?.touched) {
-
-              <p class="text-[var(--color-danger)] text-xs mt-1">
-                Mensagem obrigatória
-              </p>
+            @if (form.get('mensagem')?.invalid && form.get('mensagem')?.touched) {
+              <p class="text-[var(--color-danger)] text-xs mt-1">Mensagem obrigatoria</p>
             }
 
-            <p class="text-[var(--color-text-faint)]
-                      text-xs mt-1.5 text-right">
-
+            <p class="text-[var(--color-text-faint)] text-xs mt-1.5 text-right">
               {{ form.get('mensagem')?.value?.length ?? 0 }} caracteres
             </p>
           </div>
 
-          <!-- Botão enviar -->
+          @if (canalSelecionado() === 'WHATSAPP') {
+            <div class="bg-[var(--color-bg-base)] border border-[var(--color-border)] rounded-xl px-4 py-3">
+              <p class="text-[var(--color-text-muted)] text-sm">
+                WhatsApp exige consentimento do contato. Caso o destinatario nao esteja autorizado ou esteja
+                bloqueado, a notificacao sera bloqueada pelo backend.
+              </p>
+            </div>
+          }
+
           <button
             type="submit"
             [disabled]="form.invalid || enviando()"
-
-            class="w-full
-                   bg-[var(--color-primary)]
-                   hover:bg-[var(--color-primary-hover)]
-                   disabled:opacity-50
-                   disabled:cursor-not-allowed
-                   text-[var(--color-text)]
-                   font-semibold py-3.5 rounded-xl
-                   transition-all duration-200 text-sm
-                   flex items-center justify-center gap-2
-                   shadow-lg shadow-[var(--color-primary)]/20">
-
+            class="w-full bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] disabled:opacity-50 disabled:cursor-not-allowed text-[var(--color-text)] font-semibold py-3.5 rounded-xl transition-all duration-200 text-sm flex items-center justify-center gap-2 shadow-lg shadow-[var(--color-primary)]/20">
             @if (enviando()) {
-
-              <lucide-icon
-                [img]="loaderIcon"
-                class="animate-spin h-4 w-4" />
-
-              Enviando notificação...
-
+              <lucide-icon [img]="loaderIcon" class="animate-spin h-4 w-4" />
+              Enfileirando notificacao...
             } @else {
-
-              <lucide-icon
-                [img]="sendIcon"
-                class="w-4 h-4" />
-
-              Enviar Notificação via {{ canalSelecionado() }}
+              <lucide-icon [img]="sendIcon" class="w-4 h-4" />
+              Enfileirar Notificacao via {{ canalSelecionado() }}
             }
           </button>
-
         </form>
       </div>
 
-      <!-- Resposta -->
       @if (resposta()) {
-
-        <div class="mt-6
-                    bg-[var(--color-surface)]
-                    border rounded-2xl p-6 transition-all"
-
-             [class.border-[var(--color-success-border)]]="resposta()!.sucesso"
-             [class.border-[var(--color-danger-border)]]="!resposta()!.sucesso">
-
+        <div
+          class="mt-6 bg-[var(--color-surface)] border rounded-2xl p-6 transition-all"
+          [class.border-[var(--color-success-border)]]="resposta()!.sucesso"
+          [class.border-[var(--color-danger-border)]]="!resposta()!.sucesso">
           <div class="flex items-center gap-3 mb-4">
-
             @if (resposta()!.sucesso) {
-
-              <div class="w-8 h-8
-                          bg-[var(--color-success-bg)]
-                          rounded-lg flex items-center justify-center">
-
-                <lucide-icon
-                  [img]="checkIcon"
-                  class="w-4 h-4 text-[var(--color-success)]" />
+              <div class="w-8 h-8 bg-[var(--color-success-bg)] rounded-lg flex items-center justify-center">
+                <lucide-icon [img]="checkIcon" class="w-4 h-4 text-[var(--color-success)]" />
               </div>
-
               <h3 class="text-[var(--color-success)] font-semibold">
-                Notificação enviada!
+                Notificacao enfileirada
               </h3>
-
             } @else {
-
-              <div class="w-8 h-8
-                          bg-[var(--color-danger-bg)]
-                          rounded-lg flex items-center justify-center">
-
-                <lucide-icon
-                  [img]="xIcon"
-                  class="w-4 h-4 text-[var(--color-danger)]" />
+              <div class="w-8 h-8 bg-[var(--color-danger-bg)] rounded-lg flex items-center justify-center">
+                <lucide-icon [img]="xIcon" class="w-4 h-4 text-[var(--color-danger)]" />
               </div>
-
-              <h3 class="text-[var(--color-danger)] font-semibold">
-                Falha no envio
-              </h3>
+              <h3 class="text-[var(--color-danger)] font-semibold">Falha ao enfileirar</h3>
             }
           </div>
 
-          <!-- Dados -->
           <div class="grid grid-cols-2 gap-3">
-
-            <div class="bg-[var(--color-surface-muted)]
-                        rounded-xl p-3">
-
-              <p class="text-[var(--color-text-subtle)]
-                        text-xs mb-1">
-
-                ID da Notificação
-              </p>
-
-              <p class="text-[var(--color-text)]
-                        text-sm font-mono font-semibold">
-
+            <div class="bg-[var(--color-surface-muted)] rounded-xl p-3">
+              <p class="text-[var(--color-text-subtle)] text-xs mb-1">ID da Notificacao</p>
+              <p class="text-[var(--color-text)] text-sm font-mono font-semibold">
                 #{{ resposta()!.idNotificacao }}
               </p>
             </div>
 
-            <div class="bg-[var(--color-surface-muted)]
-                        rounded-xl p-3">
-
-              <p class="text-[var(--color-text-subtle)]
-                        text-xs mb-1">
-
-                Canal
-              </p>
-
-              <p class="text-[var(--color-text)]
-                        text-sm font-semibold">
-
-                {{ resposta()!.canal }}
-              </p>
+            <div class="bg-[var(--color-surface-muted)] rounded-xl p-3">
+              <p class="text-[var(--color-text-subtle)] text-xs mb-1">Canal</p>
+              <p class="text-[var(--color-text)] text-sm font-semibold">{{ resposta()!.canal }}</p>
             </div>
 
-            <div class="bg-[var(--color-surface-muted)]
-                        rounded-xl p-3">
-
-              <p class="text-[var(--color-text-subtle)]
-                        text-xs mb-1">
-
-                Status
-              </p>
-
-              <span class="text-sm font-semibold px-2 py-0.5 rounded-full"
-
-                    [class.text-[var(--color-success)]]="resposta()!.status === 'ENVIADO'"
-                    [class.text-[var(--color-danger)]]="resposta()!.status === 'ERRO'"
-                    [class.text-amber-400]="resposta()!.status === 'PENDENTE'">
-
-                {{ resposta()!.status }}
+            <div class="bg-[var(--color-surface-muted)] rounded-xl p-3">
+              <p class="text-[var(--color-text-subtle)] text-xs mb-1">Status</p>
+              <span
+                class="text-sm font-semibold px-2 py-0.5 rounded-full"
+                [class.text-[var(--color-success)]]="ehStatusSucesso(resposta()!.status) && !ehStatusAlerta(resposta()!.status)"
+                [class.text-amber-400]="ehStatusAlerta(resposta()!.status)"
+                [class.text-[var(--color-danger)]]="!ehStatusSucesso(resposta()!.status)">
+                {{ labelStatus(resposta()!.status) }}
               </span>
             </div>
 
             @if (resposta()!.erro) {
+              <div class="bg-[var(--color-danger-bg)]/50 rounded-xl p-3 col-span-2">
+                <p class="text-[var(--color-text-subtle)] text-xs mb-1">Erro</p>
+                <p class="text-[var(--color-danger)] text-sm">{{ resposta()!.erro }}</p>
 
-              <div class="bg-[var(--color-danger-bg)]/50
-                          rounded-xl p-3 col-span-2">
-
-                <p class="text-[var(--color-text-subtle)]
-                          text-xs mb-1">
-
-                  Erro
-                </p>
-
-                <p class="text-[var(--color-danger)] text-sm">
-                  {{ resposta()!.erro }}
-                </p>
+                @if (ehErroConsentimento(resposta()!.erro)) {
+                  <p class="text-[var(--color-text-muted)] text-xs mt-2">
+                    Verifique se o contato possui consentimento valido e se nao esta bloqueado antes de
+                    tentar novamente.
+                  </p>
+                }
               </div>
             }
           </div>
 
-          <!-- JSON -->
           <div class="mt-3">
-
             <button
+              type="button"
               (click)="mostrarJson.set(!mostrarJson())"
-
-              class="text-[var(--color-text-subtle)]
-                     hover:text-[var(--color-text)]
-                     text-xs flex items-center gap-1
-                     transition-colors">
-
+              class="text-[var(--color-text-subtle)] hover:text-[var(--color-text)] text-xs flex items-center gap-1 transition-colors">
               <lucide-icon
                 [img]="chevronRightIcon"
                 class="w-3 h-3 transition-transform"
                 [class.rotate-90]="mostrarJson()" />
-
-              {{ mostrarJson() ? 'Ocultar' : 'Ver' }}
-              JSON da resposta
+              {{ mostrarJson() ? 'Ocultar' : 'Ver' }} JSON da resposta
             </button>
 
             @if (mostrarJson()) {
-
-              <pre class="mt-2
-                          bg-[var(--color-bg-base)]
-                          border border-[var(--color-border)]
-                          rounded-xl p-4
-                          text-xs text-[var(--color-text-muted)]
-                          overflow-x-auto font-mono">{{
+              <pre class="mt-2 bg-[var(--color-bg-base)] border border-[var(--color-border)] rounded-xl p-4 text-xs text-[var(--color-text-muted)] overflow-x-auto font-mono">{{
                 resposta() | json
               }}</pre>
             }
@@ -358,17 +192,16 @@
         </div>
       }
 
-      <!-- Erro rede -->
       @if (erroRede()) {
+        <div class="mt-6 bg-[var(--color-danger-bg)] border border-[var(--color-danger-border)] rounded-2xl px-5 py-4">
+          <p class="text-[var(--color-danger)] text-sm">{{ erroRede() }}</p>
 
-        <div class="mt-6
-                    bg-[var(--color-danger-bg)]
-                    border border-[var(--color-danger-border)]
-                    rounded-2xl px-5 py-4">
-
-          <p class="text-[var(--color-danger)] text-sm">
-            {{ erroRede() }}
-          </p>
+          @if (ehErroConsentimento(erroRede())) {
+            <p class="text-[var(--color-text-muted)] text-xs mt-2">
+              Cadastre o consentimento do contato ou remova o bloqueio conforme a politica da
+              sua organizacao.
+            </p>
+          }
         </div>
       }
     </div>

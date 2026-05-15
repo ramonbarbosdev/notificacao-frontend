@@ -49,7 +49,6 @@ export class NovaOrganizacaoComponent implements OnInit {
   readonly usuarioCriado = signal<UsuarioOrganizacaoResponse | null>(null);
   readonly organizacoes = signal<OrganizacaoAdminResponse[]>([]);
   readonly organizacaoEmEdicao = signal<OrganizacaoAdminResponse | null>(null);
-  readonly alterandoStatusId = signal<number | null>(null);
 
   readonly formOrganizacao = this.fb.group({
     nmOrganizacao: ['', [Validators.required, Validators.minLength(2)]],
@@ -127,39 +126,6 @@ export class NovaOrganizacaoComponent implements OnInit {
     this.organizacaoEmEdicao.set(null);
     this.erroOrganizacao.set(null);
     this.formOrganizacao.reset();
-  }
-
-  alternarStatusOrganizacao(org: OrganizacaoAdminResponse): void {
-    this.alterandoStatusId.set(org.idOrganizacao);
-    this.erroListagem.set(null);
-
-    const request = org.flAtivo
-      ? this.adminService.desativarOrganizacao(org.idOrganizacao)
-      : this.adminService.ativarOrganizacao(org.idOrganizacao);
-
-    request.subscribe({
-      next: (res) => {
-        this.organizacoes.update((organizacoes) =>
-          organizacoes.map((item) => item.idOrganizacao === res.idOrganizacao ? res : item)
-        );
-
-        const atual = this.organizacaoCriada();
-        if (atual?.idOrganizacao === res.idOrganizacao) {
-          this.organizacaoCriada.set(res);
-        }
-
-        const edicao = this.organizacaoEmEdicao();
-        if (edicao?.idOrganizacao === res.idOrganizacao) {
-          this.organizacaoEmEdicao.set(res);
-        }
-
-        this.alterandoStatusId.set(null);
-      },
-      error: (err: HttpErrorResponse) => {
-        this.erroListagem.set(this.mensagemErro(err, 'Erro ao alterar status da organizacao.'));
-        this.alterandoStatusId.set(null);
-      },
-    });
   }
 
   carregarOrganizacoes(): void {

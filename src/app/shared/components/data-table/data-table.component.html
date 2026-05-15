@@ -1,0 +1,190 @@
+<div class="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl overflow-hidden">
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead class="bg-[var(--color-surface-muted)] text-[var(--color-text-muted)]">
+        <tr>
+          @for (column of columns; track column.key) {
+            <th
+              class="px-5 pt-3 pb-2 font-medium align-bottom"
+              [class.text-left]="column.align !== 'right' && column.align !== 'center'"
+              [class.text-center]="column.align === 'center'"
+              [class.text-right]="column.align === 'right'">
+              {{ column.label }}
+            </th>
+          }
+        </tr>
+
+        @if (hasColumnFilters()) {
+          <tr>
+            @for (column of columns; track column.key) {
+              <th class="px-5 pb-4 font-normal">
+                @if (column.filter) {
+                  @let key = columnKey(column);
+
+                  @switch (column.filter.type) {
+                    @case ('text') {
+                      <input
+                        type="text"
+                        [value]="filterValues[key]"
+                        [placeholder]="column.filter.placeholder || ''"
+                        (input)="onFilterChange(column, $any($event.target).value)"
+                        class="w-full min-w-36 bg-[var(--color-bg-base)] border border-[var(--color-border-strong)] rounded-lg px-3 py-2 text-[var(--color-text)] placeholder:text-[var(--color-text-subtle)] text-xs focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent" />
+                    }
+
+                    @case ('select') {
+                      <select
+                        [value]="filterValues[key]"
+                        (change)="onFilterChange(column, $any($event.target).value)"
+                        class="w-full min-w-32 bg-[var(--color-bg-base)] border border-[var(--color-border-strong)] rounded-lg px-3 py-2 text-[var(--color-text)] text-xs focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent">
+                        @for (option of column.filter.options ?? []; track option.value) {
+                          <option [value]="option.value ?? ''">{{ option.label }}</option>
+                        }
+                      </select>
+                    }
+
+                    @case ('boolean') {
+                      <select
+                        [value]="filterValues[key]"
+                        (change)="onFilterChange(column, $any($event.target).value)"
+                        class="w-full min-w-28 bg-[var(--color-bg-base)] border border-[var(--color-border-strong)] rounded-lg px-3 py-2 text-[var(--color-text)] text-xs focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent">
+                        <option value="">Todos</option>
+                        <option value="true">Sim</option>
+                        <option value="false">Nao</option>
+                      </select>
+                    }
+
+                    @case ('date') {
+                      <input
+                        type="date"
+                        [value]="filterValues[key]"
+                        (input)="onFilterChange(column, $any($event.target).value)"
+                        class="w-full min-w-36 bg-[var(--color-bg-base)] border border-[var(--color-border-strong)] rounded-lg px-3 py-2 text-[var(--color-text)] text-xs focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent" />
+                    }
+
+                    @case ('number') {
+                      <input
+                        type="number"
+                        [value]="filterValues[key]"
+                        [placeholder]="column.filter.placeholder || ''"
+                        (input)="onFilterChange(column, $any($event.target).value)"
+                        class="w-full min-w-28 bg-[var(--color-bg-base)] border border-[var(--color-border-strong)] rounded-lg px-3 py-2 text-[var(--color-text)] placeholder:text-[var(--color-text-subtle)] text-xs focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent" />
+                    }
+                  }
+                }
+              </th>
+            }
+          </tr>
+        }
+      </thead>
+
+      <tbody>
+        @if (loading) {
+          <tr>
+            <td [attr.colspan]="columns.length" class="px-5 py-10 text-center text-[var(--color-text-muted)]">
+              Carregando...
+            </td>
+          </tr>
+        } @else {
+          @for (row of items; track row) {
+            <tr class="border-t border-[var(--color-border)]">
+              @for (column of columns; track column.key) {
+                <td
+                  class="px-5 py-4"
+                  [class.text-center]="column.align === 'center'"
+                  [class.text-right]="column.align === 'right'">
+                  @switch (column.type) {
+                    @case ('badge') {
+                      @if (column.badge) {
+                        @let badge = column.badge(getValue(row, column.key.toString()), row);
+
+                        <span
+                          class="inline-flex px-3 py-1 rounded-full border text-xs font-semibold"
+                          [class]="badge.className">
+                          {{ badge.label }}
+                        </span>
+                      }
+                    }
+
+                    @case ('actions') {
+                      <div class="flex items-center justify-end gap-3">
+                        @for (action of column.actions ?? []; track action.label) {
+                          <button
+                            type="button"
+                            (click)="action.action(row)"
+                            class="text-xs font-semibold"
+                            [class]="getActionColor(action)">
+                            {{ action.label }}
+                          </button>
+                        }
+                      </div>
+                    }
+
+                    @default {
+                      {{
+                        column.formatter
+                          ? column.formatter(getValue(row, column.key.toString()), row)
+                          : getValue(row, column.key.toString())
+                      }}
+                    }
+                  }
+                </td>
+              }
+            </tr>
+          } @empty {
+            <tr>
+              <td [attr.colspan]="columns.length" class="px-5 py-10 text-center text-[var(--color-text-muted)]">
+                Nenhum registro encontrado.
+              </td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <div class="px-5 py-4 border-t border-[var(--color-border)] flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+    <div class="flex items-center gap-3">
+      <p class="text-sm text-[var(--color-text-muted)]">
+        Pagina {{ page + 1 }} de {{ totalPages || 1 }}
+        · {{ totalElements }} registro(s)
+      </p>
+
+      @if (hasColumnFilters() && hasActiveFilters()) {
+        <button
+          type="button"
+          (click)="clearFilters()"
+          class="px-3 py-1.5 rounded-lg border border-[var(--color-border)] text-[var(--color-text-muted)] hover:text-[var(--color-text)] text-xs transition-colors">
+          Limpar filtros
+        </button>
+      }
+    </div>
+
+    <div class="flex items-center gap-3">
+      <select
+        [value]="pageSize"
+        (change)="onPageSizeChange($event)"
+        class="bg-[var(--color-surface-muted)] border border-[var(--color-border-strong)] rounded-xl px-3 py-2 text-sm">
+        <option [value]="5">5</option>
+        <option [value]="10">10</option>
+        <option [value]="20">20</option>
+        <option [value]="50">50</option>
+      </select>
+
+      <button
+        type="button"
+        (click)="previousPage.emit()"
+        [disabled]="page <= 0"
+        class="px-4 py-2 rounded-xl border border-[var(--color-border)] disabled:opacity-40">
+        Anterior
+      </button>
+
+      <button
+        type="button"
+        (click)="nextPage.emit()"
+        [disabled]="page + 1 >= totalPages"
+        class="px-4 py-2 rounded-xl border border-[var(--color-border)] disabled:opacity-40">
+        Proxima
+      </button>
+    </div>
+  </div>
+</div>

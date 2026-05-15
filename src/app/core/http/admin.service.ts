@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
   AtualizarOrganizacaoRequest,
+  AtualizarUsuarioOrganizacaoRequest,
   CriarOrganizacaoRequest,
   CriarUsuarioOrganizacaoRequest,
   OrganizacaoAdminResponse,
@@ -33,20 +34,6 @@ export class AdminService {
     return this.http.get<OrganizacaoAdminResponse[]>(`${this.base}/organizacoes`);
   }
 
-  ativarOrganizacao(idOrganizacao: number): Observable<OrganizacaoAdminResponse> {
-    return this.http.patch<OrganizacaoAdminResponse>(
-      `${this.base}/organizacoes/${idOrganizacao}/ativar`,
-      {}
-    );
-  }
-
-  desativarOrganizacao(idOrganizacao: number): Observable<OrganizacaoAdminResponse> {
-    return this.http.patch<OrganizacaoAdminResponse>(
-      `${this.base}/organizacoes/${idOrganizacao}/desativar`,
-      {}
-    );
-  }
-
   criarUsuarioOrganizacao(
     idOrganizacao: number,
     dados: CriarUsuarioOrganizacaoRequest
@@ -60,6 +47,17 @@ export class AdminService {
   listarUsuariosOrganizacao(idOrganizacao: number): Observable<UsuarioOrganizacaoResponse[]> {
     return this.http.get<UsuarioOrganizacaoResponse[]>(
       `${this.base}/organizacoes/${idOrganizacao}/usuarios`
+    );
+  }
+
+  atualizarUsuarioOrganizacao(
+    idOrganizacao: number,
+    idUsuario: number,
+    dados: AtualizarUsuarioOrganizacaoRequest
+  ): Observable<UsuarioOrganizacaoResponse> {
+    return this.http.put<UsuarioOrganizacaoResponse>(
+      `${this.base}/organizacoes/${idOrganizacao}/usuarios/${idUsuario}`,
+      dados
     );
   }
 }

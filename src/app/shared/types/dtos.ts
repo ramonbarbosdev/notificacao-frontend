@@ -1,17 +1,27 @@
-// src/app/shared/types/dtos.ts
+export interface ApiResponseDTO<T> {
+  message: string;
+  data: T;
+}
 
-// ─── AUTH ────────────────────────────────────────────────────────────────────
+export interface PageResult<T> {
+  data: T[];
+  totalElements: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
+
 
 export interface LoginRequest {
-  login: string;       // CPF ou e-mail
+  login: string;
   senha: string;
 }
 
 export interface LoginResponse {
-  token?: string;                      // SUPER_ADMIN: token final; DEFAULT: token temporario
+  token?: string;
   tipoGlobal: 'SUPER_ADMIN' | 'DEFAULT';
   deveSelecionarOrganizacao: boolean;
-  organizacoes?: Organizacao[];        // presente se DEFAULT
+  organizacoes?: Organizacao[];
 }
 
 export interface Organizacao {
@@ -39,7 +49,7 @@ export interface UsuarioAtual {
   idOrganizacao?: number;
 }
 
-// ─── WHATSAPP ─────────────────────────────────────────────────────────────────
+// WHATSAPP
 
 export type WhatsappStatus =
   | 'NAO_INICIADO'
@@ -58,7 +68,7 @@ export interface WhatsappStatusResponse {
   status: WhatsappStatus;
   conectado: boolean | null;
   qr: string | null;
-  qrImagem: string | null;   // data URL ou base64 da imagem do QR
+  qrImagem: string | null;
   telefone: string | null;
   erro: string | null;
 }
@@ -85,18 +95,19 @@ export interface EnviarMensagemRequest {
   mensagem: string;
 }
 
-export interface EnviarMensagemResponse {
-  sucesso: boolean;
-  idOrganizacao: number;
-  identificadorContato: string | null;
-  telefone: string | null;
-  estrategia: string | null;
-  erro: string | null;
-}
-
-// ─── NOTIFICAÇÕES ─────────────────────────────────────────────────────────────
+// NOTIFICACOES
 
 export type CanalNotificacao = 'WHATSAPP' | 'EMAIL' | 'TELEGRAM' | 'WEBHOOK';
+
+export type StatusNotificacao =
+  | 'PENDENTE'
+  | 'PROCESSANDO'
+  | 'ENVIADA'
+  | 'ENTREGUE'
+  | 'LIDA'
+  | 'FALHOU'
+  | 'BLOQUEADA'
+  | 'CANCELADA';
 
 export interface EnviarNotificacaoRequest {
   canal: CanalNotificacao;
@@ -109,11 +120,48 @@ export interface EnviarNotificacaoResponse {
   sucesso: boolean;
   idNotificacao: number;
   canal: CanalNotificacao;
-  status: 'ENVIADO' | 'ERRO' | 'PENDENTE';
+  status: StatusNotificacao;
   erro: string | null;
 }
 
-// ─── ADMIN ────────────────────────────────────────────────────────────────────
+export type EnviarMensagemResponse = EnviarNotificacaoResponse;
+
+export interface FilaNotificacaoItemDTO {
+  idNotificacao: number;
+  canal: CanalNotificacao;
+  destinatario: string;
+  status: StatusNotificacao;
+  provider: string | null;
+  tentativas: number;
+  proximaTentativa: string | null;
+  erro: string | null;
+  criadoEm: string;
+}
+
+export interface FilaNotificacaoResponseDTO {
+  itens: FilaNotificacaoItemDTO[];
+}
+
+// CONTATOS
+
+export interface ContatoRequestDTO {
+  canal: CanalNotificacao;
+  destinatario: string;
+  motivo?: string | null;
+}
+
+export interface ContatoResponseDTO {
+  idContato: number;
+  canal: CanalNotificacao;
+  destinatario: string;
+  consentimento: boolean;
+  bloqueado: boolean;
+  motivoBloqueio: string | null;
+  dtConsentimento: string | null;
+  dtBloqueio: string | null;
+}
+
+// ADMIN
 
 export interface SystemStatus {
   status: string;
@@ -147,6 +195,8 @@ export interface CriarUsuarioOrganizacaoRequest {
   senha: string;
   role: RoleOrganizacao;
 }
+
+export type AtualizarUsuarioOrganizacaoRequest = CriarUsuarioOrganizacaoRequest;
 
 export interface UsuarioOrganizacaoResponse {
   idUsuario: number;

@@ -4,23 +4,24 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { SidebarComponent } from '../../core/layout/layout.components';
 import { AuthService } from '../../core/auth/auth.service';
-import { WhatsappService } from '../../core/http/services';
 import { WhatsappStatusResponse } from '../../shared/types/dtos';
 import {
-  Shield,
+  Ban,
+  Clock,
+  LoaderCircle,
   MessageCircle,
   Send,
   TriangleAlert,
-  Zap,
   ChevronRight,
   LucideAngularModule
 } from 'lucide-angular';
 import { HeaderComponent } from '../../core/layout/header/header.component';
+import { WhatsappService } from '../../core/services/notificacao.service';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [    CommonModule,
+  imports: [CommonModule,
     RouterModule,
     LucideAngularModule,
     SidebarComponent,
@@ -32,15 +33,23 @@ export class DashboardComponent implements OnInit {
   readonly authService = inject(AuthService);
   private readonly whatsappService = inject(WhatsappService);
 
-  protected readonly shieldIcon = Shield;
+  protected readonly clockIcon = Clock;
+  protected readonly processingIcon = LoaderCircle;
   protected readonly whatsappIcon = MessageCircle;
   protected readonly sendIcon = Send;
   protected readonly alertIcon = TriangleAlert;
-  protected readonly zapIcon = Zap;
+  protected readonly banIcon = Ban;
   protected readonly chevronRightIcon = ChevronRight;
 
   readonly whatsappStatus = signal<WhatsappStatusResponse | null>(null);
   readonly carregandoStatus = signal(true);
+  readonly metricas = [
+    { titulo: 'Pendentes', descricao: 'Aguardando processamento', icon: Clock, tom: 'warning' },
+    { titulo: 'Processando', descricao: 'Em execucao pela fila', icon: LoaderCircle, tom: 'info' },
+    { titulo: 'Enviadas', descricao: 'Endpoint de metricas pendente', icon: Send, tom: 'success' },
+    { titulo: 'Falhas', descricao: 'Endpoint de metricas pendente', icon: TriangleAlert, tom: 'danger' },
+    { titulo: 'Bloqueadas', descricao: 'Consentimento ou bloqueio', icon: Ban, tom: 'danger' },
+  ];
 
   readonly primeiroNome = () => {
     const nome = this.authService.nomeUsuario() ?? '';

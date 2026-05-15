@@ -44,6 +44,24 @@ export const routes: Routes = [
   },
 
   {
+    path: 'app/contatos',
+    canActivate: [authGuard, organizationGuard, roleGuard],
+    data: { roles: ['ADMIN', 'USER'] },
+    loadComponent: () =>
+      import('./features/contatos/contatos.component').then((m) => m.ContatosComponent),
+  },
+
+  {
+    path: 'app/historico',
+    canActivate: [authGuard, organizationGuard, roleGuard],
+    data: { roles: ['ADMIN', 'USER'] },
+    loadComponent: () =>
+      import('./features/historico-fila/historico-fila.component').then(
+        (m) => m.HistoricoFilaComponent
+      ),
+  },
+
+  {
     path: 'admin/dashboard',
     canActivate: [authGuard, superAdminGuard],
     loadComponent: () =>
@@ -92,6 +110,9 @@ export const routes: Routes = [
   { path: 'dashboard', redirectTo: '/app/dashboard' },
   { path: 'whatsapp', redirectTo: '/app/whatsapp' },
   { path: 'notificacoes', redirectTo: '/app/notificacoes' },
+  { path: 'contatos', redirectTo: '/app/contatos' },
+  { path: 'historico', redirectTo: '/app/historico' },
+  { path: 'fila', redirectTo: '/app/historico' },
 
   { path: '**', redirectTo: '/login' },
 ];

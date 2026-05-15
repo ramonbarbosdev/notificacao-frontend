@@ -4,12 +4,14 @@ import { RouterModule } from '@angular/router';
 import {
   Bell,
   Building2,
+  History,
   LayoutDashboard,
   LogOut,
   LucideAngularModule,
   LucideIconData,
   MessageCircle,
   Send,
+  UserCheck,
   UserPlus,
 } from 'lucide-angular';
 import { AuthService } from '../auth/auth.service';
@@ -77,6 +79,20 @@ export class SidebarComponent {
       label: 'Notificacoes',
       rota: '/app/notificacoes',
       icon: Send,
+      scope: 'ORG',
+      roles: ['ADMIN', 'USER'],
+    },
+    {
+      label: 'Contatos',
+      rota: '/app/contatos',
+      icon: UserCheck,
+      scope: 'ORG',
+      roles: ['ADMIN', 'USER'],
+    },
+    {
+      label: 'Historico / Fila',
+      rota: '/app/historico',
+      icon: History,
       scope: 'ORG',
       roles: ['ADMIN', 'USER'],
     },
