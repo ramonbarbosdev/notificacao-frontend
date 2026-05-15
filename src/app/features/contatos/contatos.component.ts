@@ -13,6 +13,7 @@ import {
   Users,
 } from 'lucide-angular';
 
+import { SidePanelComponent } from '../../shared/components/side-panel/side-panel.component';
 import { HeaderComponent } from '../../core/layout/header/header.component';
 import { SidebarComponent } from '../../core/layout/layout.components';
 import { ContatoService } from '../../core/services/contato.service';
@@ -20,7 +21,8 @@ import { DataTableComponent } from '../../shared/components/data-table/data-tabl
 import { DataTableColumn } from '../../shared/components/data-table/data-table.types';
 import { usePaginatedTable } from '../../shared/helper/paginated-table.state';
 import { CanalNotificacao, ContatoResponseDTO } from '../../shared/types/dtos';
-import { formatPhone, normalizePhone } from '../../shared/helper/phone.utils';
+import { formatPhone } from '../../shared/helper/phone.utils';
+import { useSidePanel } from '../../shared/helper/side-panel.state';
 
 type AcaoContato = 'consentimento' | 'bloqueio' | 'sync' | null;
 
@@ -34,6 +36,7 @@ type AcaoContato = 'consentimento' | 'bloqueio' | 'sync' | null;
     SidebarComponent,
     HeaderComponent,
     DataTableComponent,
+    SidePanelComponent
   ],
   templateUrl: './contatos.component.html',
 })
@@ -57,9 +60,9 @@ export class ContatosComponent implements OnInit {
   readonly contatos = signal<ContatoResponseDTO[]>([]);
   readonly resposta = signal<ContatoResponseDTO | null>(null);
   readonly erro = signal<string | null>(null);
-
   readonly canais: CanalNotificacao[] = ['WHATSAPP', 'EMAIL', 'TELEGRAM', 'WEBHOOK'];
 
+  readonly contatoPanel = useSidePanel<ContatoResponseDTO>();
   readonly form = this.fb.group({
     canal: this.fb.control<CanalNotificacao>('WHATSAPP', { nonNullable: true }),
     destinatario: ['', [Validators.required]],
@@ -84,7 +87,7 @@ export class ContatosComponent implements OnInit {
     {
       key: 'destinatario',
       label: 'Contato',
-      formatter: (value, row) =>  formatPhone(value),
+      formatter: (value, row) => formatPhone(value),
       filter: {
         type: 'text',
         placeholder: 'Buscar contato',
@@ -160,6 +163,20 @@ export class ContatosComponent implements OnInit {
     this.listarContatos();
   }
 
+  abrirNovoContato(): void {
+    this.form.reset({
+      canal: 'WHATSAPP',
+      destinatario: '',
+      motivo: '',
+    });
+
+    this.resposta.set(null);
+    this.erro.set(null);
+    this.contatoPanel.abrir();
+  }
+
+
+
   listarContatos(): void {
     this.table.loading.set(true);
     this.erro.set(null);
@@ -234,8 +251,16 @@ export class ContatosComponent implements OnInit {
       destinatario: contato.destinatario,
       motivo: contato.motivoBloqueio ?? '',
     });
+
+    this.resposta.set(null);
+    this.erro.set(null);
+    this.contatoPanel.abrir(contato);
   }
 
+  fecharPainelContato(): void {
+    this.contatoPanel.fechar();
+  }
+  
   sincronizarContatosWhatsapp(): void {
     if (this.acaoAtual()) return;
 
