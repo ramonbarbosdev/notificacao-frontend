@@ -23,7 +23,7 @@ import {
   StatusNotificacao,
 } from '../../shared/types/dtos';
 import { HeaderComponent } from '../../core/layout/header/header.component';
-import { NotificacaoService } from '../../core/services/whatsapp.service';
+import { NotificacaoService } from '../../core/services/notificacao.service';
 
 interface OpcaoCanal {
   valor: CanalNotificacao;
@@ -142,7 +142,7 @@ export class NotificacoesComponent {
         mensagem: mensagem!,
       })
       .subscribe({
-        next: (res) => {
+        next: (res:any) => {
           this.resposta.set(res);
           this.enviando.set(false);
 
@@ -154,7 +154,7 @@ export class NotificacoesComponent {
             });
           }
         },
-        error: (err) => {
+        error: (err:any) => {
           this.erroRede.set(
             err.error?.mensagem ??
             err.error?.erro ??

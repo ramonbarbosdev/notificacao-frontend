@@ -27,7 +27,7 @@ import {
   WhatsappStatusResponse,
 } from '../../shared/types/dtos';
 import { HeaderComponent } from '../../core/layout/header/header.component';
-import { WhatsappService } from '../../core/services/notificacao.service';
+import { WhatsappService } from '../../core/services/whatsapp.service';
 
 @Component({
   selector: 'app-whatsapp',

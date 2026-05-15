@@ -3,22 +3,33 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
-  EnviarNotificacaoRequest,
-  EnviarNotificacaoResponse,
-  FilaNotificacaoResponseDTO,
+  WhatsappStatusResponse,
+  EnviarMensagemRequest,
+  EnviarMensagemResponse,
 } from '../../shared/types/dtos';
 
-
 @Injectable({ providedIn: 'root' })
-export class NotificacaoService {
+export class WhatsappService {
   private readonly http = inject(HttpClient);
-  private readonly base = `${environment.apiUrl}/app/notificacoes`;
+  private readonly base = `${environment.apiUrl}/app/whatsapp`;
 
-  enviar(dados: EnviarNotificacaoRequest): Observable<EnviarNotificacaoResponse> {
-    return this.http.post<EnviarNotificacaoResponse>(`${this.base}/enviar`, dados);
+  status(): Observable<WhatsappStatusResponse> {
+    return this.http.get<WhatsappStatusResponse>(`${this.base}/status`);
   }
 
-  listarFila(): Observable<FilaNotificacaoResponseDTO> {
-    return this.http.get<FilaNotificacaoResponseDTO>(`${this.base}/fila`);
+  conectar(): Observable<WhatsappStatusResponse> {
+    return this.http.post<WhatsappStatusResponse>(`${this.base}/conectar`, {});
+  }
+
+  cancelarConexao(): Observable<WhatsappStatusResponse> {
+    return this.http.post<WhatsappStatusResponse>(`${this.base}/cancelar-conexao`, {});
+  }
+
+  desconectar(): Observable<WhatsappStatusResponse> {
+    return this.http.post<WhatsappStatusResponse>(`${this.base}/desconectar`, {});
+  }
+
+  enviarMensagem(dados: EnviarMensagemRequest): Observable<EnviarMensagemResponse> {
+    return this.http.post<EnviarMensagemResponse>(`${this.base}/enviar-mensagem`, dados);
   }
 }

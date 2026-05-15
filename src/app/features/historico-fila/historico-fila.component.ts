@@ -1,33 +1,38 @@
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, OnInit, inject, signal } from '@angular/core';
-import { Clock, Inbox, LoaderCircle, LucideAngularModule, RefreshCw } from 'lucide-angular';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Clock, LoaderCircle, LucideAngularModule, RefreshCw } from 'lucide-angular';
 
 import { HeaderComponent } from '../../core/layout/header/header.component';
 import { SidebarComponent } from '../../core/layout/layout.components';
-import { FilaNotificacaoItemDTO, StatusNotificacao } from '../../shared/types/dtos';
-import { NotificacaoService } from '../../core/services/whatsapp.service';
-
-interface ColunaFila {
-  titulo: string;
-}
+import { NotificacaoService } from '../../core/services/notificacao.service';
+import { DataTableComponent } from '../../shared/components/data-table/data-table.component';
+import { DataTableColumn } from '../../shared/components/data-table/data-table.types';
+import { usePaginatedTable } from '../../shared/helper/paginated-table.state';
+import { CanalNotificacao, FilaNotificacaoItemDTO, StatusNotificacao } from '../../shared/types/dtos';
 
 @Component({
   selector: 'app-historico-fila',
   standalone: true,
-  imports: [CommonModule, LucideAngularModule, SidebarComponent, HeaderComponent],
+  imports: [
+    CommonModule,
+    LucideAngularModule,
+    SidebarComponent,
+    HeaderComponent,
+    DataTableComponent,
+  ],
   templateUrl: './historico-fila.component.html',
 })
 export class HistoricoFilaComponent implements OnInit {
   private readonly notificacaoService = inject(NotificacaoService);
 
-  protected readonly inboxIcon = Inbox;
   protected readonly clockIcon = Clock;
   protected readonly loaderIcon = LoaderCircle;
   protected readonly refreshIcon = RefreshCw;
 
+  readonly table = usePaginatedTable(10);
   readonly itens = signal<FilaNotificacaoItemDTO[]>([]);
-  readonly carregando = signal(false);
+  readonly filtros = signal<Record<string, any>>({});
   readonly erro = signal<string | null>(null);
 
   readonly statusLabels: Record<StatusNotificacao, string> = {
@@ -41,16 +46,112 @@ export class HistoricoFilaComponent implements OnInit {
     CANCELADA: 'Cancelada',
   };
 
-  readonly colunas: ColunaFila[] = [
-    { titulo: 'ID' },
-    { titulo: 'Canal' },
-    { titulo: 'Destinatario' },
-    { titulo: 'Status' },
-    { titulo: 'Provider' },
-    { titulo: 'Tentativas' },
-    { titulo: 'Proxima tentativa' },
-    { titulo: 'Erro' },
-    { titulo: 'Criado em' },
+  readonly itensFiltrados = computed(() => {
+    const filtros = this.filtros();
+
+    return this.itens().filter((item) => {
+      const id = filtros['idNotificacao'];
+      const canal = filtros['canal'] as CanalNotificacao | undefined;
+      const destinatario = String(filtros['destinatario'] ?? '').toLowerCase();
+      const status = filtros['status'] as StatusNotificacao | undefined;
+      const provider = String(filtros['provider'] ?? '').toLowerCase();
+
+      return (
+        (!id || item.idNotificacao === Number(id)) &&
+        (!canal || item.canal === canal) &&
+        (!destinatario || item.destinatario.toLowerCase().includes(destinatario)) &&
+        (!status || item.status === status) &&
+        (!provider || (item.provider ?? '').toLowerCase().includes(provider))
+      );
+    });
+  });
+
+  readonly totalElementos = computed(() => this.itensFiltrados().length);
+
+  readonly totalPaginas = computed(() =>
+    Math.max(1, Math.ceil(this.totalElementos() / this.table.tamanhoPagina()))
+  );
+
+  readonly itensPaginados = computed(() => {
+    const inicio = this.table.paginaAtual() * this.table.tamanhoPagina();
+    const fim = inicio + this.table.tamanhoPagina();
+
+    return this.itensFiltrados().slice(inicio, fim);
+  });
+
+  readonly columns: DataTableColumn<FilaNotificacaoItemDTO>[] = [
+    {
+      key: 'destinatario',
+      label: 'Destinatario',
+      filter: {
+        type: 'text',
+        placeholder: 'Buscar destinatario',
+      },
+    },
+    {
+      key: 'canal',
+      label: 'Canal',
+      filter: {
+        type: 'select',
+        options: [
+          { label: 'Todos', value: '' },
+          { label: 'WhatsApp', value: 'WHATSAPP' },
+          { label: 'Email', value: 'EMAIL' },
+          { label: 'Telegram', value: 'TELEGRAM' },
+          { label: 'Webhook', value: 'WEBHOOK' },
+        ],
+      },
+    },
+   
+    {
+      key: 'status',
+      label: 'Status',
+      type: 'badge',
+      filter: {
+        type: 'select',
+        options: [
+          { label: 'Todos', value: '' },
+          { label: 'Pendente', value: 'PENDENTE' },
+          { label: 'Processando', value: 'PROCESSANDO' },
+          { label: 'Enviada', value: 'ENVIADA' },
+          { label: 'Entregue', value: 'ENTREGUE' },
+          { label: 'Lida', value: 'LIDA' },
+          { label: 'Falhou', value: 'FALHOU' },
+          { label: 'Bloqueada', value: 'BLOQUEADA' },
+          { label: 'Cancelada', value: 'CANCELADA' },
+        ],
+      },
+      badge: (value) => this.statusBadge(value),
+    },
+    {
+      key: 'provider',
+      label: 'Provider',
+      formatter: (value) => value || '-',
+      filter: {
+        type: 'text',
+        placeholder: 'Provider',
+      },
+    },
+    {
+      key: 'tentativas',
+      label: 'Tentativas',
+      align: 'center',
+    },
+    {
+      key: 'proximaTentativa',
+      label: 'Proxima tentativa',
+      formatter: (value) => this.formatarData(value),
+    },
+    {
+      key: 'erro',
+      label: 'Erro',
+      formatter: (value) => value || '-',
+    },
+    {
+      key: 'criadoEm',
+      label: 'Criado em',
+      formatter: (value) => this.formatarData(value),
+    },
   ];
 
   ngOnInit(): void {
@@ -58,30 +159,79 @@ export class HistoricoFilaComponent implements OnInit {
   }
 
   carregarFila(): void {
-    this.carregando.set(true);
+    this.table.loading.set(true);
     this.erro.set(null);
 
-    this.notificacaoService.listarFila().subscribe({
+    this.notificacaoService.listar(
+      {
+        page: this.table.paginaAtual(),
+        size: this.table.tamanhoPagina(),
+        sort: 'dtCriacao,desc'
+      }
+    ).subscribe({
       next: (res) => {
-        this.itens.set(res.itens);
-        this.carregando.set(false);
+        this.itens.set(res.data);
+        this.table.paginaAtual.set(0);
+        this.table.loading.set(false);
       },
       error: (err: HttpErrorResponse) => {
         this.erro.set(err.error?.mensagem ?? err.error?.erro ?? 'Erro ao carregar a fila.');
-        this.carregando.set(false);
+        this.table.loading.set(false);
       },
     });
   }
 
-  labelStatus(status: StatusNotificacao): string {
-    return this.statusLabels[status];
+  aplicarFiltros(filtros: Record<string, any>): void {
+    this.filtros.set(filtros);
+    this.table.paginaAtual.set(0);
   }
 
-  ehStatusAlerta(status: StatusNotificacao): boolean {
-    return status === 'PENDENTE' || status === 'PROCESSANDO';
+  proximaPagina(): void {
+    if (this.table.paginaAtual() + 1 >= this.totalPaginas()) return;
+
+    this.table.paginaAtual.update((page) => page + 1);
   }
 
-  ehStatusSucesso(status: StatusNotificacao): boolean {
-    return ['ENVIADA', 'ENTREGUE', 'LIDA'].includes(status);
+  paginaAnterior(): void {
+    if (this.table.paginaAtual() <= 0) return;
+
+    this.table.paginaAtual.update((page) => page - 1);
+  }
+
+  alterarTamanhoPagina(size: number): void {
+    this.table.tamanhoPagina.set(size);
+    this.table.paginaAtual.set(0);
+  }
+
+  private statusBadge(status: StatusNotificacao): { label: string; className: string } {
+    if (status === 'PENDENTE' || status === 'PROCESSANDO') {
+      return {
+        label: this.statusLabels[status],
+        className: 'bg-amber-500/10 text-amber-400 border-amber-500/30',
+      };
+    }
+
+    if (['ENVIADA', 'ENTREGUE', 'LIDA'].includes(status)) {
+      return {
+        label: this.statusLabels[status],
+        className:
+          'bg-[var(--color-success-bg)] text-[var(--color-success)] border-[var(--color-success-border)]',
+      };
+    }
+
+    return {
+      label: this.statusLabels[status],
+      className:
+        'bg-[var(--color-danger-bg)] text-[var(--color-danger)] border-[var(--color-danger-border)]',
+    };
+  }
+
+  private formatarData(value: string | null): string {
+    if (!value) return '-';
+
+    return new Intl.DateTimeFormat('pt-BR', {
+      dateStyle: 'short',
+      timeStyle: 'short',
+    }).format(new Date(value));
   }
 }

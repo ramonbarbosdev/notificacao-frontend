@@ -4,119 +4,60 @@
 
   <main class="pl-64 pt-16">
     <div class="p-8 max-w-7xl mx-auto">
-      <div class="mb-8">
-        <h1 class="text-2xl font-bold text-[var(--color-text)]">Historico / Fila</h1>
-        <p class="text-[var(--color-text-muted)] text-sm mt-1">
-          Estrutura preparada para acompanhar tentativas, bloqueios e reprocessamentos.
-        </p>
-      </div>
-
-      <div class="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl overflow-hidden">
-        <div class="px-6 py-4 border-b border-[var(--color-border)] flex items-center justify-between">
-          <div class="flex items-center gap-3">
-            <div class="w-10 h-10 bg-[var(--color-accent-soft)] rounded-xl flex items-center justify-center">
-              <lucide-icon [img]="clockIcon" class="w-5 h-5 text-[var(--color-primary-soft)]" />
-            </div>
-            <div>
-              <h2 class="text-[var(--color-text)] font-semibold">Fila de notificacoes</h2>
-              <p class="text-[var(--color-text-subtle)] text-xs">
-                Dados carregados de /app/notificacoes/fila.
-              </p>
-            </div>
-          </div>
-
-          <button type="button"
-                  (click)="carregarFila()"
-                  [disabled]="carregando()"
-                  class="px-3 py-2 rounded-lg border border-[var(--color-border)] text-[var(--color-text-muted)]
-                         hover:text-[var(--color-text)] hover:bg-[var(--color-surface-muted)]
-                         disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm flex items-center gap-2">
-            <lucide-icon [img]="carregando() ? loaderIcon : refreshIcon"
-                         class="w-4 h-4"
-                         [class.animate-spin]="carregando()" />
-            Atualizar
-          </button>
+      <div class="mb-8 flex items-start justify-between gap-4">
+        <div>
+          <h1 class="text-2xl font-bold text-[var(--color-text)]">Historico / Fila</h1>
+          <p class="text-[var(--color-text-muted)] text-sm mt-1">
+            Acompanhe tentativas, bloqueios e reprocessamentos da fila.
+          </p>
         </div>
 
-        @if (erro()) {
-          <div class="mx-6 mt-4 bg-[var(--color-danger-bg)] border border-[var(--color-danger-border)] rounded-xl px-4 py-3">
-            <p class="text-[var(--color-danger)] text-sm">{{ erro() }}</p>
-          </div>
-        }
+        <button
+          type="button"
+          (click)="carregarFila()"
+          [disabled]="table.loading()"
+          class="px-4 py-3 rounded-xl border border-[var(--color-border)] text-[var(--color-text-muted)]
+                 hover:text-[var(--color-text)] hover:bg-[var(--color-surface)]
+                 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm flex items-center gap-2">
+          <lucide-icon
+            [img]="table.loading() ? loaderIcon : refreshIcon"
+            class="w-4 h-4"
+            [class.animate-spin]="table.loading()" />
+          Atualizar
+        </button>
+      </div>
 
-        <div class="overflow-x-auto">
-          <table class="w-full min-w-[980px] text-left">
-            <thead class="bg-[var(--color-surface-muted)]">
-              <tr>
-                @for (coluna of colunas; track coluna.titulo) {
-                  <th class="px-4 py-3 text-xs font-semibold uppercase text-[var(--color-text-muted)]">
-                    {{ coluna.titulo }}
-                  </th>
-                }
-              </tr>
-            </thead>
-            <tbody>
-              @if (carregando() && !itens().length) {
-                <tr>
-                  <td colspan="9" class="px-6 py-14">
-                    <div class="max-w-md mx-auto text-center">
-                      <lucide-icon [img]="loaderIcon" class="w-8 h-8 mx-auto mb-4 text-[var(--color-primary-soft)] animate-spin" />
-                      <p class="text-[var(--color-text-muted)] text-sm">Carregando notificacoes...</p>
-                    </div>
-                  </td>
-                </tr>
-              } @else if (itens().length) {
-                @for (item of itens(); track item.idNotificacao) {
-                  <tr class="border-t border-[var(--color-border)] text-[var(--color-text)]">
-                    <td class="px-4 py-3">#{{ item.idNotificacao }}</td>
-                    <td class="px-4 py-3">{{ item.canal }}</td>
-                    <td class="px-4 py-3 max-w-[240px] truncate" [title]="item.destinatario">
-                      {{ item.destinatario }}
-                    </td>
-                    <td class="px-4 py-3">
-                      <span class="px-2 py-0.5 rounded-full text-xs border"
-                            [class.bg-[var(--color-success-bg)]]="ehStatusSucesso(item.status)"
-                            [class.text-[var(--color-success)]]="ehStatusSucesso(item.status)"
-                            [class.border-[var(--color-success-border)]]="ehStatusSucesso(item.status)"
-                            [class.bg-amber-500/10]="ehStatusAlerta(item.status)"
-                            [class.text-amber-400]="ehStatusAlerta(item.status)"
-                            [class.border-amber-500/30]="ehStatusAlerta(item.status)"
-                            [class.bg-[var(--color-danger-bg)]]="!ehStatusSucesso(item.status) && !ehStatusAlerta(item.status)"
-                            [class.text-[var(--color-danger)]]="!ehStatusSucesso(item.status) && !ehStatusAlerta(item.status)"
-                            [class.border-[var(--color-danger-border)]]="!ehStatusSucesso(item.status) && !ehStatusAlerta(item.status)">
-                        {{ labelStatus(item.status) }}
-                      </span>
-                    </td>
-                    <td class="px-4 py-3">{{ item.provider || '-' }}</td>
-                    <td class="px-4 py-3">{{ item.tentativas }}</td>
-                    <td class="px-4 py-3">{{ item.proximaTentativa ? (item.proximaTentativa | date:'short') : '-' }}</td>
-                    <td class="px-4 py-3 max-w-[260px] truncate" [title]="item.erro || ''">
-                      {{ item.erro || '-' }}
-                    </td>
-                    <td class="px-4 py-3">{{ item.criadoEm | date:'short' }}</td>
-                  </tr>
-                }
-              } @else {
-                <tr>
-                <td colspan="9" class="px-6 py-14">
-                  <div class="max-w-md mx-auto text-center">
-                    <div class="w-12 h-12 bg-[var(--color-bg-base)] border border-[var(--color-border)] rounded-xl mx-auto mb-4 flex items-center justify-center">
-                      <lucide-icon [img]="inboxIcon" class="w-6 h-6 text-[var(--color-text-subtle)]" />
-                    </div>
-                    <h3 class="text-[var(--color-text)] font-semibold mb-2">
-                      Nenhuma notificacao na fila
-                    </h3>
-                    <p class="text-[var(--color-text-muted)] text-sm">
-                      Quando a API retornar itens, eles serao exibidos nesta tabela.
-                    </p>
-                  </div>
-                </td>
-              </tr>
-              }
-            </tbody>
-          </table>
+      <div class="mb-6 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl px-6 py-4 flex items-center gap-3">
+        <div class="w-10 h-10 bg-[var(--color-accent-soft)] rounded-xl flex items-center justify-center">
+          <lucide-icon [img]="clockIcon" class="w-5 h-5 text-[var(--color-primary-soft)]" />
+        </div>
+
+        <div>
+          <h2 class="text-[var(--color-text)] font-semibold">Fila de notificacoes</h2>
+          <p class="text-[var(--color-text-subtle)] text-xs">
+            Dados carregados de /app/notificacoes/fila.
+          </p>
         </div>
       </div>
+
+      @if (erro()) {
+        <div class="mb-6 bg-[var(--color-danger-bg)] border border-[var(--color-danger-border)] rounded-xl px-4 py-3">
+          <p class="text-[var(--color-danger)] text-sm">{{ erro() }}</p>
+        </div>
+      }
+
+      <app-data-table
+        [columns]="columns"
+        [items]="itensPaginados()"
+        [loading]="table.loading()"
+        [page]="table.paginaAtual()"
+        [pageSize]="table.tamanhoPagina()"
+        [totalElements]="totalElementos()"
+        [totalPages]="totalPaginas()"
+        (filterChange)="aplicarFiltros($event)"
+        (nextPage)="proximaPagina()"
+        (previousPage)="paginaAnterior()"
+        (pageSizeChange)="alterarTamanhoPagina($event)" />
     </div>
   </main>
 </div>

@@ -12,6 +12,7 @@ import {
   UserCheck,
   Users,
 } from 'lucide-angular';
+import { z } from 'zod';
 
 import { SidePanelComponent } from '../../shared/components/side-panel/side-panel.component';
 import { HeaderComponent } from '../../core/layout/header/header.component';
@@ -21,10 +22,44 @@ import { DataTableComponent } from '../../shared/components/data-table/data-tabl
 import { DataTableColumn } from '../../shared/components/data-table/data-table.types';
 import { usePaginatedTable } from '../../shared/helper/paginated-table.state';
 import { CanalNotificacao, ContatoResponseDTO } from '../../shared/types/dtos';
-import { formatPhone } from '../../shared/helper/phone.utils';
+import { formatPhone, normalizePhone } from '../../shared/helper/phone.utils';
 import { useSidePanel } from '../../shared/helper/side-panel.state';
 
 type AcaoContato = 'consentimento' | 'bloqueio' | 'sync' | null;
+
+const contatoFormSchema = z
+  .object({
+    canal: z.enum(['WHATSAPP', 'EMAIL', 'TELEGRAM', 'WEBHOOK']),
+    destinatario: z.string().trim().min(1, 'Informe o contato.'),
+    motivo: z.string().trim().optional(),
+  })
+  .superRefine((value, ctx) => {
+    if (value.canal === 'WHATSAPP') {
+      const telefone = normalizePhone(value.destinatario);
+
+      if (telefone.length < 10 || telefone.length > 15) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['destinatario'],
+          message: 'Informe um telefone valido para WhatsApp.',
+        });
+      }
+    }
+
+    if (value.canal === 'EMAIL') {
+      const emailValido = z.string().email().safeParse(value.destinatario);
+
+      if (!emailValido.success) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['destinatario'],
+          message: 'Informe um e-mail valido.',
+        });
+      }
+    }
+  });
+
+type ContatoFormData = z.infer<typeof contatoFormSchema>;
 
 @Component({
   selector: 'app-contatos',
@@ -60,6 +95,7 @@ export class ContatosComponent implements OnInit {
   readonly contatos = signal<ContatoResponseDTO[]>([]);
   readonly resposta = signal<ContatoResponseDTO | null>(null);
   readonly erro = signal<string | null>(null);
+  readonly errosFormulario = signal<Partial<Record<keyof ContatoFormData, string>>>({});
   readonly canais: CanalNotificacao[] = ['WHATSAPP', 'EMAIL', 'TELEGRAM', 'WEBHOOK'];
 
   readonly contatoPanel = useSidePanel<ContatoResponseDTO>();
@@ -172,6 +208,7 @@ export class ContatosComponent implements OnInit {
 
     this.resposta.set(null);
     this.erro.set(null);
+    this.errosFormulario.set({});
     this.contatoPanel.abrir();
   }
 
@@ -226,18 +263,22 @@ export class ContatosComponent implements OnInit {
   }
 
   registrarConsentimento(): void {
-    if (!this.formValido()) return;
+    if (!this.validarFormulario()) return;
 
     this.executar('consentimento');
   }
 
   bloquearContato(): void {
-    if (!this.formValido()) return;
+    if (!this.validarFormulario()) return;
 
     const motivo = this.form.controls.motivo.value?.trim();
 
     if (!motivo) {
       this.erro.set('Informe o motivo para bloquear o contato.');
+      this.errosFormulario.update((erros) => ({
+        ...erros,
+        motivo: 'Informe o motivo para bloquear o contato.',
+      }));
       this.form.controls.motivo.markAsTouched();
       return;
     }
@@ -254,11 +295,61 @@ export class ContatosComponent implements OnInit {
 
     this.resposta.set(null);
     this.erro.set(null);
+    this.errosFormulario.set({});
     this.contatoPanel.abrir(contato);
   }
 
   fecharPainelContato(): void {
     this.contatoPanel.fechar();
+    this.errosFormulario.set({});
+  }
+
+  aoAlterarCanal(): void {
+    const destinatario = this.form.controls.destinatario.value ?? '';
+
+    this.errosFormulario.set({});
+    this.resposta.set(null);
+    this.erro.set(null);
+
+    if (!destinatario) return;
+
+    this.form.controls.destinatario.setValue(this.formatarDestinatario(destinatario), {
+      emitEvent: false,
+    });
+  }
+
+  atualizarDestinatario(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const valorFormatado = this.formatarDestinatario(input.value);
+
+    this.form.controls.destinatario.setValue(valorFormatado, {
+      emitEvent: false,
+    });
+    input.value = valorFormatado;
+
+    this.errosFormulario.update((erros) => ({
+      ...erros,
+      destinatario: undefined,
+    }));
+  }
+
+  placeholderDestinatario(): string {
+    switch (this.form.controls.canal.value) {
+      case 'WHATSAPP':
+        return '+55 (71) 99118-0200';
+      case 'EMAIL':
+        return 'destinatario@email.com';
+      case 'TELEGRAM':
+        return '@usuario ou chat_id';
+      case 'WEBHOOK':
+        return 'https://seu-webhook.com/endpoint';
+      default:
+        return '';
+    }
+  }
+
+  tipoInputDestinatario(): string {
+    return this.form.controls.canal.value === 'EMAIL' ? 'email' : 'text';
   }
   
   sincronizarContatosWhatsapp(): void {
@@ -289,11 +380,11 @@ export class ContatosComponent implements OnInit {
     this.resposta.set(null);
     this.erro.set(null);
 
-    const dados = this.form.getRawValue();
+    const dados = contatoFormSchema.parse(this.form.getRawValue());
 
     const request = {
       canal: dados.canal,
-      destinatario: dados.destinatario!.trim(),
+      destinatario: this.normalizarDestinatarioParaApi(dados),
       motivo: dados.motivo?.trim() || null,
     };
 
@@ -317,11 +408,84 @@ export class ContatosComponent implements OnInit {
     });
   }
 
-  private formValido(): boolean {
-    if (this.form.valid) return true;
-
+  private validarFormulario(): boolean {
     this.form.markAllAsTouched();
+
+    const resultado = contatoFormSchema.safeParse(this.form.getRawValue());
+
+    if (resultado.success) {
+      this.errosFormulario.set({});
+      return true;
+    }
+
+    const erros = resultado.error.issues.reduce((acc, issue) => {
+      const campo = issue.path[0] as keyof ContatoFormData | undefined;
+
+      if (campo && !acc[campo]) {
+        acc[campo] = issue.message;
+      }
+
+      return acc;
+    }, {} as Partial<Record<keyof ContatoFormData, string>>);
+
+    this.errosFormulario.set(erros);
     return false;
+  }
+
+  private formatarDestinatario(value: string): string {
+    if (this.form.controls.canal.value === 'WHATSAPP') {
+      return this.aplicarMascaraWhatsapp(value);
+    }
+
+    if (this.form.controls.canal.value === 'EMAIL') {
+      return value.replace(/\s/g, '').toLowerCase();
+    }
+
+    return value.trimStart();
+  }
+
+  private aplicarMascaraWhatsapp(value: string): string {
+    const digits = normalizePhone(value).slice(0, 13);
+
+    if (!digits) return '';
+
+    if (digits.startsWith('55')) {
+      const ddi = digits.slice(0, 2);
+      const ddd = digits.slice(2, 4);
+      const prefixo = digits.length > 12 ? digits.slice(4, 9) : digits.slice(4, 8);
+      const sufixo = digits.length > 12 ? digits.slice(9, 13) : digits.slice(8, 12);
+
+      return [
+        `+${ddi}`,
+        ddd ? ` (${ddd}` : '',
+        ddd.length === 2 ? ')' : '',
+        prefixo ? ` ${prefixo}` : '',
+        sufixo ? `-${sufixo}` : '',
+      ].join('');
+    }
+
+    const ddd = digits.slice(0, 2);
+    const prefixo = digits.length > 10 ? digits.slice(2, 7) : digits.slice(2, 6);
+    const sufixo = digits.length > 10 ? digits.slice(7, 11) : digits.slice(6, 10);
+
+    return [
+      ddd ? `(${ddd}` : '',
+      ddd.length === 2 ? ')' : '',
+      prefixo ? ` ${prefixo}` : '',
+      sufixo ? `-${sufixo}` : '',
+    ].join('');
+  }
+
+  private normalizarDestinatarioParaApi(dados: ContatoFormData): string {
+    if (dados.canal === 'WHATSAPP') {
+      return normalizePhone(dados.destinatario);
+    }
+
+    if (dados.canal === 'EMAIL') {
+      return dados.destinatario.trim().toLowerCase();
+    }
+
+    return dados.destinatario.trim();
   }
 
   private toBooleanOrUndefined(value: unknown): boolean | undefined {

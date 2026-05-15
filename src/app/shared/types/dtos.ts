@@ -139,7 +139,15 @@ export interface FilaNotificacaoItemDTO {
 }
 
 export interface FilaNotificacaoResponseDTO {
-  itens: FilaNotificacaoItemDTO[];
+  idNotificacao: number;
+  canal: CanalNotificacao;
+  destinatario: string;
+  status: StatusNotificacao;
+  provider: string | null;
+  tentativas: number;
+  proximaTentativa: string | null;
+  erro: string | null;
+  criadoEm: string;
 }
 
 // CONTATOS
