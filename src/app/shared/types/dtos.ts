@@ -150,6 +150,94 @@ export interface FilaNotificacaoResponseDTO {
   criadoEm: string;
 }
 
+// TEMPLATES
+
+export type TipoVariavelTemplate =
+  | 'TEXTO'
+  | 'NUMERO'
+  | 'MOEDA'
+  | 'DATA'
+  | 'TELEFONE'
+  | 'EMAIL'
+  | 'URL'
+  | 'BOOLEANO';
+
+export interface TemplateVariavelDTO {
+  chave: string;
+  label: string;
+  tipo: TipoVariavelTemplate;
+  obrigatoria: boolean;
+  exemplo: string | null;
+}
+
+export interface TemplateMensagemRequestDTO {
+  nome: string;
+  chave: string;
+  canal: CanalNotificacao;
+  assunto?: string | null;
+  conteudo: string;
+  ativo: boolean;
+  variaveis: TemplateVariavelDTO[];
+  variaveisObrigatorias?: string[];
+}
+
+export interface TemplateMensagemResponseDTO {
+  idModelo: number;
+  idOrganizacao?: number;
+  nome: string;
+  chave: string;
+  canal: CanalNotificacao;
+  assunto: string | null;
+  conteudo: string;
+  ativo: boolean;
+  variaveis?: TemplateVariavelDTO[];
+  variaveisObrigatorias?: string[];
+  versao: number;
+  dtCriacao?: string | null;
+  dtAtualizacao?: string | null;
+}
+
+export interface ExtrairVariaveisTemplateRequestDTO {
+  conteudo: string;
+}
+
+export interface ExtrairVariaveisTemplateResponseDTO {
+  variaveis: string[];
+}
+
+export interface ValidarTemplateRequestDTO {
+  conteudo: string;
+  variaveis: TemplateVariavelDTO[];
+}
+
+export interface ValidarTemplateResponseDTO {
+  valido: boolean;
+  variaveisEncontradas: string[];
+  variaveisDeclaradas: string[];
+  variaveisNaoDeclaradas: string[];
+  variaveisDeclaradasNaoUsadas: string[];
+  erros: string[];
+  avisos: string[];
+}
+
+export interface TestarTemplateRequestDTO {
+  variaveis: Record<string, string>;
+}
+
+export interface TestarTemplateResponseDTO {
+  templateKey: string;
+  canal: CanalNotificacao;
+  assunto: string | null;
+  mensagem: string;
+  versao: number;
+}
+
+export interface EnviarTemplateRequestDTO {
+  templateKey: string;
+  destinatario: string;
+  variaveis: Record<string, string>;
+}
+
 // CONTATOS
 
 export interface ContatoRequestDTO {

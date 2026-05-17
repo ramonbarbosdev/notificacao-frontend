@@ -52,6 +52,14 @@ export const routes: Routes = [
   },
 
   {
+    path: 'app/templates',
+    canActivate: [authGuard, organizationGuard, roleGuard],
+    data: { roles: ['ADMIN', 'USER'] },
+    loadComponent: () =>
+      import('./features/templates/templates.component').then((m) => m.TemplatesComponent),
+  },
+
+  {
     path: 'app/historico',
     canActivate: [authGuard, organizationGuard, roleGuard],
     data: { roles: ['ADMIN', 'USER'] },
@@ -111,6 +119,7 @@ export const routes: Routes = [
   { path: 'whatsapp', redirectTo: '/app/whatsapp' },
   { path: 'notificacoes', redirectTo: '/app/notificacoes' },
   { path: 'contatos', redirectTo: '/app/contatos' },
+  { path: 'templates', redirectTo: '/app/templates' },
   { path: 'historico', redirectTo: '/app/historico' },
   { path: 'fila', redirectTo: '/app/historico' },
 

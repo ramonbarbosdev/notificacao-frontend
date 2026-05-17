@@ -1,0 +1,523 @@
+<div class="min-h-screen bg-[var(--color-bg-base)]">
+  <app-sidebar />
+  <app-header />
+
+  <main class="pl-64 pt-16">
+    <div class="p-8 max-w-7xl mx-auto">
+      <div class="flex items-start justify-between gap-4 mb-8">
+        <div>
+          <h1 class="text-2xl font-bold text-[var(--color-text)]">
+            Templates de Mensagem
+          </h1>
+
+          <p class="text-[var(--color-text-muted)] text-sm mt-1">
+            Crie mensagens reutilizaveis, teste variaveis e envie notificacoes por template.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          (click)="abrirNovo()"
+          class="bg-[var(--color-primary)] hover:brightness-110 text-[var(--color-bg-base)] font-semibold px-4 py-3 rounded-xl text-sm flex items-center gap-2"
+        >
+          <lucide-icon [img]="templateIcon" class="w-4 h-4" />
+          Novo template
+        </button>
+      </div>
+
+      @if (sucesso()) {
+        <div
+          class="mb-6 bg-[var(--color-success-bg)] border border-[var(--color-success-border)] rounded-xl px-4 py-3"
+        >
+          <p class="text-[var(--color-success)] text-sm">{{ sucesso() }}</p>
+        </div>
+      }
+
+      @if (erro()) {
+        <div
+          class="mb-6 bg-[var(--color-danger-bg)] border border-[var(--color-danger-border)] rounded-xl px-4 py-3"
+        >
+          <p class="text-[var(--color-danger)] text-sm">{{ erro() }}</p>
+        </div>
+      }
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div class="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-5">
+          <p class="text-[var(--color-text-muted)] text-sm">Total de templates</p>
+          <strong class="text-2xl text-[var(--color-text)] mt-2 block">
+            {{ table.totalElementos() }}
+          </strong>
+        </div>
+
+        <div class="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-5">
+          <p class="text-[var(--color-text-muted)] text-sm">Ativos nesta pagina</p>
+          <strong class="text-2xl text-[var(--color-success)] mt-2 block">
+            {{ totalAtivosPagina() }}
+          </strong>
+        </div>
+
+        <div class="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-5">
+          <p class="text-[var(--color-text-muted)] text-sm">Canais suportados</p>
+          <strong class="text-2xl text-[var(--color-text)] mt-2 block">
+            {{ canais.length }}
+          </strong>
+        </div>
+      </div>
+
+      <app-data-table
+        [columns]="columns"
+        [items]="templates()"
+        [loading]="table.loading()"
+        [page]="table.paginaAtual()"
+        [pageSize]="table.tamanhoPagina()"
+        [totalElements]="table.totalElementos()"
+        [totalPages]="table.totalPaginas()"
+        (filterChange)="aplicarFiltros($event)"
+        (nextPage)="proximaPagina()"
+        (previousPage)="paginaAnterior()"
+        (pageSizeChange)="alterarTamanhoPagina($event)"
+      />
+    </div>
+  </main>
+
+  <app-side-panel
+    [open]="formPanel.aberto()"
+    [title]="formPanel.item() ? 'Editar template' : 'Novo template'"
+    description="Configure o conteudo e as variaveis que a API deve validar."
+    size="lg"
+    (closed)="fecharFormulario()"
+  >
+    <form [formGroup]="form" class="space-y-5">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-[var(--color-text-muted)] mb-2">
+            Nome
+          </label>
+          <input
+            formControlName="nome"
+            type="text"
+            placeholder="Pedido aprovado"
+            class="w-full bg-[var(--color-surface-muted)] border border-[var(--color-border-strong)] rounded-xl px-4 py-3 text-[var(--color-text)] placeholder:text-[var(--color-text-subtle)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
+          />
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-[var(--color-text-muted)] mb-2">
+            Chave
+          </label>
+          <input
+            formControlName="chave"
+            type="text"
+            placeholder="pedido-aprovado"
+            class="w-full bg-[var(--color-surface-muted)] border border-[var(--color-border-strong)] rounded-xl px-4 py-3 text-[var(--color-text)] placeholder:text-[var(--color-text-subtle)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
+          />
+          @if (form.controls.chave.invalid && form.controls.chave.touched) {
+            <p class="text-[var(--color-danger)] text-xs mt-1">
+              Use kebab-case, como pedido-aprovado.
+            </p>
+          }
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-[var(--color-text-muted)] mb-2">
+            Canal
+          </label>
+          <select
+            formControlName="canal"
+            class="w-full bg-[var(--color-surface-muted)] border border-[var(--color-border-strong)] rounded-xl px-4 py-3 text-[var(--color-text)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
+          >
+            @for (canal of canais; track canal) {
+              <option [value]="canal">{{ canal }}</option>
+            }
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-[var(--color-text-muted)] mb-2">
+            Assunto
+          </label>
+          <input
+            formControlName="assunto"
+            type="text"
+            placeholder="Opcional"
+            class="w-full bg-[var(--color-surface-muted)] border border-[var(--color-border-strong)] rounded-xl px-4 py-3 text-[var(--color-text)] placeholder:text-[var(--color-text-subtle)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
+          />
+        </div>
+      </div>
+
+      <label class="flex items-center gap-3 text-sm text-[var(--color-text)]">
+        <input
+          formControlName="ativo"
+          type="checkbox"
+          class="w-4 h-4 rounded border-[var(--color-border)]"
+        />
+        Template ativo
+      </label>
+
+      <div>
+        <label class="block text-sm font-medium text-[var(--color-text-muted)] mb-2">
+          Conteudo
+        </label>
+        <textarea
+          formControlName="conteudo"
+          rows="7"
+          [placeholder]="'Ola {{nome}}, seu pedido {{numeroPedido}} foi aprovado.'"
+          class="w-full bg-[var(--color-surface-muted)] border border-[var(--color-border-strong)] rounded-xl px-4 py-3 text-[var(--color-text)] placeholder:text-[var(--color-text-subtle)] text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
+        ></textarea>
+        <div class="flex items-center gap-3 mt-3">
+          <button
+            type="button"
+            (click)="extrairVariaveisDaApi()"
+            [disabled]="acaoAtual() !== null || !form.controls.conteudo.value"
+            class="border border-[var(--color-border)] text-[var(--color-text)] hover:bg-[var(--color-surface)] disabled:opacity-50 disabled:cursor-not-allowed font-semibold px-3 py-2 rounded-xl text-xs flex items-center gap-2"
+          >
+            @if (acaoAtual() === 'extrair') {
+              <lucide-icon [img]="loaderIcon" class="w-4 h-4 animate-spin" />
+            } @else {
+              <lucide-icon [img]="refreshIcon" class="w-4 h-4" />
+            }
+            Extrair variaveis
+          </button>
+
+          <p class="text-xs text-[var(--color-text-subtle)]">
+            Tambem detectamos automaticamente enquanto voce digita.
+          </p>
+        </div>
+      </div>
+
+      <div class="bg-[var(--color-surface-muted)] border border-[var(--color-border)] rounded-2xl p-4">
+        <div class="flex items-center gap-2 mb-3">
+          <lucide-icon [img]="previewIcon" class="w-4 h-4 text-[var(--color-primary-soft)]" />
+          <h3 class="text-sm font-semibold text-[var(--color-text)]">Preview</h3>
+        </div>
+
+        <p class="text-sm text-[var(--color-text)] whitespace-pre-line min-h-12">
+          {{ previewEditor() || 'Digite o conteudo para visualizar a mensagem.' }}
+        </p>
+      </div>
+
+      <div class="space-y-4">
+        <div class="flex items-center justify-between gap-3">
+          <div>
+            <h3 class="text-sm font-semibold text-[var(--color-text)]">
+              Variaveis do template
+            </h3>
+            <p class="text-xs text-[var(--color-text-subtle)] mt-1">
+              Configure label, tipo, obrigatoriedade e exemplo para teste e envio.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            (click)="adicionarVariavelManual()"
+            class="border border-[var(--color-border)] text-[var(--color-text)] hover:bg-[var(--color-surface)] font-semibold px-3 py-2 rounded-xl text-xs"
+          >
+            Adicionar variavel
+          </button>
+        </div>
+
+        @if (variaveisEncontradas().length) {
+          <div class="flex flex-wrap gap-2">
+            @for (variavel of variaveisEncontradas(); track variavel) {
+              <span
+                class="inline-flex px-3 py-1 rounded-full border border-[var(--color-border)] text-xs text-[var(--color-text-muted)]"
+              >
+                {{ variavel }}
+              </span>
+            }
+          </div>
+        } @else {
+          <p class="text-sm text-[var(--color-text-muted)]">
+            Nenhuma variavel no formato {{ '{{variavel}}' }} foi encontrada.
+          </p>
+        }
+
+        @for (variavel of variaveis(); track variavel.chave; let i = $index) {
+          <div class="border border-[var(--color-border)] bg-[var(--color-surface-muted)] rounded-2xl p-4 space-y-3">
+            <div class="flex items-start justify-between gap-3">
+              <div>
+                <p class="text-sm font-semibold text-[var(--color-text)]">
+                  {{ variavel.chave }}
+                </p>
+                @if (!variavelUsadaNoConteudo(variavel.chave)) {
+                  <p class="text-xs text-amber-400 mt-1">
+                    Esta variavel esta declarada, mas nao foi encontrada no conteudo.
+                  </p>
+                }
+              </div>
+
+              <button
+                type="button"
+                (click)="removerVariavel(variavel.chave)"
+                class="text-xs font-semibold text-[var(--color-danger)]"
+              >
+                Remover
+              </button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-medium text-[var(--color-text-muted)] mb-1">
+                  Chave
+                </label>
+                <input
+                  type="text"
+                  [value]="variavel.chave"
+                  (input)="atualizarVariavel(i, 'chave', $event)"
+                  class="w-full bg-[var(--color-bg-base)] border border-[var(--color-border-strong)] rounded-xl px-3 py-2 text-[var(--color-text)] text-sm"
+                />
+              </div>
+
+              <div>
+                <label class="block text-xs font-medium text-[var(--color-text-muted)] mb-1">
+                  Label
+                </label>
+                <input
+                  type="text"
+                  [value]="variavel.label"
+                  (input)="atualizarVariavel(i, 'label', $event)"
+                  class="w-full bg-[var(--color-bg-base)] border border-[var(--color-border-strong)] rounded-xl px-3 py-2 text-[var(--color-text)] text-sm"
+                />
+              </div>
+
+              <div>
+                <label class="block text-xs font-medium text-[var(--color-text-muted)] mb-1">
+                  Tipo
+                </label>
+                <select
+                  [value]="variavel.tipo"
+                  (change)="atualizarVariavel(i, 'tipo', $event)"
+                  class="w-full bg-[var(--color-bg-base)] border border-[var(--color-border-strong)] rounded-xl px-3 py-2 text-[var(--color-text)] text-sm"
+                >
+                  @for (tipo of tiposVariavel; track tipo) {
+                    <option [value]="tipo">{{ tipo }}</option>
+                  }
+                </select>
+              </div>
+
+              <div>
+                <label class="block text-xs font-medium text-[var(--color-text-muted)] mb-1">
+                  Exemplo
+                </label>
+                <input
+                  [type]="inputType(variavel.tipo)"
+                  [value]="variavel.exemplo || ''"
+                  (input)="atualizarVariavel(i, 'exemplo', $event)"
+                  class="w-full bg-[var(--color-bg-base)] border border-[var(--color-border-strong)] rounded-xl px-3 py-2 text-[var(--color-text)] text-sm"
+                />
+              </div>
+            </div>
+
+            <label class="inline-flex items-center gap-2 text-xs text-[var(--color-text)]">
+              <input
+                type="checkbox"
+                [checked]="variavel.obrigatoria"
+                (change)="atualizarVariavel(i, 'obrigatoria', $event)"
+              />
+              Obrigatoria
+            </label>
+          </div>
+        }
+      </div>
+
+      @if (resultadoValidacao()) {
+        <div class="border border-[var(--color-border)] rounded-2xl p-4 space-y-3">
+          <div class="flex items-center justify-between gap-3">
+            <h3 class="text-sm font-semibold text-[var(--color-text)]">
+              Validacao da API
+            </h3>
+            <span
+              class="inline-flex px-3 py-1 rounded-full border text-xs font-semibold"
+              [class.bg-[var(--color-success-bg)]]="resultadoValidacao()!.valido"
+              [class.text-[var(--color-success)]]="resultadoValidacao()!.valido"
+              [class.border-[var(--color-success-border)]]="resultadoValidacao()!.valido"
+              [class.bg-[var(--color-danger-bg)]]="!resultadoValidacao()!.valido"
+              [class.text-[var(--color-danger)]]="!resultadoValidacao()!.valido"
+              [class.border-[var(--color-danger-border)]]="!resultadoValidacao()!.valido"
+            >
+              {{ resultadoValidacao()!.valido ? 'Valido' : 'Com erros' }}
+            </span>
+          </div>
+
+          @if (resultadoValidacao()!.erros.length) {
+            <div class="space-y-1">
+              @for (erroValidacao of resultadoValidacao()!.erros; track erroValidacao) {
+                <p class="text-xs text-[var(--color-danger)]">{{ erroValidacao }}</p>
+              }
+            </div>
+          }
+
+          @if (resultadoValidacao()!.avisos.length) {
+            <div class="space-y-1">
+              @for (aviso of resultadoValidacao()!.avisos; track aviso) {
+                <p class="text-xs text-amber-400">{{ aviso }}</p>
+              }
+            </div>
+          }
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs text-[var(--color-text-muted)]">
+            <p>Encontradas: {{ resultadoValidacao()!.variaveisEncontradas.join(', ') || '-' }}</p>
+            <p>Declaradas: {{ resultadoValidacao()!.variaveisDeclaradas.join(', ') || '-' }}</p>
+            <p>Nao declaradas: {{ resultadoValidacao()!.variaveisNaoDeclaradas.join(', ') || '-' }}</p>
+            <p>Nao usadas: {{ resultadoValidacao()!.variaveisDeclaradasNaoUsadas.join(', ') || '-' }}</p>
+          </div>
+        </div>
+      }
+
+      <button
+        type="button"
+        (click)="salvarTemplate()"
+        [disabled]="form.invalid || acaoAtual() !== null"
+        class="w-full bg-[var(--color-primary)] hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed text-[var(--color-bg-base)] font-semibold py-3 rounded-xl text-sm flex items-center justify-center gap-2"
+      >
+        @if (acaoAtual() === 'salvar' || acaoAtual() === 'validar') {
+          <lucide-icon [img]="loaderIcon" class="w-4 h-4 animate-spin" />
+        } @else {
+          <lucide-icon [img]="checkIcon" class="w-4 h-4" />
+        }
+        Salvar template
+      </button>
+    </form>
+  </app-side-panel>
+
+  <app-side-panel
+    [open]="testPanel.aberto()"
+    title="Testar Template"
+    description="Renderize a mensagem com valores de exemplo antes de enviar."
+    size="md"
+    (closed)="fecharTeste()"
+  >
+    @if (testPanel.item(); as template) {
+      <div class="space-y-5">
+        <div>
+          <p class="text-sm font-semibold text-[var(--color-text)]">{{ template.nome }}</p>
+          <p class="text-xs text-[var(--color-text-muted)]">{{ template.chave }}</p>
+        </div>
+
+        @for (variavel of variaveisDoTemplate(template); track variavel.chave) {
+          <div>
+            <label class="block text-sm font-medium text-[var(--color-text-muted)] mb-2">
+              {{ variavel.label }}
+            </label>
+            <input
+              [type]="inputType(variavel.tipo)"
+              [value]="valoresTeste()[variavel.chave] || ''"
+              (input)="atualizarValorTeste(variavel.chave, $event)"
+              class="w-full bg-[var(--color-surface-muted)] border border-[var(--color-border-strong)] rounded-xl px-4 py-3 text-[var(--color-text)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
+            />
+            <p class="text-xs text-[var(--color-text-subtle)] mt-1">
+              {{ variavel.chave }} · {{ variavel.tipo }}{{ variavel.obrigatoria ? ' · obrigatoria' : '' }}
+            </p>
+          </div>
+        }
+
+        <div class="bg-[var(--color-surface-muted)] border border-[var(--color-border)] rounded-2xl p-4">
+          <p class="text-xs text-[var(--color-text-muted)] mb-2">Preview local</p>
+          <p class="text-sm text-[var(--color-text)] whitespace-pre-line">
+            {{ previewTemplate(template, valoresTeste()) }}
+          </p>
+        </div>
+
+        <button
+          type="button"
+          (click)="testarTemplate()"
+          [disabled]="acaoAtual() !== null"
+          class="w-full bg-[var(--color-primary)] hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed text-[var(--color-bg-base)] font-semibold py-3 rounded-xl text-sm flex items-center justify-center gap-2"
+        >
+          @if (acaoAtual() === 'teste') {
+            <lucide-icon [img]="loaderIcon" class="w-4 h-4 animate-spin" />
+          } @else {
+            <lucide-icon [img]="testIcon" class="w-4 h-4" />
+          }
+          Testar renderizacao
+        </button>
+
+        @if (respostaTeste()) {
+          <div
+            class="bg-[var(--color-success-bg)] border border-[var(--color-success-border)] rounded-2xl p-4"
+          >
+            <p class="text-xs text-[var(--color-success)] mb-2">
+              Renderizado pela API - v{{ respostaTeste()!.versao }}
+            </p>
+            <p class="text-sm text-[var(--color-text)] whitespace-pre-line">
+              {{ respostaTeste()!.mensagem }}
+            </p>
+          </div>
+        }
+      </div>
+    }
+  </app-side-panel>
+
+  <app-side-panel
+    [open]="sendPanel.aberto()"
+    title="Enviar por Template"
+    description="A API renderiza, valida consentimento e cria a notificacao na fila."
+    size="md"
+    (closed)="fecharEnvio()"
+  >
+    @if (sendPanel.item(); as template) {
+      <form [formGroup]="sendForm" class="space-y-5">
+        <div>
+          <p class="text-sm font-semibold text-[var(--color-text)]">{{ template.nome }}</p>
+          <p class="text-xs text-[var(--color-text-muted)]">{{ template.chave }}</p>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-[var(--color-text-muted)] mb-2">
+            Destinatario
+          </label>
+          <input
+            formControlName="destinatario"
+            type="text"
+            placeholder="5571999999999"
+            class="w-full bg-[var(--color-surface-muted)] border border-[var(--color-border-strong)] rounded-xl px-4 py-3 text-[var(--color-text)] placeholder:text-[var(--color-text-subtle)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
+          />
+        </div>
+
+        @for (variavel of variaveisDoTemplate(template); track variavel.chave) {
+          <div>
+            <label class="block text-sm font-medium text-[var(--color-text-muted)] mb-2">
+              {{ variavel.label }}
+            </label>
+            <input
+              [type]="inputType(variavel.tipo)"
+              [value]="valoresEnvio()[variavel.chave] || ''"
+              (input)="atualizarValorEnvio(variavel.chave, $event)"
+              class="w-full bg-[var(--color-surface-muted)] border border-[var(--color-border-strong)] rounded-xl px-4 py-3 text-[var(--color-text)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
+            />
+            <p class="text-xs text-[var(--color-text-subtle)] mt-1">
+              {{ variavel.chave }} · {{ variavel.tipo }}{{ variavel.obrigatoria ? ' · obrigatoria' : '' }}
+            </p>
+          </div>
+        }
+
+        <button
+          type="button"
+          (click)="enviarTemplate()"
+          [disabled]="sendForm.invalid || acaoAtual() !== null"
+          class="w-full bg-[var(--color-success)] hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed text-[var(--color-bg-base)] font-semibold py-3 rounded-xl text-sm flex items-center justify-center gap-2"
+        >
+          @if (acaoAtual() === 'envio') {
+            <lucide-icon [img]="loaderIcon" class="w-4 h-4 animate-spin" />
+          } @else {
+            <lucide-icon [img]="sendIcon" class="w-4 h-4" />
+          }
+          Enviar usando template
+        </button>
+
+        @if (respostaEnvio()) {
+          <div
+            class="bg-[var(--color-success-bg)] border border-[var(--color-success-border)] rounded-2xl p-4"
+          >
+            <p class="text-sm text-[var(--color-success)]">
+              Notificacao #{{ respostaEnvio()!.idNotificacao }} criada com status
+              {{ respostaEnvio()!.status }}.
+            </p>
+          </div>
+        }
+      </form>
+    }
+  </app-side-panel>
+</div>
