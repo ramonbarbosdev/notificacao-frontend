@@ -4,14 +4,17 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import {
   Ban,
   Check,
+  Download,
   LoaderCircle,
   LucideAngularModule,
   MessageCircle,
   RefreshCcw,
   ShieldCheck,
+  Upload,
   UserCheck,
   Users,
 } from 'lucide-angular';
+import { catchError, concatMap, from, map, of, toArray } from 'rxjs';
 import { z } from 'zod';
 
 import { SidePanelComponent } from '../../shared/components/side-panel/side-panel.component';
@@ -25,7 +28,7 @@ import { CanalNotificacao, ContatoResponseDTO } from '../../shared/types/dtos';
 import { formatPhone, normalizePhone } from '../../shared/helper/phone.utils';
 import { useSidePanel } from '../../shared/helper/side-panel.state';
 
-type AcaoContato = 'consentimento' | 'bloqueio' | 'sync' | null;
+type AcaoContato = 'consentimento' | 'bloqueio' | 'sync' | 'import' | 'export' | null;
 
 const contatoFormSchema = z
   .object({
@@ -61,6 +64,20 @@ const contatoFormSchema = z
 
 type ContatoFormData = z.infer<typeof contatoFormSchema>;
 
+interface ContatoImportacao {
+  canal: CanalNotificacao;
+  destinatario: string;
+  consentimento: boolean;
+  bloqueado: boolean;
+  motivo: string | null;
+}
+
+interface ResultadoImportacao {
+  item: number;
+  sucesso: boolean;
+  mensagem?: string;
+}
+
 @Component({
   selector: 'app-contatos',
   standalone: true,
@@ -89,12 +106,15 @@ export class ContatosComponent implements OnInit {
   protected readonly checkIcon = Check;
   protected readonly whatsappIcon = MessageCircle;
   protected readonly syncIcon = RefreshCcw;
+  protected readonly importIcon = Upload;
+  protected readonly exportIcon = Download;
 
   readonly filtros = signal<Record<string, any>>({});
   readonly acaoAtual = signal<AcaoContato>(null);
   readonly contatos = signal<ContatoResponseDTO[]>([]);
   readonly resposta = signal<ContatoResponseDTO | null>(null);
   readonly erro = signal<string | null>(null);
+  readonly mensagemImportacao = signal<string | null>(null);
   readonly errosFormulario = signal<Partial<Record<keyof ContatoFormData, string>>>({});
   readonly canais: CanalNotificacao[] = ['WHATSAPP', 'EMAIL', 'TELEGRAM', 'WEBHOOK'];
 
@@ -208,6 +228,7 @@ export class ContatosComponent implements OnInit {
 
     this.resposta.set(null);
     this.erro.set(null);
+    this.mensagemImportacao.set(null);
     this.errosFormulario.set({});
     this.contatoPanel.abrir();
   }
@@ -295,6 +316,7 @@ export class ContatosComponent implements OnInit {
 
     this.resposta.set(null);
     this.erro.set(null);
+    this.mensagemImportacao.set(null);
     this.errosFormulario.set({});
     this.contatoPanel.abrir(contato);
   }
@@ -310,6 +332,7 @@ export class ContatosComponent implements OnInit {
     this.errosFormulario.set({});
     this.resposta.set(null);
     this.erro.set(null);
+    this.mensagemImportacao.set(null);
 
     if (!destinatario) return;
 
@@ -357,6 +380,7 @@ export class ContatosComponent implements OnInit {
 
     this.acaoAtual.set('sync');
     this.erro.set(null);
+    this.mensagemImportacao.set(null);
     this.resposta.set(null);
 
     this.contatoService.sincronizarWhatsapp().subscribe({
@@ -373,12 +397,86 @@ export class ContatosComponent implements OnInit {
     });
   }
 
+  exportarContatos(): void {
+    if (this.acaoAtual()) return;
+
+    this.acaoAtual.set('export');
+    this.erro.set(null);
+    this.mensagemImportacao.set(null);
+
+    const filtros = this.filtros();
+    const total = Math.max(this.table.totalElementos(), this.contatos().length, 1);
+
+    this.contatoService
+      .listar({
+        page: 0,
+        size: total,
+        sort: 'dtCriacao,desc',
+        destinatario: filtros['destinatario'] || undefined,
+        canal: filtros['canal'] || undefined,
+        consentimento: this.toBooleanOrUndefined(filtros['consentimento']),
+        bloqueado: this.toBooleanOrUndefined(filtros['bloqueado']),
+      })
+      .subscribe({
+        next: (page) => {
+          this.baixarJson(page.data);
+          this.acaoAtual.set(null);
+        },
+        error: (err) => {
+          this.erro.set(
+            err.error?.mensagem ?? err.error?.erro ?? 'Nao foi possivel exportar os contatos.'
+          );
+          this.acaoAtual.set(null);
+        },
+      });
+  }
+
+  importarContatos(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const arquivo = input.files?.[0];
+
+    input.value = '';
+
+    if (!arquivo || this.acaoAtual()) return;
+
+    this.acaoAtual.set('import');
+    this.erro.set(null);
+    this.mensagemImportacao.set(null);
+
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      try {
+        const contatos = this.parseJsonContatos(String(reader.result ?? ''));
+
+        if (!contatos.length) {
+          this.erro.set('Nenhum contato valido encontrado no arquivo.');
+          this.acaoAtual.set(null);
+          return;
+        }
+
+        this.executarImportacao(contatos);
+      } catch (error) {
+        this.erro.set(error instanceof Error ? error.message : 'Nao foi possivel ler o arquivo.');
+        this.acaoAtual.set(null);
+      }
+    };
+
+    reader.onerror = () => {
+      this.erro.set('Nao foi possivel ler o arquivo selecionado.');
+      this.acaoAtual.set(null);
+    };
+
+    reader.readAsText(arquivo);
+  }
+
   private executar(operacao: 'consentimento' | 'bloqueio'): void {
     if (this.acaoAtual()) return;
 
     this.acaoAtual.set(operacao);
     this.resposta.set(null);
     this.erro.set(null);
+    this.mensagemImportacao.set(null);
 
     const dados = contatoFormSchema.parse(this.form.getRawValue());
 
@@ -406,6 +504,74 @@ export class ContatosComponent implements OnInit {
         this.acaoAtual.set(null);
       },
     });
+  }
+
+  private executarImportacao(contatos: ContatoImportacao[]): void {
+    from(contatos)
+      .pipe(
+        concatMap((contato, index) => {
+          if (!contato.bloqueado && !contato.consentimento) {
+            return of({
+              item: index + 1,
+              sucesso: false,
+              mensagem: 'contato sem consentimento nao pode ser importado pelos endpoints atuais',
+            });
+          }
+
+          const request = {
+            canal: contato.canal,
+            destinatario: this.normalizarDestinatarioParaApi(contato),
+            motivo: contato.motivo,
+          };
+          const chamada = contato.bloqueado
+            ? this.contatoService.bloquearContato(request)
+            : this.contatoService.registrarConsentimento(request);
+
+          return chamada.pipe(
+            map(
+              (): ResultadoImportacao => ({
+                item: index + 1,
+                sucesso: true,
+              })
+            ),
+            catchError((err) =>
+              of({
+                item: index + 1,
+                sucesso: false,
+                mensagem: err.error?.mensagem ?? err.error?.erro ?? 'falha ao importar',
+              })
+            )
+          );
+        }),
+        toArray()
+      )
+      .subscribe({
+        next: (resultados) => {
+          const importados = resultados.filter((resultado) => resultado.sucesso).length;
+          const falhas = resultados.filter((resultado) => !resultado.sucesso);
+
+          this.mensagemImportacao.set(
+            falhas.length
+              ? `${importados} contato(s) importado(s). ${falhas.length} item(ns) com erro.`
+              : `${importados} contato(s) importado(s) com sucesso.`
+          );
+
+          this.erro.set(
+            falhas.length
+              ? falhas
+                  .slice(0, 5)
+                  .map((falha) => `Item ${falha.item}: ${falha.mensagem}`)
+                  .join(' | ')
+              : null
+          );
+          this.acaoAtual.set(null);
+          this.listarContatos();
+        },
+        error: () => {
+          this.erro.set('Nao foi possivel importar os contatos.');
+          this.acaoAtual.set(null);
+        },
+      });
   }
 
   private validarFormulario(): boolean {
@@ -476,7 +642,7 @@ export class ContatosComponent implements OnInit {
     ].join('');
   }
 
-  private normalizarDestinatarioParaApi(dados: ContatoFormData): string {
+  private normalizarDestinatarioParaApi(dados: Pick<ContatoFormData, 'canal' | 'destinatario'>): string {
     if (dados.canal === 'WHATSAPP') {
       return normalizePhone(dados.destinatario);
     }
@@ -486,6 +652,71 @@ export class ContatosComponent implements OnInit {
     }
 
     return dados.destinatario.trim();
+  }
+
+  private baixarJson(contatos: ContatoResponseDTO[]): void {
+    const dados = contatos.map((contato) => ({
+      canal: contato.canal,
+      destinatario: contato.destinatario,
+      consentimento: contato.consentimento,
+      bloqueado: contato.bloqueado,
+      motivo: contato.motivoBloqueio,
+      dtConsentimento: contato.dtConsentimento,
+      dtBloqueio: contato.dtBloqueio,
+    }));
+    const json = JSON.stringify(dados, null, 2);
+    const blob = new Blob([json], { type: 'application/json;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+
+    link.href = url;
+    link.download = `contatos-${new Date().toISOString().slice(0, 10)}.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+
+  private parseJsonContatos(conteudo: string): ContatoImportacao[] {
+    const dados = JSON.parse(conteudo) as unknown;
+    const contatos = Array.isArray(dados)
+      ? dados
+      : this.isRecord(dados) && Array.isArray(dados['contatos'])
+        ? dados['contatos']
+        : null;
+
+    if (!contatos) {
+      throw new Error('O JSON deve ser uma lista de contatos ou um objeto com a propriedade contatos.');
+    }
+
+    return contatos.reduce((acc, item, index) => {
+      if (!this.isRecord(item)) {
+        throw new Error(`Item ${index + 1}: formato invalido.`);
+      }
+
+      const canal = String(item['canal'] ?? '').trim().toUpperCase() as CanalNotificacao;
+      const destinatario = String(item['destinatario'] ?? '').trim();
+
+      if (!this.canais.includes(canal)) {
+        throw new Error(`Item ${index + 1}: canal invalido.`);
+      }
+
+      if (!destinatario) {
+        throw new Error(`Item ${index + 1}: destinatario obrigatorio.`);
+      }
+
+      acc.push({
+        canal,
+        destinatario,
+        consentimento: item['consentimento'] === undefined ? true : item['consentimento'] === true,
+        bloqueado: item['bloqueado'] === true,
+        motivo: typeof item['motivo'] === 'string' && item['motivo'].trim() ? item['motivo'].trim() : null,
+      });
+
+      return acc;
+    }, [] as ContatoImportacao[]);
+  }
+
+  private isRecord(value: unknown): value is Record<string, unknown> {
+    return typeof value === 'object' && value !== null && !Array.isArray(value);
   }
 
   private toBooleanOrUndefined(value: unknown): boolean | undefined {

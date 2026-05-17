@@ -142,7 +142,7 @@ export class NotificacoesComponent {
         mensagem: mensagem!,
       })
       .subscribe({
-        next: (res:any) => {
+        next: (res: any) => {
           this.resposta.set(res);
           this.enviando.set(false);
 
@@ -154,14 +154,15 @@ export class NotificacoesComponent {
             });
           }
         },
-        error: (err:any) => {
+        error: (err: any) => {
+          this.enviando.set(false);
+
           this.erroRede.set(
             err.error?.mensagem ??
-            err.error?.erro ??
-            'Falha na comunicação com a API.'
+            err.error?.detail ??
+            err.error?.message ??
+            'Falha ao enviar notificação.'
           );
-
-          this.enviando.set(false);
         },
       });
   }
