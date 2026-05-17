@@ -4,6 +4,8 @@ import { RouterModule } from '@angular/router';
 import {
   Bell,
   Building2,
+  ClipboardList,
+  Flag,
   History,
   LayoutDashboard,
   LogOut,
@@ -11,7 +13,9 @@ import {
   LucideIconData,
   MessageCircle,
   MessageSquareText,
+  Package,
   Send,
+  Settings,
   UserCheck,
   UserPlus,
 } from 'lucide-angular';
@@ -48,6 +52,36 @@ export class SidebarComponent {
       label: 'Nova Organizacao',
       rota: '/admin/organizacoes',
       icon: Building2,
+      scope: 'ADMIN_GLOBAL',
+    },
+    {
+      label: 'Planos',
+      rota: '/admin/planos',
+      icon: Package,
+      scope: 'ADMIN_GLOBAL',
+    },
+    {
+      label: 'Configuracoes Globais',
+      rota: '/admin/configuracoes',
+      icon: Settings,
+      scope: 'ADMIN_GLOBAL',
+    },
+    {
+      label: 'Feature Flags',
+      rota: '/admin/features',
+      icon: Flag,
+      scope: 'ADMIN_GLOBAL',
+    },
+    {
+      label: 'Monitoramento',
+      rota: '/admin/monitoramento',
+      icon: ClipboardList,
+      scope: 'ADMIN_GLOBAL',
+    },
+    {
+      label: 'Auditoria',
+      rota: '/admin/auditoria',
+      icon: History,
       scope: 'ADMIN_GLOBAL',
     },
     {
@@ -99,10 +133,24 @@ export class SidebarComponent {
     },
     {
       label: 'Historico / Fila',
-      rota: '/app/historico',
+      rota: '/app/fila',
       icon: History,
       scope: 'ORG',
       roles: ['ADMIN', 'USER'],
+    },
+    {
+      label: 'Configuracoes',
+      rota: '/app/configuracoes',
+      icon: Settings,
+      scope: 'ORG',
+      roles: ['ADMIN', 'USER'],
+    },
+    {
+      label: 'Auditoria',
+      rota: '/app/auditoria',
+      icon: History,
+      scope: 'ORG',
+      roles: ['ADMIN'],
     },
   ];
 

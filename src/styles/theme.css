@@ -128,6 +128,18 @@
     box-shadow: 0 0 0 2px var(--app-primary);
   }
 
+  .config-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    border: 1px solid var(--app-border);
+    border-radius: 0.75rem;
+    padding: 0.75rem 1rem;
+    color: var(--app-text);
+    font-size: 0.875rem;
+  }
+
   .app-button-primary {
     background: var(--app-primary);
     color: var(--app-text);

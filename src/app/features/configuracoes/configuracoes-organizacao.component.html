@@ -1,0 +1,252 @@
+<div class="min-h-screen bg-[var(--color-bg-base)]">
+  <app-sidebar />
+  <app-header />
+
+  <main class="pl-64 pt-16">
+    <div class="p-8 max-w-7xl mx-auto">
+      <div class="flex items-start justify-between gap-4 mb-8">
+        <div>
+          <h1 class="text-2xl font-bold text-[var(--color-text)]">Configuracoes da Organizacao</h1>
+          <p class="text-[var(--color-text-muted)] text-sm mt-1">
+            Politicas operacionais, seguranca, integrações e recursos da sua organizacao.
+          </p>
+        </div>
+        @if (!isAdmin()) {
+          <span class="px-3 py-1 rounded-full border border-[var(--color-border)] text-xs text-[var(--color-text-muted)]">Somente leitura</span>
+        }
+      </div>
+
+      @if (erro()) {
+        <div class="mb-6 bg-[var(--color-danger-bg)] border border-[var(--color-danger-border)] rounded-xl px-4 py-3">
+          <p class="text-[var(--color-danger)] text-sm">{{ erro() }}</p>
+        </div>
+      }
+      @if (sucesso()) {
+        <div class="mb-6 bg-[var(--color-success-bg)] border border-[var(--color-success-border)] rounded-xl px-4 py-3">
+          <p class="text-[var(--color-success)] text-sm">{{ sucesso() }}</p>
+        </div>
+      }
+
+      <div class="flex flex-wrap gap-2 mb-6">
+        @for (item of abas; track item.id) {
+          @if (!item.adminOnly || isAdmin()) {
+            <button type="button" (click)="selecionarAba(item.id)" class="px-4 py-2 rounded-xl border text-sm"
+              [class.bg-[var(--color-primary)]]="aba() === item.id"
+              [class.text-[var(--color-bg-base)]]="aba() === item.id"
+              [class.border-[var(--color-primary)]]="aba() === item.id"
+              [class.border-[var(--color-border)]]="aba() !== item.id"
+              [class.text-[var(--color-text-muted)]]="aba() !== item.id">
+              {{ item.label }}
+            </button>
+          }
+        }
+      </div>
+
+      <form [formGroup]="form" class="space-y-6">
+        @switch (aba()) {
+          @case ('geral') {
+            <section class="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-6">
+              <h2 class="text-[var(--color-text)] font-semibold mb-4">Geral</h2>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <input formControlName="nmExibicao" class="form-input-admin" placeholder="Nome de exibicao" />
+                <input formControlName="dsLogoUrl" class="form-input-admin" placeholder="Logo URL" />
+                <input formControlName="dsIdioma" class="form-input-admin" placeholder="Idioma" />
+                <input formControlName="timezone" class="form-input-admin" placeholder="Timezone" />
+                <input formControlName="nuTelefoneOperacional" class="form-input-admin" placeholder="Telefone operacional" />
+                <input formControlName="dsEmailOperacional" type="email" class="form-input-admin" placeholder="Email operacional" />
+              </div>
+            </section>
+          }
+
+          @case ('whatsapp') {
+            <section class="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-6 space-y-5">
+              <div class="flex items-center justify-between gap-3">
+                <div>
+                  <h2 class="text-[var(--color-text)] font-semibold">WhatsApp</h2>
+                  <p class="text-xs text-[var(--color-text-muted)] mt-1">
+                    Status: {{ whatsappStatus()?.status ?? 'desconhecido' }} · {{ whatsappStatus()?.conectado ? 'online' : 'offline' }}
+                  </p>
+                </div>
+                <a routerLink="/app/whatsapp" class="px-3 py-2 rounded-xl border border-[var(--color-border)] text-sm text-[var(--color-text)]">Ir para WhatsApp</a>
+              </div>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <input formControlName="whatsappDelayMinSegundos" type="number" class="form-input-admin" placeholder="Delay minimo" />
+                <input formControlName="whatsappDelayMaxSegundos" type="number" class="form-input-admin" placeholder="Delay maximo" />
+                <input formControlName="whatsappLimitePorMinuto" type="number" class="form-input-admin" placeholder="Limite por minuto" />
+                <input formControlName="whatsappLimitePorDia" type="number" class="form-input-admin" placeholder="Limite por dia" />
+                <select formControlName="whatsappModoEnvio" class="form-input-admin">
+                  <option value="SEGURO">SEGURO</option>
+                  <option value="BALANCEADO">BALANCEADO</option>
+                  <option value="AGRESSIVO">AGRESSIVO</option>
+                </select>
+              </div>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <label class="config-toggle">Reconexao automatica <input type="checkbox" formControlName="whatsappReconexaoAutomatica" /></label>
+                <label class="config-toggle">Simular digitando <input type="checkbox" formControlName="whatsappSimularDigitando" /></label>
+              </div>
+              <p class="text-xs text-[var(--color-text-subtle)]">Use limites conservadores para reduzir bloqueios e melhorar entregabilidade.</p>
+            </section>
+          }
+
+          @case ('consentimento') {
+            <section class="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-6 space-y-4">
+              <h2 class="text-[var(--color-text)] font-semibold">Consentimento</h2>
+              <p class="text-sm text-[var(--color-text-muted)]">
+                O consentimento controla se um contato pode receber mensagens. Quando ativado, a API bloqueia envios para contatos sem consentimento ativo.
+              </p>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <label class="config-toggle">Exigir consentimento <input type="checkbox" formControlName="exigirConsentimento" /></label>
+                <label class="config-toggle">Consentimento expira <input type="checkbox" formControlName="consentimentoExpira" /></label>
+                <label class="config-toggle">Bloqueio automatico <input type="checkbox" formControlName="bloqueioAutomatico" /></label>
+                <input formControlName="diasExpiracaoConsentimento" type="number" class="form-input-admin" placeholder="Dias de expiracao" />
+                <input formControlName="limiteFalhasParaBloqueio" type="number" class="form-input-admin" placeholder="Limite de falhas" />
+              </div>
+            </section>
+          }
+
+          @case ('templates') {
+            <section class="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-6 space-y-4">
+              <h2 class="text-[var(--color-text)] font-semibold">Templates</h2>
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <label class="config-toggle">Versionamento <input type="checkbox" formControlName="templatesVersionamento" /></label>
+                <label class="config-toggle">Exigir aprovacao <input type="checkbox" formControlName="templatesExigirAprovacao" /></label>
+                <label class="config-toggle">Validar variaveis <input type="checkbox" formControlName="templatesValidarVariaveis" /></label>
+              </div>
+              <div class="flex gap-3">
+                <a routerLink="/app/templates" class="px-3 py-2 rounded-xl border border-[var(--color-border)] text-sm text-[var(--color-text)]">Ir para Templates</a>
+              </div>
+            </section>
+          }
+
+          @case ('notificacoes') {
+            <section class="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-6">
+              <h2 class="text-[var(--color-text)] font-semibold mb-4">Notificacoes</h2>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <label class="config-toggle">Retry automatico <input type="checkbox" formControlName="retryAutomatico" /></label>
+                <input formControlName="retryTentativas" type="number" class="form-input-admin" placeholder="Tentativas" />
+                <input formControlName="retryIntervaloSegundos" type="number" class="form-input-admin" placeholder="Intervalo em segundos" />
+                <input formControlName="prioridadePadrao" class="form-input-admin" placeholder="Prioridade padrao" />
+                <input formControlName="expiracaoFilaHoras" type="number" class="form-input-admin" placeholder="Expiracao da fila em horas" />
+              </div>
+            </section>
+          }
+        }
+
+        @if (['geral','whatsapp','consentimento','templates','notificacoes'].includes(aba())) {
+          <div class="flex justify-end">
+            <button type="button" (click)="salvar()" [disabled]="salvando() || !isAdmin()" class="px-4 py-3 rounded-xl bg-[var(--color-primary)] disabled:opacity-50 text-[var(--color-bg-base)] text-sm font-semibold flex items-center gap-2">
+              @if (salvando()) {
+                <lucide-icon [img]="loaderIcon" class="w-4 h-4 animate-spin" />
+              } @else {
+                <lucide-icon [img]="checkIcon" class="w-4 h-4" />
+              }
+              Salvar configuracoes
+            </button>
+          </div>
+        }
+      </form>
+
+      @if (aba() === 'apiKeys') {
+        <section class="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-6 space-y-6">
+          <h2 class="text-[var(--color-text)] font-semibold">API Keys</h2>
+          @if (apiKeyCriada()) {
+            <div class="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4">
+              <p class="text-amber-300 text-sm font-semibold">Copie esta chave agora. Ela nao sera exibida novamente.</p>
+              <code class="block mt-2 text-xs text-[var(--color-text)] break-all">{{ apiKeyCriada()!.chave }}</code>
+            </div>
+          }
+          <div [formGroup]="apiKeyForm" class="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <input formControlName="nome" class="form-input-admin" placeholder="Nome da chave" />
+            <input formControlName="expiraEm" type="datetime-local" class="form-input-admin" />
+            <button type="button" (click)="criarApiKey()" class="px-4 py-3 rounded-xl bg-[var(--color-primary)] text-[var(--color-bg-base)] text-sm font-semibold">Gerar API Key</button>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            @for (scope of scopes; track scope.value) {
+              <label class="px-3 py-2 rounded-xl border border-[var(--color-border)] text-xs text-[var(--color-text)]">
+                <input type="checkbox" [checked]="apiKeyForm.controls.scopes.value?.includes(scope.value)" (change)="toggleScope(scope.value)" />
+                {{ scope.label }}
+              </label>
+            }
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              @for (key of apiKeys(); track key.idApiKey) {
+                <tr class="border-t border-[var(--color-border)]">
+                  <td class="py-3 pr-4 text-[var(--color-text)]">{{ key.nome }}</td>
+                  <td class="py-3 pr-4 text-[var(--color-text-muted)]">{{ key.prefixo }}</td>
+                  <td class="py-3 pr-4 text-[var(--color-text-muted)]">{{ key.scopes.join(', ') }}</td>
+                  <td class="py-3 pr-4">{{ key.ativo ? 'Ativa' : 'Revogada' }}</td>
+                  <td class="py-3 pr-4 text-right">
+                    @if (key.ativo) {
+                      <button type="button" (click)="revogarApiKey(key.idApiKey)" class="text-xs font-semibold text-[var(--color-danger)]">Revogar</button>
+                    }
+                  </td>
+                </tr>
+              }
+            </table>
+          </div>
+        </section>
+      }
+
+      @if (aba() === 'webhooks') {
+        <section class="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-6 space-y-6">
+          <div class="flex items-center justify-between">
+            <h2 class="text-[var(--color-text)] font-semibold">Webhooks</h2>
+            <button type="button" (click)="novoWebhook()" class="px-3 py-2 rounded-xl border border-[var(--color-border)] text-sm text-[var(--color-text)]">Novo Webhook</button>
+          </div>
+          <div [formGroup]="webhookForm" class="space-y-3">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <input formControlName="nome" class="form-input-admin" placeholder="Nome" />
+              <input formControlName="url" class="form-input-admin" placeholder="URL" />
+              <input formControlName="secret" class="form-input-admin" placeholder="Secret novo" />
+              <label class="config-toggle">Ativo <input type="checkbox" formControlName="ativo" /></label>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              @for (evento of eventos; track evento.value) {
+                <label class="px-3 py-2 rounded-xl border border-[var(--color-border)] text-xs text-[var(--color-text)]">
+                  <input type="checkbox" [checked]="webhookForm.controls.eventos.value?.includes(evento.value)" (change)="toggleEvento(evento.value)" />
+                  {{ evento.label }}
+                </label>
+              }
+            </div>
+            <button type="button" (click)="salvarWebhook()" class="px-4 py-3 rounded-xl bg-[var(--color-primary)] text-[var(--color-bg-base)] text-sm font-semibold">Salvar webhook</button>
+          </div>
+          <div class="space-y-3">
+            @for (webhook of webhooks(); track webhook.idWebhook) {
+              <div class="border border-[var(--color-border)] rounded-xl p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                <div>
+                  <p class="text-[var(--color-text)] font-semibold">{{ webhook.nome }}</p>
+                  <p class="text-xs text-[var(--color-text-muted)]">{{ webhook.url }}</p>
+                </div>
+                <div class="flex gap-3">
+                  <button type="button" (click)="editarWebhook(webhook)" class="text-xs font-semibold text-[var(--color-primary-soft)]">Editar</button>
+                  <button type="button" (click)="alternarWebhook(webhook)" class="text-xs font-semibold text-[var(--color-text-muted)]">{{ webhook.ativo ? 'Inativar' : 'Ativar' }}</button>
+                  <button type="button" (click)="removerWebhook(webhook.idWebhook)" class="text-xs font-semibold text-[var(--color-danger)]">Remover</button>
+                </div>
+              </div>
+            }
+          </div>
+        </section>
+      }
+
+      @if (aba() === 'usuarios') {
+        <section class="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-6">
+          <h2 class="text-[var(--color-text)] font-semibold">Usuarios</h2>
+          <p class="text-sm text-[var(--color-text-muted)] mt-2">
+            O backend atual expoe gestao de usuarios por organizacao no painel global do SUPER_ADMIN.
+          </p>
+        </section>
+      }
+
+      @if (aba() === 'auditoria') {
+        <section class="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-6">
+          <h2 class="text-[var(--color-text)] font-semibold">Auditoria</h2>
+          <p class="text-sm text-[var(--color-text-muted)] mt-2">
+            A auditoria completa fica em uma rota dedicada.
+          </p>
+          <a routerLink="/app/auditoria" class="inline-flex mt-4 px-3 py-2 rounded-xl border border-[var(--color-border)] text-sm text-[var(--color-text)]">Abrir auditoria</a>
+        </section>
+      }
+    </div>
+  </main>
+</div>

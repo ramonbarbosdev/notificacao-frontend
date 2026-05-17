@@ -84,3 +84,18 @@ export const roleGuard: CanActivateFn = (route: ActivatedRouteSnapshot) => {
     tokenService.isSuperAdmin() ? '/admin/dashboard' : '/app/dashboard',
   ]);
 };
+
+export const adminOnlyGuard: CanActivateFn = () => {
+  const tokenService = inject(TokenService);
+  const router = inject(Router);
+
+  if (!tokenService.existe() || tokenService.estaExpirado()) {
+    return router.createUrlTree(['/login']);
+  }
+
+  if (tokenService.role() === 'ADMIN') {
+    return true;
+  }
+
+  return router.createUrlTree(['/app/dashboard']);
+};

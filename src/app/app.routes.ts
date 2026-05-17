@@ -1,5 +1,11 @@
 import { Routes } from '@angular/router';
-import { authGuard, organizationGuard, roleGuard, superAdminGuard } from './core/guards/guards';
+import {
+  adminOnlyGuard,
+  authGuard,
+  organizationGuard,
+  roleGuard,
+  superAdminGuard,
+} from './core/guards/guards';
 
 export const routes: Routes = [
   { path: '', redirectTo: '/login', pathMatch: 'full' },
@@ -70,6 +76,32 @@ export const routes: Routes = [
   },
 
   {
+    path: 'app/fila',
+    canActivate: [authGuard, organizationGuard, roleGuard],
+    data: { roles: ['ADMIN', 'USER'] },
+    loadComponent: () =>
+      import('./features/historico-fila/historico-fila.component').then(
+        (m) => m.HistoricoFilaComponent
+      ),
+  },
+
+  {
+    path: 'app/configuracoes',
+    canActivate: [authGuard, organizationGuard, roleGuard],
+    data: { roles: ['ADMIN', 'USER'] },
+    loadComponent: () =>
+      import('./features/configuracoes/configuracoes-organizacao.component').then(
+        (m) => m.ConfiguracoesOrganizacaoComponent
+      ),
+  },
+
+  {
+    path: 'app/auditoria',
+    canActivate: [authGuard, organizationGuard, adminOnlyGuard],
+    loadComponent: () => import('./features/auditoria/auditoria.component').then((m) => m.AuditoriaComponent),
+  },
+
+  {
     path: 'admin/dashboard',
     canActivate: [authGuard, superAdminGuard],
     loadComponent: () =>
@@ -82,6 +114,48 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/admin/nova-organizacao/nova-organizacao.component').then(
         (m) => m.NovaOrganizacaoComponent
+      ),
+  },
+
+  {
+    path: 'admin/planos',
+    canActivate: [authGuard, superAdminGuard],
+    loadComponent: () => import('./features/admin/planos/planos.component').then((m) => m.PlanosComponent),
+  },
+
+  {
+    path: 'admin/configuracoes',
+    canActivate: [authGuard, superAdminGuard],
+    loadComponent: () =>
+      import('./features/admin/configuracoes-globais/configuracoes-globais.component').then(
+        (m) => m.ConfiguracoesGlobaisComponent
+      ),
+  },
+
+  {
+    path: 'admin/features',
+    canActivate: [authGuard, superAdminGuard],
+    loadComponent: () =>
+      import('./features/admin/feature-flags/feature-flags.component').then(
+        (m) => m.FeatureFlagsComponent
+      ),
+  },
+
+  {
+    path: 'admin/auditoria',
+    canActivate: [authGuard, superAdminGuard],
+    loadComponent: () =>
+      import('./features/admin/auditoria-global/auditoria-global.component').then(
+        (m) => m.AuditoriaGlobalComponent
+      ),
+  },
+
+  {
+    path: 'admin/monitoramento',
+    canActivate: [authGuard, superAdminGuard],
+    loadComponent: () =>
+      import('./features/admin/monitoramento/monitoramento.component').then(
+        (m) => m.MonitoramentoComponent
       ),
   },
 
@@ -121,7 +195,8 @@ export const routes: Routes = [
   { path: 'contatos', redirectTo: '/app/contatos' },
   { path: 'templates', redirectTo: '/app/templates' },
   { path: 'historico', redirectTo: '/app/historico' },
-  { path: 'fila', redirectTo: '/app/historico' },
+  { path: 'fila', redirectTo: '/app/fila' },
+  { path: 'configuracoes', redirectTo: '/app/configuracoes' },
 
   { path: '**', redirectTo: '/login' },
 ];

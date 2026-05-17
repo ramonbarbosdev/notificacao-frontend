@@ -1,0 +1,32 @@
+<div class="min-h-screen bg-[var(--color-bg-base)]">
+  <app-sidebar />
+  <app-header />
+
+  <main class="pl-64 pt-16">
+    <div class="p-8 max-w-7xl mx-auto">
+      <div class="mb-8">
+        <h1 class="text-2xl font-bold text-[var(--color-text)]">Auditoria</h1>
+        <p class="text-[var(--color-text-muted)] text-sm mt-1">Eventos da organizacao atual.</p>
+      </div>
+
+      @if (erro()) {
+        <div class="mb-6 bg-[var(--color-danger-bg)] border border-[var(--color-danger-border)] rounded-xl px-4 py-3">
+          <p class="text-[var(--color-danger)] text-sm">{{ erro() }}</p>
+        </div>
+      }
+
+      <app-data-table
+        [columns]="columns"
+        [items]="eventos()"
+        [loading]="table.loading()"
+        [page]="table.paginaAtual()"
+        [pageSize]="table.tamanhoPagina()"
+        [totalElements]="table.totalElementos()"
+        [totalPages]="table.totalPaginas()"
+        (nextPage)="proximaPagina()"
+        (previousPage)="paginaAnterior()"
+        (pageSizeChange)="alterarTamanhoPagina($event)"
+      />
+    </div>
+  </main>
+</div>

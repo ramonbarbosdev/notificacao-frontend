@@ -304,3 +304,201 @@ export interface UsuarioOrganizacaoResponse {
   role: RoleOrganizacao;
   flAtivo: boolean;
 }
+
+// CONFIGURACOES SAAS
+
+export type RecursoFeature =
+  | 'WHATSAPP'
+  | 'EMAIL'
+  | 'TELEGRAM'
+  | 'WEBHOOK'
+  | 'TEMPLATES'
+  | 'API_PUBLICA'
+  | 'ANALYTICS';
+
+export type ApiKeyScope =
+  | 'NOTIFICACOES_ENVIAR'
+  | 'NOTIFICACOES_CONSULTAR'
+  | 'TEMPLATES_CONSULTAR'
+  | 'TEMPLATES_GERENCIAR'
+  | 'CONTATOS_CONSULTAR'
+  | 'CONTATOS_GERENCIAR';
+
+export type WebhookEvento =
+  | 'NOTIFICACAO_CRIADA'
+  | 'NOTIFICACAO_ENVIADA'
+  | 'NOTIFICACAO_ENTREGUE'
+  | 'NOTIFICACAO_LIDA'
+  | 'NOTIFICACAO_FALHOU'
+  | 'CONTATO_BLOQUEADO'
+  | 'WHATSAPP_DESCONECTADO'
+  | 'WHATSAPP_QR_ATUALIZADO';
+
+export interface ConfiguracaoGlobal {
+  idConfiguracaoGlobal: number;
+  nmPlataforma: string;
+  nmDominioPrincipal: string;
+  nmEmailSuporte: string;
+  dsSmtpHost: string | null;
+  nuSmtpPorta: number | null;
+  nmSmtpUsuario: string | null;
+  smtpSenhaConfigurada: boolean;
+  nuTimezonePadrao: number | null;
+  flWhatsappProviderPadrao: boolean;
+  flApiPublicaHabilitada: boolean;
+  flTemplatesHabilitado: boolean;
+  flWebhooksHabilitado: boolean;
+  flTelegramHabilitado: boolean;
+  flEmailHabilitado: boolean;
+  dtCriacao?: string | null;
+  dtAtualizacao?: string | null;
+}
+
+export interface ConfiguracaoGlobalRequest {
+  nmPlataforma: string;
+  nmDominioPrincipal: string;
+  nmEmailSuporte: string;
+  dsSmtpHost?: string | null;
+  nuSmtpPorta?: number | null;
+  nmSmtpUsuario?: string | null;
+  dsSmtpSenha?: string | null;
+  nuTimezonePadrao?: number | null;
+  flWhatsappProviderPadrao: boolean;
+  flApiPublicaHabilitada: boolean;
+  flTemplatesHabilitado: boolean;
+  flWebhooksHabilitado: boolean;
+  flTelegramHabilitado: boolean;
+  flEmailHabilitado: boolean;
+}
+
+export interface Plano {
+  idPlano: number;
+  nmPlano: string;
+  dsPlano: string | null;
+  nuLimiteMensagensMensal: number | null;
+  nuLimiteUsuarios: number | null;
+  nuLimiteTemplates: number | null;
+  nuLimiteContatos: number | null;
+  flWhatsappHabilitado: boolean;
+  flEmailHabilitado: boolean;
+  flTelegramHabilitado: boolean;
+  flWebhookHabilitado: boolean;
+  flApiPublicaHabilitada: boolean;
+  flAtivo: boolean;
+  dtCriacao?: string | null;
+  dtAtualizacao?: string | null;
+}
+
+export type PlanoRequest = Omit<Plano, 'idPlano' | 'dtCriacao' | 'dtAtualizacao'>;
+
+export interface FeatureFlag {
+  idFeatureFlag: number | null;
+  idOrganizacao: number;
+  recurso: RecursoFeature;
+  habilitado: boolean;
+}
+
+export interface FeatureFlagRequest {
+  features: Partial<Record<RecursoFeature, boolean>>;
+}
+
+export interface OrganizacaoConfiguracao {
+  idOrganizacaoConfiguracao: number;
+  idOrganizacao: number;
+  nmExibicao: string;
+  dsLogoUrl: string | null;
+  dsIdioma: string | null;
+  timezone: string | null;
+  nuTelefoneOperacional: string | null;
+  dsEmailOperacional: string | null;
+  whatsappReconexaoAutomatica: boolean;
+  whatsappDelayMinSegundos: number | null;
+  whatsappDelayMaxSegundos: number | null;
+  whatsappSimularDigitando: boolean;
+  whatsappLimitePorMinuto: number | null;
+  whatsappLimitePorDia: number | null;
+  whatsappModoEnvio: 'SEGURO' | 'BALANCEADO' | 'AGRESSIVO' | string;
+  exigirConsentimento: boolean;
+  consentimentoExpira: boolean;
+  diasExpiracaoConsentimento: number | null;
+  bloqueioAutomatico: boolean;
+  limiteFalhasParaBloqueio: number | null;
+  templatesVersionamento: boolean;
+  templatesExigirAprovacao: boolean;
+  templatesValidarVariaveis: boolean;
+  retryAutomatico: boolean;
+  retryTentativas: number | null;
+  retryIntervaloSegundos: number | null;
+  prioridadePadrao: string | null;
+  expiracaoFilaHoras: number | null;
+  auditoriaHabilitada: boolean;
+  dtCriacao?: string | null;
+  dtAtualizacao?: string | null;
+}
+
+export type OrganizacaoConfiguracaoRequest = Omit<
+  OrganizacaoConfiguracao,
+  'idOrganizacaoConfiguracao' | 'idOrganizacao' | 'dtCriacao' | 'dtAtualizacao'
+>;
+
+export interface ApiKey {
+  idApiKey: number;
+  nome: string;
+  prefixo: string;
+  scopes: ApiKeyScope[];
+  ativo: boolean;
+  ultimoUsoEm: string | null;
+  expiraEm: string | null;
+  dtCriacao: string | null;
+  dtRevogacao: string | null;
+}
+
+export interface ApiKeyCreateRequest {
+  nome: string;
+  scopes: ApiKeyScope[];
+  expiraEm?: string | null;
+}
+
+export interface ApiKeyCreatedResponse {
+  idApiKey: number;
+  nome: string;
+  prefixo: string;
+  chave: string;
+  scopes: ApiKeyScope[];
+  expiraEm: string | null;
+  dtCriacao: string | null;
+}
+
+export interface Webhook {
+  idWebhook: number;
+  nome: string;
+  url: string;
+  secretConfigurado: boolean;
+  eventos: WebhookEvento[];
+  ativo: boolean;
+  dtCriacao?: string | null;
+  dtAtualizacao?: string | null;
+}
+
+export interface WebhookRequest {
+  nome: string;
+  url: string;
+  secret?: string | null;
+  eventos: WebhookEvento[];
+  ativo: boolean;
+}
+
+export interface AuditoriaEvento {
+  idAuditoria: number;
+  idOrganizacao: number | null;
+  idUsuario: number | null;
+  role: string | null;
+  modulo: string;
+  acao: string;
+  descricao: string;
+  ip: string | null;
+  userAgent: string | null;
+  dadosAntes: string | null;
+  dadosDepois: string | null;
+  dtCriacao: string;
+}
