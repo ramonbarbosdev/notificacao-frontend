@@ -61,7 +61,7 @@
 
             <div>
               <p class="text-[var(--color-text)] font-semibold text-lg">
-                {{ status()?.status ?? '-' }}
+                {{labelTentativaStatus(status()!.status)  ?? 'Pendente' }}
               </p>
 
               @if (status()?.telefone) {

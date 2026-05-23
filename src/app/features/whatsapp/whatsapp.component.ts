@@ -1,33 +1,36 @@
-import { HttpErrorResponse } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Subscription } from 'rxjs';
+import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
+import { Observable, Subscription } from 'rxjs';
 
-import {
-  LucideAngularModule,
-  MessageCircle,
-  RefreshCw,
-  LoaderCircle,
-  Send,
-  Check,
-  X,
-  PlugZap,
-  QrCode,
-} from 'lucide-angular';
+import { LucideAngularModule } from 'lucide-angular';
 
-import { SidebarComponent } from '../../core/layout/layout.components';
 import { AuthService } from '../../core/auth/auth.service';
 import { WhatsappEventsService } from '../../core/http/whatsapp-events.service';
+import { HeaderComponent } from '../../core/layout/header/header.component';
+import { SidebarComponent } from '../../core/layout/layout.components';
+import { WhatsappService } from '../../core/services/whatsapp.service';
 
 import {
   EnviarMensagemResponse,
   StatusNotificacao,
   WhatsappEvento,
+  WhatsappStatus,
   WhatsappStatusResponse,
 } from '../../shared/types/dtos';
-import { HeaderComponent } from '../../core/layout/header/header.component';
-import { WhatsappService } from '../../core/services/whatsapp.service';
+
+import { STATUS_LABELS, STATUS_TENTATIVA_LABELS } from './whatsapp.constants';
+import { criarFormularioMensagem } from './whatsapp.form';
+import {
+  ehErroConsentimento,
+  ehStatusDeTentativa,
+  extrairMensagemErro,
+  montarQrImagemSrc,
+} from './whatsapp.helpers';
+import { WHATSAPP_ICONS } from './whatsapp.icons';
+
+type WhatsappConnectionStatus = WhatsappStatusResponse['status'];
 
 @Component({
   selector: 'app-whatsapp',
@@ -50,14 +53,14 @@ export class WhatsappComponent implements OnInit, OnDestroy {
   private countdownId: ReturnType<typeof setInterval> | null = null;
   private eventosSubscription: Subscription | null = null;
 
-  protected readonly whatsappIcon = MessageCircle;
-  protected readonly refreshIcon = RefreshCw;
-  protected readonly loaderIcon = LoaderCircle;
-  protected readonly sendIcon = Send;
-  protected readonly checkIcon = Check;
-  protected readonly xIcon = X;
-  protected readonly plugZapIcon = PlugZap;
-  protected readonly qrCodeIcon = QrCode;
+  protected readonly whatsappIcon = WHATSAPP_ICONS.whatsapp;
+  protected readonly refreshIcon = WHATSAPP_ICONS.refresh;
+  protected readonly loaderIcon = WHATSAPP_ICONS.loader;
+  protected readonly sendIcon = WHATSAPP_ICONS.send;
+  protected readonly checkIcon = WHATSAPP_ICONS.check;
+  protected readonly xIcon = WHATSAPP_ICONS.x;
+  protected readonly plugZapIcon = WHATSAPP_ICONS.plugZap;
+  protected readonly qrCodeIcon = WHATSAPP_ICONS.qrCode;
 
   readonly status = signal<WhatsappStatusResponse | null>(null);
   readonly carregando = signal(false);
@@ -69,44 +72,23 @@ export class WhatsappComponent implements OnInit, OnDestroy {
   readonly podeConectar = signal(true);
   readonly segundosRestantes = signal(0);
 
-  readonly statusEmTentativa = computed(() => {
-    const status = this.status()?.status;
-    return this.ehStatusDeTentativa(status);
-  });
-
-  readonly tentativaEmAndamento = computed(
-    () => this.statusEmTentativa() || !this.podeConectar()
+  readonly statusEmTentativa = computed(() =>
+    ehStatusDeTentativa(this.status()?.status)
   );
 
-  readonly conectarBloqueado = computed(
-    () => this.carregando() || !this.podeConectar() || this.statusEmTentativa()
+  readonly tentativaEmAndamento = computed(() =>
+    this.statusEmTentativa() || !this.podeConectar()
   );
 
-  readonly formMensagem = this.fb.group({
-    telefone: ['', [Validators.required, Validators.minLength(10)]],
-    mensagem: ['', [Validators.required]],
-  });
+  readonly conectarBloqueado = computed(() =>
+    this.carregando() || !this.podeConectar() || this.statusEmTentativa()
+  );
 
-  readonly statusLabels: Record<StatusNotificacao, string> = {
-    PENDENTE: 'Pendente',
-    PROCESSANDO: 'Processando',
-    ENVIADA: 'Enviada',
-    ENTREGUE: 'Entregue',
-    LIDA: 'Lida',
-    FALHOU: 'Falhou',
-    BLOQUEADA: 'Bloqueada',
-    CANCELADA: 'Cancelada',
-  };
+  readonly qrImagemSrc = computed(() =>
+    montarQrImagemSrc(this.status()?.qrImagem)
+  );
 
-  readonly qrImagemSrc = () => {
-    const qrImagem = this.status()?.qrImagem;
-
-    if (!qrImagem) return '';
-
-    return qrImagem.startsWith('data:image/')
-      ? qrImagem
-      : `data:image/png;base64,${qrImagem}`;
-  };
+  readonly formMensagem = criarFormularioMensagem(this.fb);
 
   ngOnInit(): void {
     this.conectarEventosDaOrganizacao();
@@ -122,99 +104,44 @@ export class WhatsappComponent implements OnInit, OnDestroy {
     this.carregando.set(true);
 
     this.whatsappService.status().subscribe({
-      next: (status) => {
-        this.status.set(status);
-        this.carregando.set(false);
-        this.sincronizarBotaoComStatus(status);
-
-        if (!status.qrImagem && this.ehStatusDeTentativa(status.status)) {
-          this.buscarStatusSemLoading();
-        }
-      },
-      error: () => {
-        this.carregando.set(false);
-      },
+      next: (status) => this.processarStatusRecebido(status, true),
+      error: () => this.carregando.set(false),
     });
   }
 
   conectar(): void {
     if (this.conectarBloqueado()) return;
 
-    this.carregando.set(true);
-    this.erroConexao.set(null);
-    this.mensagemEvento.set(null);
-    this.podeConectar.set(false);
-    this.segundosRestantes.set(30);
-    this.iniciarContador();
+    this.prepararTentativaConexao();
 
     this.whatsappService.conectar().subscribe({
-      next: (status) => {
-        this.status.set(status);
-        this.carregando.set(false);
-        this.sincronizarBotaoComStatus(status);
-      },
-      error: (err: HttpErrorResponse) => {
-        this.carregando.set(false);
-
-        if (err.status === 409) {
-          this.erroConexao.set(
-            'Conexão WhatsApp em andamento. Aguarde alguns segundos ou cancele a tentativa atual.'
-          );
-          this.podeConectar.set(false);
-          return;
-        }
-
-        this.erroConexao.set(
-          err.error?.mensagem ??
-          err.error?.erro ??
-          'Erro ao iniciar conexão do WhatsApp.'
-        );
-
-        this.liberarConectar();
-      },
+      next: (status) => this.processarStatusRecebido(status, true),
+      error: (err: HttpErrorResponse) => this.tratarErroConexaoInicial(err),
     });
   }
 
   cancelarConexao(): void {
-    this.carregando.set(true);
-    this.erroConexao.set(null);
-
-    this.whatsappService.cancelarConexao().subscribe({
-      next: (status) => {
-        this.status.set(status);
-        this.carregando.set(false);
+    this.executarAcaoDeConexao(() => this.whatsappService.cancelarConexao(), {
+      onSuccess: () => {
         this.removerQrDaTela();
         this.liberarConectar();
       },
-      error: (err: HttpErrorResponse) => {
-        this.carregando.set(false);
-        this.erroConexao.set(
-          err.error?.mensagem ??
-          err.error?.erro ??
-          'Erro ao cancelar conexão do WhatsApp.'
-        );
-      },
+      fallbackErro: 'Erro ao cancelar conexão do WhatsApp.',
     });
   }
 
   desconectar(): void {
-    this.carregando.set(true);
-    this.erroConexao.set(null);
-
-    this.whatsappService.desconectar().subscribe({
-      next: (status) => {
-        this.status.set(status);
-        this.carregando.set(false);
-        this.liberarConectar();
-      },
-      error: () => {
-        this.carregando.set(false);
-      },
+    this.executarAcaoDeConexao(() => this.whatsappService.desconectar(), {
+      onSuccess: () => this.liberarConectar(),
+      fallbackErro: 'Erro ao desconectar o WhatsApp.',
     });
   }
 
   enviarMensagem(): void {
-    if (this.formMensagem.invalid) return;
+    if (this.formMensagem.invalid) {
+      this.formMensagem.markAllAsTouched();
+      return;
+    }
 
     this.enviando.set(true);
     this.respostaMensagem.set(null);
@@ -228,35 +155,128 @@ export class WhatsappComponent implements OnInit, OnDestroy {
         mensagem: mensagem!,
       })
       .subscribe({
-        next: (resposta) => {
-          this.respostaMensagem.set(resposta);
-          this.enviando.set(false);
-
-          if (resposta.sucesso) {
-            this.formMensagem.reset();
-          }
-        },
-        error: (err) => {
-          this.erroEnvio.set(
-            err.error?.mensagem ??
-            err.error?.erro ??
-            'Erro de comunicação com a API.'
-          );
-
-          this.enviando.set(false);
-        },
+        next: (resposta) => this.tratarRespostaEnvio(resposta),
+        error: (err: HttpErrorResponse) => this.tratarErroEnvio(err),
       });
   }
 
   labelStatus(status: StatusNotificacao): string {
-    return this.statusLabels[status];
+    return STATUS_LABELS[status];
+  }
+  labelTentativaStatus(status: WhatsappStatus): string {
+    return STATUS_TENTATIVA_LABELS[status];
   }
 
   ehErroConsentimento(mensagem: string | null | undefined): boolean {
-    if (!mensagem) return false;
+    return ehErroConsentimento(mensagem);
+  }
 
-    const texto = mensagem.toLowerCase();
-    return texto.includes('consentimento') || texto.includes('opt-in') || texto.includes('opt in') || texto.includes('bloque');
+  private buscarStatusSemLoading(): void {
+    this.whatsappService.status().subscribe({
+      next: (status) => this.processarStatusRecebido(status, false),
+    });
+  }
+
+  private processarStatusRecebido(
+    status: WhatsappStatusResponse,
+    finalizarLoading: boolean
+  ): void {
+    this.status.set(status);
+    this.sincronizarBotaoComStatus(status);
+
+    if (finalizarLoading) {
+      this.carregando.set(false);
+    }
+
+    if (!status.qrImagem && ehStatusDeTentativa(status.status)) {
+      this.buscarStatusSemLoading();
+    }
+  }
+
+  private prepararTentativaConexao(): void {
+    this.carregando.set(true);
+    this.erroConexao.set(null);
+    this.mensagemEvento.set(null);
+    this.podeConectar.set(false);
+    this.segundosRestantes.set(30);
+    this.iniciarContador();
+  }
+
+  private tratarErroConexaoInicial(err: HttpErrorResponse): void {
+    this.carregando.set(false);
+
+    if (err.status === 409) {
+      this.erroConexao.set(
+        'Conexão WhatsApp em andamento. Aguarde alguns segundos ou cancele a tentativa atual.'
+      );
+      this.podeConectar.set(false);
+      return;
+    }
+
+    this.erroConexao.set(
+      extrairMensagemErro(err, 'Erro ao iniciar conexão do WhatsApp.')
+    );
+
+    this.liberarConectar();
+  }
+
+  private executarAcaoDeConexao(
+    acao: () => Observable<WhatsappStatusResponse>,
+    options: {
+      onSuccess?: (status: WhatsappStatusResponse) => void;
+      fallbackErro: string;
+    }
+  ): void {
+    this.carregando.set(true);
+    this.erroConexao.set(null);
+
+    acao().subscribe({
+      next: (status) => {
+        this.status.set(status);
+        this.carregando.set(false);
+        options.onSuccess?.(status);
+      },
+      error: (err: HttpErrorResponse) => {
+        this.carregando.set(false);
+        this.erroConexao.set(extrairMensagemErro(err, options.fallbackErro));
+      },
+    });
+  }
+
+  private sincronizarBotaoComStatus(status: WhatsappStatusResponse): void {
+    if (status.conectado === true) {
+      this.liberarConectar();
+      return;
+    }
+
+    if (ehStatusDeTentativa(status.status)) {
+      this.podeConectar.set(false);
+      return;
+    }
+
+    this.liberarConectar();
+  }
+
+  private liberarConectar(): void {
+    this.podeConectar.set(true);
+    this.segundosRestantes.set(0);
+    this.pararContador();
+  }
+
+  private tratarRespostaEnvio(resposta: EnviarMensagemResponse): void {
+    this.respostaMensagem.set(resposta);
+    this.enviando.set(false);
+
+    if (resposta.sucesso) {
+      this.formMensagem.reset();
+    }
+  }
+
+  private tratarErroEnvio(err: HttpErrorResponse): void {
+    this.erroEnvio.set(
+      extrairMensagemErro(err, 'Erro de comunicação com a API.')
+    );
+    this.enviando.set(false);
   }
 
   private conectarEventosDaOrganizacao(): void {
@@ -277,7 +297,7 @@ export class WhatsappComponent implements OnInit, OnDestroy {
   }
 
   private aplicarEvento(evento: WhatsappEvento): void {
-    if (evento.idOrganizacao !== this.authService.idOrganizacaoAtual()) return;
+    if (!this.eventoPertenceOrganizacaoAtual(evento)) return;
 
     this.mensagemEvento.set(evento.mensagem);
     this.podeConectar.set(evento.podeConectar);
@@ -287,17 +307,9 @@ export class WhatsappComponent implements OnInit, OnDestroy {
       this.atualizarStatusLocal(evento.status);
     }
 
-    if (this.segundosRestantes() > 0) {
-      this.iniciarContador();
-    } else {
-      this.pararContador();
-    }
+    this.sincronizarContadorComEvento();
 
-    if (
-      (evento.tipo === 'TENTATIVA_INICIADA' || evento.tipo === 'STATUS_ATUALIZADO') &&
-      evento.status &&
-      this.ehStatusDeTentativa(evento.status)
-    ) {
+    if (this.deveBuscarStatusAposEvento(evento)) {
       this.buscarStatusSemLoading();
     }
 
@@ -307,42 +319,40 @@ export class WhatsappComponent implements OnInit, OnDestroy {
     }
   }
 
-  private sincronizarBotaoComStatus(status: WhatsappStatusResponse): void {
-    if (status.conectado === true) {
-      this.liberarConectar();
+  private eventoPertenceOrganizacaoAtual(evento: WhatsappEvento): boolean {
+    return evento.idOrganizacao === this.authService.idOrganizacaoAtual();
+  }
+
+  private atualizarStatusLocal(status: WhatsappConnectionStatus): void {
+    const statusAtual = this.status();
+
+    if (!statusAtual) return;
+
+    this.status.set({
+      ...statusAtual,
+      status,
+      conectado: status === 'CONECTADO',
+    });
+  }
+
+  private sincronizarContadorComEvento(): void {
+    if (this.segundosRestantes() > 0) {
+      this.iniciarContador();
       return;
     }
 
-    if (this.ehStatusDeTentativa(status.status)) {
-      this.podeConectar.set(false);
-      return;
-    }
-
-    this.liberarConectar();
-  }
-
-  private ehStatusDeTentativa(status: string | null | undefined): boolean {
-    return (
-      status === 'CONECTANDO' ||
-      status === 'CONNECTING' ||
-      status === 'AGUARDANDO_QR' ||
-      status === 'PENDING_QR'
-    );
-  }
-
-  private liberarConectar(): void {
-    this.podeConectar.set(true);
-    this.segundosRestantes.set(0);
     this.pararContador();
   }
 
-  private buscarStatusSemLoading(): void {
-    this.whatsappService.status().subscribe({
-      next: (status) => {
-        this.status.set(status);
-        this.sincronizarBotaoComStatus(status);
-      },
-    });
+  private deveBuscarStatusAposEvento(evento: WhatsappEvento): boolean {
+    const eventoAtualizaTentativa =
+      evento.tipo === 'TENTATIVA_INICIADA' || evento.tipo === 'STATUS_ATUALIZADO';
+
+    return (
+      eventoAtualizaTentativa &&
+      !!evento.status &&
+      ehStatusDeTentativa(evento.status)
+    );
   }
 
   private iniciarContador(): void {
@@ -350,7 +360,6 @@ export class WhatsappComponent implements OnInit, OnDestroy {
 
     this.countdownId = setInterval(() => {
       const proximoValor = Math.max(0, this.segundosRestantes() - 1);
-
       this.segundosRestantes.set(proximoValor);
 
       if (proximoValor === 0) {
@@ -364,18 +373,6 @@ export class WhatsappComponent implements OnInit, OnDestroy {
 
     clearInterval(this.countdownId);
     this.countdownId = null;
-  }
-
-  private atualizarStatusLocal(status: WhatsappStatusResponse['status']): void {
-    const statusAtual = this.status();
-
-    if (!statusAtual) return;
-
-    this.status.set({
-      ...statusAtual,
-      status,
-      conectado: status === 'CONECTADO',
-    });
   }
 
   private removerQrDaTela(): void {
