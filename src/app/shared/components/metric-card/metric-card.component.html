@@ -1,0 +1,34 @@
+<div
+  class="bg-[var(--color-surface)] border border-[var(--color-border)] hover:border-[var(--color-border-strong)] rounded-2xl p-5 transition-all duration-200"
+>
+  <div class="flex items-start justify-between mb-4">
+    <div
+      class="w-10 h-10 rounded-xl flex items-center justify-center"
+      [class.bg-[var(--color-accent-soft)]]="tone !== 'danger'"
+      [class.bg-[var(--color-danger-bg)]]="tone === 'danger'"
+    >
+      <lucide-icon
+        [img]="icon"
+        class="w-5 h-5"
+        [class.text-[var(--color-primary-soft)]]="tone !== 'danger'"
+        [class.text-[var(--color-danger)]]="tone === 'danger'"
+      />
+    </div>
+
+    <span class="text-[var(--color-text-faint)] text-xs font-medium">
+      {{ label }}
+    </span>
+  </div>
+
+  <p class="text-[var(--color-text-muted)] text-xs uppercase tracking-widest mb-1">
+    {{ title }}
+  </p>
+
+  <p class="text-[var(--color-text)] font-semibold text-2xl">
+    {{ value }}
+  </p>
+
+  <p class="text-[var(--color-text-faint)] text-xs mt-1">
+    {{ description }}
+  </p>
+</div>

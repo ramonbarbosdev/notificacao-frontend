@@ -5,150 +5,49 @@
   <main class="pl-64 pt-16">
     <div class="p-8 max-w-7xl mx-auto">
       <div class="mb-8">
-        <h1 class="text-2xl font-bold text-[var(--color-text)]">Bom dia, {{ primeiroNome() }}</h1>
+        <h1 class="text-2xl font-bold text-[var(--color-text)]">
+          Bom dia, {{ primeiroNome() }}
+        </h1>
+
         <p class="text-[var(--color-text-muted)] text-sm mt-1">
           Visao operacional da fila de notificacoes da organizacao.
         </p>
       </div>
 
       <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5 mb-8">
-        <div
-          class="bg-[var(--color-surface)] border rounded-2xl p-5 transition-all duration-200 hover:border-[var(--color-border-strong)]"
-          [class.border-[var(--color-success-border)]]="whatsappStatus()?.conectado"
-          [class.border-[var(--color-border)]]="!whatsappStatus()?.conectado">
-          <div class="flex items-start justify-between mb-4">
-            <div
-              class="w-10 h-10 rounded-xl flex items-center justify-center"
-              [class.bg-[var(--color-success-bg)]]="whatsappStatus()?.conectado"
-              [class.bg-[var(--color-surface-muted)]]="!whatsappStatus()?.conectado">
-              <lucide-icon
-                [img]="whatsappIcon"
-                class="w-5 h-5"
-                [class.text-[var(--color-success)]]="whatsappStatus()?.conectado"
-                [class.text-[var(--color-text-subtle)]]="!whatsappStatus()?.conectado" />
-            </div>
+        <app-whatsapp-status-card
+          [whatsappStatus]="whatsappStatus()"
+          [carregandoStatus]="carregandoStatus()"
+          [whatsappIcon]="whatsappIcon"
+        />
 
-            <span
-              class="text-xs px-2 py-0.5 rounded-full border font-medium"
-              [class.bg-[var(--color-success-bg)]]="whatsappStatus()?.conectado"
-              [class.text-[var(--color-success)]]="whatsappStatus()?.conectado"
-              [class.border-[var(--color-success-border)]]="whatsappStatus()?.conectado"
-              [class.bg-[var(--color-surface-muted)]]="!whatsappStatus()?.conectado"
-              [class.text-[var(--color-text-muted)]]="!whatsappStatus()?.conectado"
-              [class.border-[var(--color-border)]]="!whatsappStatus()?.conectado">
-              {{ whatsappStatus()?.conectado ? 'Online' : 'Offline' }}
-            </span>
-          </div>
-
-          <p class="text-[var(--color-text-muted)] text-xs uppercase tracking-widest mb-1">
-            WhatsApp status
-          </p>
-          <p class="text-[var(--color-text)] font-semibold text-lg">
-            {{ whatsappStatus()?.status ?? (carregandoStatus() ? '...' : 'Desconhecido') }}
-          </p>
-
-          @if (whatsappStatus()?.telefone) {
-            <p class="text-[var(--color-text-subtle)] text-xs mt-1 truncate">
-              {{ whatsappStatus()!.telefone }}
-            </p>
-          }
-        </div>
-
-        @for (metrica of metricas; track metrica.titulo) {
-          <div class="bg-[var(--color-surface)] border border-[var(--color-border)] hover:border-[var(--color-border-strong)] rounded-2xl p-5 transition-all duration-200">
-            <div class="flex items-start justify-between mb-4">
-              <div
-                class="w-10 h-10 rounded-xl flex items-center justify-center"
-                [class.bg-[var(--color-accent-soft)]]="metrica.tom !== 'danger'"
-                [class.bg-[var(--color-danger-bg)]]="metrica.tom === 'danger'">
-                <lucide-icon
-                  [img]="metrica.icon"
-                  class="w-5 h-5"
-                  [class.text-[var(--color-primary-soft)]]="metrica.tom !== 'danger'"
-                  [class.text-[var(--color-danger)]]="metrica.tom === 'danger'" />
-              </div>
-
-              <span class="text-[var(--color-text-faint)] text-xs font-medium">
-                sem endpoint
-              </span>
-            </div>
-
-            <p class="text-[var(--color-text-muted)] text-xs uppercase tracking-widest mb-1">
-              {{ metrica.titulo }}
-            </p>
-            <p class="text-[var(--color-text)] font-semibold text-2xl">-</p>
-            <p class="text-[var(--color-text-faint)] text-xs mt-1">{{ metrica.descricao }}</p>
-          </div>
+        @for (metrica of metricas; track metrica.title) {
+          <app-metric-card
+            [title]="metrica.title"
+            [description]="metrica.description"
+            [icon]="metrica.icon"
+            [tone]="metrica.tone"
+            [value]="metrica.value ?? '-'"
+            [label]="metrica.label ?? 'sem endpoint'"
+          />
         }
       </div>
 
-      <div class="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl px-5 py-4 mb-8">
-        <p class="text-[var(--color-text-muted)] text-sm">
-          Ainda nao ha endpoint real para metricas agregadas da fila. Os cards acima estao prontos
-          para receber os totais quando a API disponibilizar os dados.
-        </p>
-      </div>
+      <app-dashboard-alert
+        message="Ainda nao ha endpoint real para metricas agregadas da fila. Os cards acima estao prontos para receber os totais quando a API disponibilizar os dados."
+      />
 
       <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5">
-        <a
-          routerLink="/app/whatsapp"
-          class="group bg-[var(--color-surface)] border border-[var(--color-border)] hover:border-[var(--color-primary)] rounded-2xl p-6 flex items-center gap-5 transition-all duration-200 hover:bg-[var(--color-surface-muted)]">
-          <div class="w-12 h-12 bg-[var(--color-success-bg)] group-hover:bg-[var(--color-success-border)] rounded-xl flex items-center justify-center transition-colors flex-shrink-0">
-            <lucide-icon [img]="whatsappIcon" class="w-6 h-6 text-[var(--color-success)]" />
-          </div>
-          <div>
-            <h3 class="text-[var(--color-text)] font-semibold">Gerenciar WhatsApp</h3>
-            <p class="text-[var(--color-text-subtle)] text-sm mt-0.5">
-              Conexao, sessao e QR Code
-            </p>
-          </div>
-          <lucide-icon [img]="chevronRightIcon" class="w-5 h-5 ml-auto flex-shrink-0 text-[var(--color-text-faint)] group-hover:text-[var(--color-primary-soft)] transition-colors" />
-        </a>
-
-        <a
-          routerLink="/app/notificacoes"
-          class="group bg-[var(--color-surface)] border border-[var(--color-border)] hover:border-[var(--color-primary)] rounded-2xl p-6 flex items-center gap-5 transition-all duration-200 hover:bg-[var(--color-surface-muted)]">
-          <div class="w-12 h-12 bg-[var(--color-accent-soft)] rounded-xl flex items-center justify-center transition-colors flex-shrink-0">
-            <lucide-icon [img]="sendIcon" class="w-6 h-6 text-[var(--color-primary-soft)]" />
-          </div>
-          <div>
-            <h3 class="text-[var(--color-text)] font-semibold">Enfileirar Notificacao</h3>
-            <p class="text-[var(--color-text-subtle)] text-sm mt-0.5">
-              Criar notificacao com status inicial
-            </p>
-          </div>
-          <lucide-icon [img]="chevronRightIcon" class="w-5 h-5 ml-auto flex-shrink-0 text-[var(--color-text-faint)] group-hover:text-[var(--color-primary-soft)] transition-colors" />
-        </a>
-
-        <a
-          routerLink="/app/contatos"
-          class="group bg-[var(--color-surface)] border border-[var(--color-border)] hover:border-[var(--color-primary)] rounded-2xl p-6 flex items-center gap-5 transition-all duration-200 hover:bg-[var(--color-surface-muted)]">
-          <div class="w-12 h-12 bg-[var(--color-accent-soft)] rounded-xl flex items-center justify-center transition-colors flex-shrink-0">
-            <lucide-icon [img]="banIcon" class="w-6 h-6 text-[var(--color-primary-soft)]" />
-          </div>
-          <div>
-            <h3 class="text-[var(--color-text)] font-semibold">Contatos</h3>
-            <p class="text-[var(--color-text-subtle)] text-sm mt-0.5">
-              Consentimento e bloqueio
-            </p>
-          </div>
-          <lucide-icon [img]="chevronRightIcon" class="w-5 h-5 ml-auto flex-shrink-0 text-[var(--color-text-faint)] group-hover:text-[var(--color-primary-soft)] transition-colors" />
-        </a>
-
-        <a
-          routerLink="/app/historico"
-          class="group bg-[var(--color-surface)] border border-[var(--color-border)] hover:border-[var(--color-primary)] rounded-2xl p-6 flex items-center gap-5 transition-all duration-200 hover:bg-[var(--color-surface-muted)]">
-          <div class="w-12 h-12 bg-[var(--color-accent-soft)] rounded-xl flex items-center justify-center transition-colors flex-shrink-0">
-            <lucide-icon [img]="clockIcon" class="w-6 h-6 text-[var(--color-primary-soft)]" />
-          </div>
-          <div>
-            <h3 class="text-[var(--color-text)] font-semibold">Historico / Fila</h3>
-            <p class="text-[var(--color-text-subtle)] text-sm mt-0.5">
-              Estrutura preparada
-            </p>
-          </div>
-          <lucide-icon [img]="chevronRightIcon" class="w-5 h-5 ml-auto flex-shrink-0 text-[var(--color-text-faint)] group-hover:text-[var(--color-primary-soft)] transition-colors" />
-        </a>
+        @for (action of quickActions; track action.routerLink) {
+          <app-quick-action-card
+            [title]="action.title"
+            [description]="action.description"
+            [routerLink]="action.routerLink"
+            [icon]="action.icon"
+            [tone]="action.tone ?? 'default'"
+            [chevronIcon]="chevronRightIcon"
+          />
+        }
       </div>
     </div>
   </main>
