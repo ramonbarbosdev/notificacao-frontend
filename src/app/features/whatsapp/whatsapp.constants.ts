@@ -22,6 +22,7 @@ export const STATUS_TENTATIVA_LABELS: Record<WhatsappStatus, string> = {
   PENDING_QR: 'Pendente leitura QR',
   AGUARDANDO_QR: 'Aguardando leitura QR',
   NAO_INICIADO: 'Não Iniciado',
+  NOT_STARTED: 'Não Iniciado',
   CONECTANDO: 'Conectando',
   CONNECTING: 'Conectando',
   CONECTADO: 'Conectado',

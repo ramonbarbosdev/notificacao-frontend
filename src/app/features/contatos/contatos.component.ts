@@ -34,6 +34,7 @@ const contatoFormSchema = z
   .object({
     canal: z.enum(['WHATSAPP', 'EMAIL', 'TELEGRAM', 'WEBHOOK']),
     destinatario: z.string().trim().min(1, 'Informe o contato.'),
+    nmContato: z.string().trim().min(1, 'Informe o contato.'),
     motivo: z.string().trim().optional(),
   })
   .superRefine((value, ctx) => {
@@ -67,6 +68,7 @@ type ContatoFormData = z.infer<typeof contatoFormSchema>;
 interface ContatoImportacao {
   canal: CanalNotificacao;
   destinatario: string;
+  nmContato: string;
   consentimento: boolean;
   bloqueado: boolean;
   motivo: string | null;
@@ -121,6 +123,7 @@ export class ContatosComponent implements OnInit {
   readonly contatoPanel = useSidePanel<ContatoResponseDTO>();
   readonly form = this.fb.group({
     canal: this.fb.control<CanalNotificacao>('WHATSAPP', { nonNullable: true }),
+    nmContato: ['', [Validators.required]],
     destinatario: ['', [Validators.required]],
     motivo: [''],
   });
@@ -141,12 +144,20 @@ export class ContatosComponent implements OnInit {
 
   readonly columns: DataTableColumn<ContatoResponseDTO>[] = [
     {
-      key: 'destinatario',
+      key: 'nmContato',
       label: 'Contato',
-      formatter: (value, row) => formatPhone(value),
       filter: {
         type: 'text',
         placeholder: 'Buscar contato',
+      },
+    },
+    {
+      key: 'destinatario',
+      label: 'Destinatario',
+      formatter: (value, row) => formatPhone(value),
+      filter: {
+        type: 'text',
+        placeholder: 'Buscar destinatario',
       },
     },
     {
@@ -222,6 +233,7 @@ export class ContatosComponent implements OnInit {
   abrirNovoContato(): void {
     this.form.reset({
       canal: 'WHATSAPP',
+      nmContato: '',
       destinatario: '',
       motivo: '',
     });
@@ -246,6 +258,7 @@ export class ContatosComponent implements OnInit {
         page: this.table.paginaAtual(),
         size: this.table.tamanhoPagina(),
         sort: 'dtCriacao,desc',
+        nmContato: filtros['nmContato'] || undefined,
         destinatario: filtros['destinatario'] || undefined,
         canal: filtros['canal'] || undefined,
         consentimento: this.toBooleanOrUndefined(filtros['consentimento']),
@@ -310,6 +323,7 @@ export class ContatosComponent implements OnInit {
   preencherFormulario(contato: ContatoResponseDTO): void {
     this.form.patchValue({
       canal: contato.canal,
+      nmContato: contato.nmContato,
       destinatario: contato.destinatario,
       motivo: contato.motivoBloqueio ?? '',
     });
@@ -374,7 +388,7 @@ export class ContatosComponent implements OnInit {
   tipoInputDestinatario(): string {
     return this.form.controls.canal.value === 'EMAIL' ? 'email' : 'text';
   }
-  
+
   sincronizarContatosWhatsapp(): void {
     if (this.acaoAtual()) return;
 
@@ -482,6 +496,7 @@ export class ContatosComponent implements OnInit {
 
     const request = {
       canal: dados.canal,
+      nmContato: dados.nmContato.trim(),
       destinatario: this.normalizarDestinatarioParaApi(dados),
       motivo: dados.motivo?.trim() || null,
     };
@@ -520,6 +535,7 @@ export class ContatosComponent implements OnInit {
 
           const request = {
             canal: contato.canal,
+            nmContato: contato.nmContato,
             destinatario: this.normalizarDestinatarioParaApi(contato),
             motivo: contato.motivo,
           };
@@ -559,9 +575,9 @@ export class ContatosComponent implements OnInit {
           this.erro.set(
             falhas.length
               ? falhas
-                  .slice(0, 5)
-                  .map((falha) => `Item ${falha.item}: ${falha.mensagem}`)
-                  .join(' | ')
+                .slice(0, 5)
+                .map((falha) => `Item ${falha.item}: ${falha.mensagem}`)
+                .join(' | ')
               : null
           );
           this.acaoAtual.set(null);
@@ -655,15 +671,16 @@ export class ContatosComponent implements OnInit {
   }
 
   private baixarJson(contatos: ContatoResponseDTO[]): void {
-    const dados = contatos.map((contato) => ({
-      canal: contato.canal,
-      destinatario: contato.destinatario,
-      consentimento: contato.consentimento,
-      bloqueado: contato.bloqueado,
-      motivo: contato.motivoBloqueio,
-      dtConsentimento: contato.dtConsentimento,
-      dtBloqueio: contato.dtBloqueio,
-    }));
+  const dados = contatos.map((contato) => ({
+  canal: contato.canal,
+  nmContato: contato.nmContato,
+  destinatario: contato.destinatario,
+  consentimento: contato.consentimento,
+  bloqueado: contato.bloqueado,
+  motivo: contato.motivoBloqueio,
+  dtConsentimento: contato.dtConsentimento,
+  dtBloqueio: contato.dtBloqueio,
+}));
     const json = JSON.stringify(dados, null, 2);
     const blob = new Blob([json], { type: 'application/json;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -702,13 +719,20 @@ export class ContatosComponent implements OnInit {
       if (!destinatario) {
         throw new Error(`Item ${index + 1}: destinatario obrigatorio.`);
       }
-
       acc.push({
         canal,
+        nmContato: String(item['nmContato'] ?? '').trim(),
         destinatario,
-        consentimento: item['consentimento'] === undefined ? true : item['consentimento'] === true,
+        consentimento:
+          item['consentimento'] === undefined
+            ? true
+            : item['consentimento'] === true,
         bloqueado: item['bloqueado'] === true,
-        motivo: typeof item['motivo'] === 'string' && item['motivo'].trim() ? item['motivo'].trim() : null,
+        motivo:
+          typeof item['motivo'] === 'string' &&
+            item['motivo'].trim()
+            ? item['motivo'].trim()
+            : null,
       });
 
       return acc;

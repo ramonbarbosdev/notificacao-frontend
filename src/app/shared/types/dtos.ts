@@ -52,8 +52,9 @@ export interface UsuarioAtual {
 // WHATSAPP
 
 export type WhatsappStatus =
-  | 'NAO_INICIADO'
-  | 'CONECTANDO'
+| 'NOT_STARTED'
+| 'NAO_INICIADO'
+| 'CONECTANDO'
   | 'CONNECTING'
   | 'PENDING_QR'
   | 'AGUARDANDO_QR'
@@ -249,6 +250,7 @@ export interface ContatoRequestDTO {
 export interface ContatoResponseDTO {
   idContato: number;
   canal: CanalNotificacao;
+  nmContato: string;
   destinatario: string;
   consentimento: boolean;
   bloqueado: boolean;

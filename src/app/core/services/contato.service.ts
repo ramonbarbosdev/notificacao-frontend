@@ -40,6 +40,7 @@ export class ContatoService {
     size: number;
     sort?: string;
     canal?: string;
+    nmContato?: string;
     destinatario?: string;
     consentimento?: boolean;
     bloqueado?: boolean;
