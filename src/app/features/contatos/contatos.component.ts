@@ -1,69 +1,30 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import {
-  Ban,
-  Check,
-  Download,
-  LoaderCircle,
-  LucideAngularModule,
-  MessageCircle,
-  RefreshCcw,
-  ShieldCheck,
-  Upload,
-  UserCheck,
-  Users,
-} from 'lucide-angular';
+import { FormBuilder } from '@angular/forms';
 import { catchError, concatMap, from, map, of, toArray } from 'rxjs';
-import { z } from 'zod';
 
-import { SidePanelComponent } from '../../shared/components/side-panel/side-panel.component';
 import { HeaderComponent } from '../../core/layout/header/header.component';
 import { SidebarComponent } from '../../core/layout/layout.components';
 import { ContatoService } from '../../core/services/contato.service';
-import { DataTableComponent } from '../../shared/components/data-table/data-table.component';
 import { DataTableColumn } from '../../shared/components/data-table/data-table.types';
 import { usePaginatedTable } from '../../shared/helper/paginated-table.state';
-import { CanalNotificacao, ContatoResponseDTO } from '../../shared/types/dtos';
+import { CanalNotificacao, ContatoRequestDTO, ContatoResponseDTO } from '../../shared/types/dtos';
 import { formatPhone, normalizePhone } from '../../shared/helper/phone.utils';
 import { useSidePanel } from '../../shared/helper/side-panel.state';
+import { ContatoListComponent } from './components/contato-list/contato-list.component';
+import { ContatoSummaryCardsComponent } from './components/contato-summary-cards/contato-summary-cards.component';
+import { FormPanelComponent } from './components/form-panel/form-panel.component';
 
 type AcaoContato = 'consentimento' | 'bloqueio' | 'sync' | 'import' | 'export' | null;
 
-const contatoFormSchema = z
-  .object({
-    canal: z.enum(['WHATSAPP', 'EMAIL', 'TELEGRAM', 'WEBHOOK']),
-    destinatario: z.string().trim().min(1, 'Informe o contato.'),
-    nmContato: z.string().trim().min(1, 'Informe o contato.'),
-    motivo: z.string().trim().optional(),
-  })
-  .superRefine((value, ctx) => {
-    if (value.canal === 'WHATSAPP') {
-      const telefone = normalizePhone(value.destinatario);
+import {
+  contatoBloqueioFormSchema,
+  contatoFormSchema,
+  ContatoFormData,
+  ContatoFormErrors,
+} from './schemas/contato-form.schema';
 
-      if (telefone.length < 10 || telefone.length > 15) {
-        ctx.addIssue({
-          code: 'custom',
-          path: ['destinatario'],
-          message: 'Informe um telefone valido para WhatsApp.',
-        });
-      }
-    }
-
-    if (value.canal === 'EMAIL') {
-      const emailValido = z.string().email().safeParse(value.destinatario);
-
-      if (!emailValido.success) {
-        ctx.addIssue({
-          code: 'custom',
-          path: ['destinatario'],
-          message: 'Informe um e-mail valido.',
-        });
-      }
-    }
-  });
-
-type ContatoFormData = z.infer<typeof contatoFormSchema>;
+import { getZodFieldErrors } from '../../shared/helper/zod-form.helper';
 
 interface ContatoImportacao {
   canal: CanalNotificacao;
@@ -85,12 +46,11 @@ interface ResultadoImportacao {
   standalone: true,
   imports: [
     CommonModule,
-    ReactiveFormsModule,
-    LucideAngularModule,
     SidebarComponent,
     HeaderComponent,
-    DataTableComponent,
-    SidePanelComponent
+    ContatoListComponent,
+    ContatoSummaryCardsComponent,
+    FormPanelComponent,
   ],
   templateUrl: './contatos.component.html',
 })
@@ -100,32 +60,21 @@ export class ContatosComponent implements OnInit {
 
   readonly table = usePaginatedTable(10);
 
-  protected readonly contatoIcon = UserCheck;
-  protected readonly usersIcon = Users;
-  protected readonly shieldIcon = ShieldCheck;
-  protected readonly banIcon = Ban;
-  protected readonly loaderIcon = LoaderCircle;
-  protected readonly checkIcon = Check;
-  protected readonly whatsappIcon = MessageCircle;
-  protected readonly syncIcon = RefreshCcw;
-  protected readonly importIcon = Upload;
-  protected readonly exportIcon = Download;
-
   readonly filtros = signal<Record<string, any>>({});
   readonly acaoAtual = signal<AcaoContato>(null);
   readonly contatos = signal<ContatoResponseDTO[]>([]);
   readonly resposta = signal<ContatoResponseDTO | null>(null);
   readonly erro = signal<string | null>(null);
   readonly mensagemImportacao = signal<string | null>(null);
-  readonly errosFormulario = signal<Partial<Record<keyof ContatoFormData, string>>>({});
+  readonly errosFormulario = signal<ContatoFormErrors>({});
   readonly canais: CanalNotificacao[] = ['WHATSAPP', 'EMAIL', 'TELEGRAM', 'WEBHOOK'];
 
   readonly contatoPanel = useSidePanel<ContatoResponseDTO>();
-  readonly form = this.fb.group({
-    canal: this.fb.control<CanalNotificacao>('WHATSAPP', { nonNullable: true }),
-    nmContato: ['', [Validators.required]],
-    destinatario: ['', [Validators.required]],
-    motivo: [''],
+  readonly form = this.fb.nonNullable.group({
+    canal: this.fb.nonNullable.control<CanalNotificacao>('WHATSAPP'),
+    nmContato: '',
+    destinatario: '',
+    motivo: '',
   });
 
   readonly totalContatos = computed(() => this.table.totalElementos());
@@ -297,27 +246,21 @@ export class ContatosComponent implements OnInit {
   }
 
   registrarConsentimento(): void {
-    if (!this.validarFormulario()) return;
 
-    this.executar('consentimento');
+    const dados = this.validarFormulario('consentimento');
+
+    if (!dados) return;
+
+
+    this.executar('consentimento', dados);
   }
 
   bloquearContato(): void {
-    if (!this.validarFormulario()) return;
+    const dados = this.validarFormulario('bloqueio');
 
-    const motivo = this.form.controls.motivo.value?.trim();
+    if (!dados) return;
 
-    if (!motivo) {
-      this.erro.set('Informe o motivo para bloquear o contato.');
-      this.errosFormulario.update((erros) => ({
-        ...erros,
-        motivo: 'Informe o motivo para bloquear o contato.',
-      }));
-      this.form.controls.motivo.markAsTouched();
-      return;
-    }
-
-    this.executar('bloqueio');
+    this.executar('bloqueio', dados);
   }
 
   preencherFormulario(contato: ContatoResponseDTO): void {
@@ -484,7 +427,7 @@ export class ContatosComponent implements OnInit {
     reader.readAsText(arquivo);
   }
 
-  private executar(operacao: 'consentimento' | 'bloqueio'): void {
+  private executar(operacao: 'consentimento' | 'bloqueio', dados: ContatoFormData): void {
     if (this.acaoAtual()) return;
 
     this.acaoAtual.set(operacao);
@@ -492,9 +435,7 @@ export class ContatosComponent implements OnInit {
     this.erro.set(null);
     this.mensagemImportacao.set(null);
 
-    const dados = contatoFormSchema.parse(this.form.getRawValue());
-
-    const request = {
+    const request: ContatoRequestDTO = {
       canal: dados.canal,
       nmContato: dados.nmContato.trim(),
       destinatario: this.normalizarDestinatarioParaApi(dados),
@@ -590,28 +531,23 @@ export class ContatosComponent implements OnInit {
       });
   }
 
-  private validarFormulario(): boolean {
+  private validarFormulario(operacao: 'consentimento' | 'bloqueio'): ContatoFormData | null {
     this.form.markAllAsTouched();
 
-    const resultado = contatoFormSchema.safeParse(this.form.getRawValue());
+    const schema =
+      operacao === 'bloqueio'
+        ? contatoBloqueioFormSchema
+        : contatoFormSchema;
+
+    const resultado = schema.safeParse(this.form.getRawValue());
 
     if (resultado.success) {
       this.errosFormulario.set({});
-      return true;
+      return resultado.data;
     }
 
-    const erros = resultado.error.issues.reduce((acc, issue) => {
-      const campo = issue.path[0] as keyof ContatoFormData | undefined;
-
-      if (campo && !acc[campo]) {
-        acc[campo] = issue.message;
-      }
-
-      return acc;
-    }, {} as Partial<Record<keyof ContatoFormData, string>>);
-
-    this.errosFormulario.set(erros);
-    return false;
+    this.errosFormulario.set(getZodFieldErrors(resultado.error));
+    return null;
   }
 
   private formatarDestinatario(value: string): string {
@@ -671,16 +607,16 @@ export class ContatosComponent implements OnInit {
   }
 
   private baixarJson(contatos: ContatoResponseDTO[]): void {
-  const dados = contatos.map((contato) => ({
-  canal: contato.canal,
-  nmContato: contato.nmContato,
-  destinatario: contato.destinatario,
-  consentimento: contato.consentimento,
-  bloqueado: contato.bloqueado,
-  motivo: contato.motivoBloqueio,
-  dtConsentimento: contato.dtConsentimento,
-  dtBloqueio: contato.dtBloqueio,
-}));
+    const dados = contatos.map((contato) => ({
+      canal: contato.canal,
+      nmContato: contato.nmContato,
+      destinatario: contato.destinatario,
+      consentimento: contato.consentimento,
+      bloqueado: contato.bloqueado,
+      motivo: contato.motivoBloqueio,
+      dtConsentimento: contato.dtConsentimento,
+      dtBloqueio: contato.dtBloqueio,
+    }));
     const json = JSON.stringify(dados, null, 2);
     const blob = new Blob([json], { type: 'application/json;charset=utf-8;' });
     const url = URL.createObjectURL(blob);

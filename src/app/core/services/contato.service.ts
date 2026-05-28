@@ -52,6 +52,7 @@ export class ContatoService {
           size: params.size,
           sort: params.sort ?? 'dtCriacao,desc',
           ...(params.canal ? { canal: params.canal } : {}),
+          ...(params.nmContato ? { nmContato: params.nmContato } : {}),
           ...(params.destinatario ? { destinatario: params.destinatario } : {}),
           ...(params.consentimento !== undefined ? { consentimento: params.consentimento } : {}),
           ...(params.bloqueado !== undefined ? { bloqueado: params.bloqueado } : {}),

@@ -1,0 +1,29 @@
+<div>
+  <label class="block text-sm font-medium text-[var(--color-text-muted)] mb-2">
+    {{ label() }}
+  </label>
+
+  <select
+    [formControl]="control()"
+    (change)="changed.emit($event)"
+    class="w-full bg-[var(--color-surface-muted)] border border-[var(--color-border-strong)] rounded-xl px-4 py-3 text-[var(--color-text)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
+  >
+    @for (option of options(); track option.value) {
+      <option [value]="option.value">
+        {{ option.label }}
+      </option>
+    }
+  </select>
+
+  @if (helper()) {
+    <p class="text-[var(--color-text-subtle)] text-xs mt-1">
+      {{ helper() }}
+    </p>
+  }
+
+  @if (error()) {
+    <p class="text-[var(--color-danger)] text-xs mt-1">
+      {{ error() }}
+    </p>
+  }
+</div>

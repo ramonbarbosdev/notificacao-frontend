@@ -19,6 +19,6 @@ export class ApiKeyService {
   }
 
   revogar(idApiKey: number): Observable<ApiKey> {
-    return this.http.patch<ApiKey>(`${this.base}/${idApiKey}/revogar`, {});
+    return this.http.get<ApiKey>(`${this.base}/${idApiKey}/revogar`, {});
   }
 }

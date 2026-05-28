@@ -1,0 +1,29 @@
+<div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+  <div class="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-5">
+    <p class="text-[var(--color-text-muted)] text-sm">Total de contatos</p>
+    <strong class="text-2xl text-[var(--color-text)] mt-2 block">
+      {{ totalContatos() }}
+    </strong>
+  </div>
+
+  <div class="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-5">
+    <p class="text-[var(--color-text-muted)] text-sm">Com consentimento</p>
+    <strong class="text-2xl text-[var(--color-success)] mt-2 block">
+      {{ totalConsentidos() }}
+    </strong>
+  </div>
+
+  <div class="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-5">
+    <p class="text-[var(--color-text-muted)] text-sm">Bloqueados</p>
+    <strong class="text-2xl text-[var(--color-danger)] mt-2 block">
+      {{ totalBloqueados() }}
+    </strong>
+  </div>
+
+  <div class="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-5">
+    <p class="text-[var(--color-text-muted)] text-sm">Sem consentimento</p>
+    <strong class="text-2xl text-[var(--color-text)] mt-2 block">
+      {{ totalSemConsentimento() }}
+    </strong>
+  </div>
+</div>

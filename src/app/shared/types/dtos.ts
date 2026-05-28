@@ -243,6 +243,7 @@ export interface EnviarTemplateRequestDTO {
 
 export interface ContatoRequestDTO {
   canal: CanalNotificacao;
+  nmContato: string;
   destinatario: string;
   motivo?: string | null;
 }
