@@ -1,6 +1,6 @@
 export const environment = {
   production: false,
-  apiUrl: 'http://localhost:8080/api',
+  apiUrl: 'http://localhost:8086/api',
 };
 
 // src/environments/environment.prod.ts
