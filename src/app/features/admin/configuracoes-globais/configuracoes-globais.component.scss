@@ -1,0 +1,120 @@
+.config-global-instructions {
+  border: 1px solid color-mix(in srgb, var(--color-primary) 20%, var(--color-border));
+  background: color-mix(in srgb, var(--color-primary) 5%, transparent);
+  border-radius: 1rem;
+  padding: 1rem 1.125rem;
+}
+
+.config-global-instructions--collapsed {
+  padding-bottom: 0.875rem;
+}
+
+.config-global-instructions__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.config-global-instructions--collapsed .config-global-instructions__header {
+  align-items: center;
+}
+
+.config-global-instructions__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-shrink: 0;
+  padding: 0.35rem 0.65rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.config-global-instructions__toggle:hover {
+  background: var(--color-surface-hover, color-mix(in srgb, var(--color-border) 40%, transparent));
+  color: var(--color-text);
+}
+
+.config-global-instructions__title {
+  margin: 0 0 0.35rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.config-global-instructions--collapsed .config-global-instructions__title {
+  margin-bottom: 0;
+}
+
+.config-global-instructions__resumo {
+  margin: 0 0 1rem;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--color-text-muted);
+}
+
+.config-global-instructions__steps {
+  margin: 1rem 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+}
+
+.config-global-instructions__step-title {
+  margin: 0 0 0.2rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.config-global-instructions__step-desc {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--color-text-muted);
+}
+
+.config-global-instructions__links {
+  margin: 0.4rem 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.config-global-instructions__links a {
+  font-size: 0.8125rem;
+  color: var(--color-primary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.config-global-instructions__tip {
+  margin: 1rem 0 0;
+  padding-top: 0.875rem;
+  border-top: 1px solid color-mix(in srgb, var(--color-primary) 12%, var(--color-border));
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: var(--color-text-subtle);
+}
+
+.config-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.75rem;
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  color: var(--color-text);
+}
