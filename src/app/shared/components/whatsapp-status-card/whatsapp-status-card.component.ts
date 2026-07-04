@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, Input } from '@angular/core';
 import { LucideAngularModule, LucideIconData } from 'lucide-angular';
 import { formatPhone } from '../../helper/phone.utils';
-import { STATUS_TENTATIVA_LABELS } from '../../../features/whatsapp/whatsapp.constants';
+import { labelWhatsappStatus } from '../../labels/notificacao.labels';
 import { WhatsappStatusResponse } from '../../types/dtos';
 
 
@@ -18,6 +18,5 @@ export class WhatsappStatusCardComponent {
   @Input({ required: true }) whatsappIcon!: LucideIconData;
 
   readonly formatarTelefone = formatPhone;
-  readonly labelStatus = (status: string | undefined) =>
-    status ? (STATUS_TENTATIVA_LABELS[status as keyof typeof STATUS_TENTATIVA_LABELS] ?? status) : 'Desconhecido';
+  readonly labelStatus = (status: string | undefined) => labelWhatsappStatus(status);
 }

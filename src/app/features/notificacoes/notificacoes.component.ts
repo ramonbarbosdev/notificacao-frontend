@@ -21,6 +21,7 @@ import {
   CanalNotificacao,
   StatusNotificacao,
 } from '../../shared/types/dtos';
+import { labelStatusNotificacao, extrairMensagemErroHttp } from '../../shared/labels/notificacao.labels';
 import { NotificacaoService } from '../../core/services/notificacao.service';
 import { formatCanal } from '../../shared/helper/channel.utils';
 import { maskPhoneInput, normalizePhone } from '../../shared/helper/phone.utils';
@@ -64,16 +65,7 @@ export class NotificacoesComponent {
     { valor: 'WEBHOOK', label: 'Webhook', icon: Webhook },
   ];
 
-  readonly statusLabels: Record<StatusNotificacao, string> = {
-    PENDENTE: 'Pendente',
-    PROCESSANDO: 'Processando',
-    ENVIADA: 'Enviada',
-    ENTREGUE: 'Entregue',
-    LIDA: 'Lida',
-    FALHOU: 'Falhou',
-    BLOQUEADA: 'Bloqueada',
-    CANCELADA: 'Cancelada',
-  };
+  readonly labelStatus = labelStatusNotificacao;
 
   readonly form = this.fb.group({
     destinatario: ['', [Validators.required]],
@@ -139,10 +131,6 @@ export class NotificacoesComponent {
     this.erroRede.set(null);
   }
 
-  labelStatus(status: StatusNotificacao): string {
-    return this.statusLabels[status];
-  }
-
   ehStatusSucesso(status: StatusNotificacao): boolean {
     return ['PENDENTE', 'PROCESSANDO', 'ENVIADA', 'ENTREGUE', 'LIDA'].includes(status);
   }
@@ -192,10 +180,7 @@ export class NotificacoesComponent {
           this.enviando.set(false);
 
           this.erroRede.set(
-            err.error?.mensagem ??
-            err.error?.detail ??
-            err.error?.message ??
-            'Falha ao enviar notificação.'
+            extrairMensagemErroHttp(err, 'Falha ao enviar notificação.')
           );
         },
       });

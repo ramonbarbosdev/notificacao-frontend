@@ -18,7 +18,11 @@ import {
   WhatsappStatusResponse,
 } from '../../shared/types/dtos';
 
-import { STATUS_LABELS, STATUS_TENTATIVA_LABELS } from './whatsapp.constants';
+import {
+  labelStatusNotificacao,
+  labelWhatsappStatus,
+  resolverMensagemExibicao,
+} from '../../shared/labels/notificacao.labels';
 import { criarFormularioMensagem } from './whatsapp.form';
 import { formatPhone, maskPhoneInput, normalizePhone } from '../../shared/helper/phone.utils';
 import {
@@ -168,12 +172,15 @@ export class WhatsappComponent implements OnInit, OnDestroy {
   }
 
   labelStatus(status: StatusNotificacao): string {
-    return STATUS_LABELS[status];
+    return labelStatusNotificacao(status);
   }
-  labelTentativaStatus(status: WhatsappStatus | null | undefined): string {
-    if (!status) return 'Desconhecido';
 
-    return STATUS_TENTATIVA_LABELS[status] ?? status;
+  labelTentativaStatus(status: WhatsappStatus | null | undefined): string {
+    return labelWhatsappStatus(status ?? undefined);
+  }
+
+  labelMensagemErro(mensagem?: string | null, fallback = 'Erro desconhecido'): string {
+    return resolverMensagemExibicao(mensagem, null, fallback);
   }
 
   labelStatusAtual(): string {

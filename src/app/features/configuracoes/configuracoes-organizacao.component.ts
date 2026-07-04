@@ -27,7 +27,7 @@ import { FormFieldComponent } from '../../shared/components/forms/form-field/app
 import { formatScopes, maskApiKeyPrefix } from '../../shared/helper/api-key.utils';
 import { formatDateTimePtBr } from '../../shared/helper/date.utils';
 import { maskPhoneInput, normalizePhone } from '../../shared/helper/phone.utils';
-import { STATUS_TENTATIVA_LABELS } from '../whatsapp/whatsapp.constants';
+import { labelWhatsappStatus as traduzirStatusWhatsapp, extrairMensagemErroHttp } from '../../shared/labels/notificacao.labels';
 
 type AbaConfiguracao =
   | 'geral'
@@ -158,9 +158,7 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
   readonly mascararPrefixo = maskApiKeyPrefix;
 
   labelWhatsappStatus(status: string | null | undefined): string {
-    if (!status) return 'Desconhecido';
-
-    return STATUS_TENTATIVA_LABELS[status as keyof typeof STATUS_TENTATIVA_LABELS] ?? status;
+    return traduzirStatusWhatsapp(status);
   }
 
   formatarScopes(scopes: ApiKeyScope[]): string {
@@ -364,6 +362,6 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
 
   private mensagemErro(err: HttpErrorResponse, fallback: string): string {
     if (err.status === 403) return 'Voce nao tem permissao para executar esta acao.';
-    return err.error?.mensagem ?? err.error?.erro ?? err.error?.message ?? fallback;
+    return extrairMensagemErroHttp(err, fallback);
   }
 }

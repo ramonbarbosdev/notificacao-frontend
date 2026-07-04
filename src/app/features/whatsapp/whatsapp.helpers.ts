@@ -1,9 +1,11 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { STATUS_TENTATIVA } from './whatsapp.constants';
+import {
+  ehStatusDeTentativa,
+  extrairMensagemErroHttp,
+  resolverMensagemExibicao,
+} from '../../shared/labels/notificacao.labels';
 
-export function ehStatusDeTentativa(status: string | null | undefined): boolean {
-  return !!status && STATUS_TENTATIVA.has(status);
-}
+export { ehStatusDeTentativa, resolverMensagemExibicao };
 
 export function montarQrImagemSrc(qrImagem: string | null | undefined): string {
   if (!qrImagem) return '';
@@ -30,5 +32,5 @@ export function extrairMensagemErro(
   err: HttpErrorResponse,
   fallback: string
 ): string {
-  return err.error?.mensagem ?? err.error?.erro ?? fallback;
+  return extrairMensagemErroHttp(err, fallback);
 }

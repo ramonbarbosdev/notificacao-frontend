@@ -97,7 +97,7 @@
                         rounded-xl px-4 py-3">
 
               <p class="text-[var(--color-danger)] text-sm">
-                {{ status()?.erro }}
+                {{ labelMensagemErro(status()?.erro) }}
               </p>
             </div>
           }
@@ -339,7 +339,7 @@
                           rounded-xl px-4 py-3">
 
                 <p class="text-[var(--color-danger)] text-sm">
-                  {{ respostaMensagem()?.erro ?? 'Erro ao enviar mensagem.' }}
+                  {{ labelMensagemErro(respostaMensagem()?.erro, 'Erro ao enviar mensagem.') }}
                 </p>
 
                 @if (ehErroConsentimento(respostaMensagem()?.erro)) {

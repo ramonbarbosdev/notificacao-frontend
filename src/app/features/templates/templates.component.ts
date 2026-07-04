@@ -25,7 +25,7 @@ import { useSidePanel } from '../../shared/helper/side-panel.state';
 import { maskBrlInput } from '../../shared/helper/currency.utils';
 import { formatDateTimePtBr } from '../../shared/helper/date.utils';
 import { maskPhoneInput, normalizePhone } from '../../shared/helper/phone.utils';
-import { STATUS_LABELS } from '../whatsapp/whatsapp.constants';
+import { labelStatusNotificacao, extrairMensagemErroHttp } from '../../shared/labels/notificacao.labels';
 import {
   CanalNotificacao,
   EnviarNotificacaoResponse,
@@ -504,7 +504,7 @@ export class TemplatesComponent implements OnInit, OnDestroy {
   }
 
   labelStatus(status: string): string {
-    return STATUS_LABELS[status as keyof typeof STATUS_LABELS] ?? status;
+    return labelStatusNotificacao(status);
   }
 
   enviarTemplate(): void {
@@ -737,9 +737,10 @@ export class TemplatesComponent implements OnInit, OnDestroy {
   }
 
   private mensagemErro(err: HttpErrorResponse, fallback: string): string {
-    const mensagemApi = err.error?.mensagem ?? err.error?.erro ?? err.error?.message;
-
-    if (mensagemApi) return mensagemApi;
+    const traduzida = extrairMensagemErroHttp(err, fallback);
+    if (traduzida !== fallback) {
+      return traduzida;
+    }
 
     if (err.status === 400) {
       return 'Verifique os dados do template ou as variaveis obrigatorias.';
