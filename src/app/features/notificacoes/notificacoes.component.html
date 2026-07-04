@@ -1,10 +1,4 @@
-<div class="min-h-screen bg-[var(--color-bg-base)]">
-  <app-sidebar />
-  <app-header />
-
-  <main class="pl-64 pt-16">
-    <div class="p-8 max-w-3xl mx-auto">
-      <div class="mb-8">
+<div class="mb-8">
         <h1 class="text-2xl font-bold text-[var(--color-text)]">Notificacoes</h1>
         <p class="text-[var(--color-text-muted)] text-sm mt-1">
           Enfileire notificacoes por canais autorizados e acompanhe o status operacional.
@@ -45,12 +39,16 @@
             </label>
             <input
               formControlName="destinatario"
-              type="text"
+              [type]="canalSelecionado() === 'EMAIL' ? 'email' : 'text'"
+              [attr.inputmode]="canalSelecionado() === 'WHATSAPP' ? 'tel' : 'text'"
               [placeholder]="placeholderDestinatario()"
+              (input)="atualizarDestinatario($event)"
               class="w-full bg-[var(--color-surface-muted)] border border-[var(--color-border-strong)] rounded-xl px-4 py-3 text-[var(--color-text)] placeholder:text-[var(--color-text-subtle)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent transition-all duration-200" />
 
             @if (form.get('destinatario')?.invalid && form.get('destinatario')?.touched) {
               <p class="text-[var(--color-danger)] text-xs mt-1">Campo obrigatorio</p>
+            } @else {
+              <p class="text-[var(--color-text-subtle)] text-xs mt-1">{{ helperDestinatario() }}</p>
             }
           </div>
 
@@ -105,7 +103,7 @@
               Enfileirando notificacao...
             } @else {
               <lucide-icon [img]="sendIcon" class="w-4 h-4" />
-              Enfileirar Notificacao via {{ canalSelecionado() }}
+              Enfileirar Notificacao via {{ formatarCanal(canalSelecionado()) }}
             }
           </button>
         </form>
@@ -142,7 +140,7 @@
 
             <div class="bg-[var(--color-surface-muted)] rounded-xl p-3">
               <p class="text-[var(--color-text-subtle)] text-xs mb-1">Canal</p>
-              <p class="text-[var(--color-text)] text-sm font-semibold">{{ resposta()!.canal }}</p>
+              <p class="text-[var(--color-text)] text-sm font-semibold">{{ formatarCanal(resposta()!.canal) }}</p>
             </div>
 
             <div class="bg-[var(--color-surface-muted)] rounded-xl p-3">
@@ -155,6 +153,20 @@
                 {{ labelStatus(resposta()!.status) }}
               </span>
             </div>
+
+            @if (resposta()!.sucesso && resposta()!.tempoEstimadoEnvioTexto) {
+              <div class="bg-[var(--color-surface-muted)] rounded-xl p-3 col-span-2">
+                <p class="text-[var(--color-text-subtle)] text-xs mb-1">Previsao de envio</p>
+                <p class="text-[var(--color-text)] text-sm font-semibold">
+                  {{ resposta()!.tempoEstimadoEnvioTexto }}
+                </p>
+                @if (resposta()!.posicaoFila != null && resposta()!.posicaoFila! > 0) {
+                  <p class="text-[var(--color-text-muted)] text-xs mt-1">
+                    {{ resposta()!.posicaoFila }} mensagem(ns) na fila antes desta.
+                  </p>
+                }
+              </div>
+            }
 
             @if (resposta()!.erro) {
               <div class="bg-[var(--color-danger-bg)]/50 rounded-xl p-3 col-span-2">
@@ -204,6 +216,4 @@
           }
         </div>
       }
-    </div>
-  </main>
-</div>
+

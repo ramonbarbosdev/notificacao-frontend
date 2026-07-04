@@ -4,17 +4,16 @@ import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Check, LoaderCircle, LucideAngularModule, PackagePlus } from 'lucide-angular';
 
-import { HeaderComponent } from '../../../core/layout/header/header.component';
-import { SidebarComponent } from '../../../core/layout/layout.components';
 import { PlanoService } from '../../../core/services/plano.service';
 import { SidePanelComponent } from '../../../shared/components/side-panel/side-panel.component';
 import { useSidePanel } from '../../../shared/helper/side-panel.state';
+import { formatNumberPtBr } from '../../../shared/helper/number.utils';
 import { Plano } from '../../../shared/types/dtos';
 
 @Component({
   selector: 'app-planos',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, LucideAngularModule, SidebarComponent, HeaderComponent, SidePanelComponent],
+  imports: [CommonModule, ReactiveFormsModule, LucideAngularModule, SidePanelComponent],
   templateUrl: './planos.component.html',
 })
 export class PlanosComponent implements OnInit {
@@ -26,6 +25,7 @@ export class PlanosComponent implements OnInit {
   protected readonly checkIcon = Check;
 
   readonly panel = useSidePanel<Plano>();
+  readonly formatarNumero = formatNumberPtBr;
   readonly planos = signal<Plano[]>([]);
   readonly termo = signal('');
   readonly status = signal('');

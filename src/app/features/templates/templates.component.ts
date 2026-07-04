@@ -16,14 +16,16 @@ import {
 } from 'lucide-angular';
 import { Subscription, switchMap } from 'rxjs';
 
-import { HeaderComponent } from '../../core/layout/header/header.component';
-import { SidebarComponent } from '../../core/layout/layout.components';
 import { TemplateService } from '../../core/services/template.service';
 import { DataTableComponent } from '../../shared/components/data-table/data-table.component';
 import { DataTableColumn } from '../../shared/components/data-table/data-table.types';
 import { SidePanelComponent } from '../../shared/components/side-panel/side-panel.component';
 import { usePaginatedTable } from '../../shared/helper/paginated-table.state';
 import { useSidePanel } from '../../shared/helper/side-panel.state';
+import { maskBrlInput } from '../../shared/helper/currency.utils';
+import { formatDateTimePtBr } from '../../shared/helper/date.utils';
+import { maskPhoneInput, normalizePhone } from '../../shared/helper/phone.utils';
+import { STATUS_LABELS } from '../whatsapp/whatsapp.constants';
 import {
   CanalNotificacao,
   EnviarNotificacaoResponse,
@@ -44,8 +46,6 @@ const TEMPLATE_VARIABLE_REGEX = /\{\{\s*([A-Za-zÀ-ÿ_][A-Za-zÀ-ÿ0-9_.-]*)\s*\
     CommonModule,
     ReactiveFormsModule,
     LucideAngularModule,
-    SidebarComponent,
-    HeaderComponent,
     DataTableComponent,
     SidePanelComponent,
   ],
@@ -179,7 +179,7 @@ export class TemplatesComponent implements OnInit, OnDestroy {
     {
       key: 'dtAtualizacao',
       label: 'Atualizado em',
-      formatter: (value) => this.formatarData(value),
+      formatter: (value) => formatDateTimePtBr(value),
     },
     {
       key: 'actions',
@@ -480,10 +480,31 @@ export class TemplatesComponent implements OnInit, OnDestroy {
     this.respostaEnvio.set(null);
   }
 
-  atualizarValorEnvio(variavel: string, event: Event): void {
-    const value = (event.target as HTMLInputElement).value;
+  atualizarDestinatarioEnvio(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const valorFormatado = maskPhoneInput(input.value);
+
+    this.sendForm.controls.destinatario.setValue(valorFormatado, { emitEvent: false });
+    input.value = valorFormatado;
+  }
+
+  atualizarValorEnvio(variavel: string, tipo: TipoVariavelTemplate, event: Event): void {
+    const input = event.target as HTMLInputElement;
+    let value = input.value;
+
+    if (tipo === 'TELEFONE') {
+      value = maskPhoneInput(value);
+      input.value = value;
+    } else if (tipo === 'MOEDA') {
+      value = maskBrlInput(value);
+      input.value = value;
+    }
 
     this.valoresEnvio.update((valores) => ({ ...valores, [variavel]: value }));
+  }
+
+  labelStatus(status: string): string {
+    return STATUS_LABELS[status as keyof typeof STATUS_LABELS] ?? status;
   }
 
   enviarTemplate(): void {
@@ -494,6 +515,24 @@ export class TemplatesComponent implements OnInit, OnDestroy {
       return;
     }
 
+    const destinatarioBruto = this.sendForm.controls.destinatario.value!.trim();
+    const destinatario =
+      template.canal === 'WHATSAPP' ? normalizePhone(destinatarioBruto) : destinatarioBruto;
+
+    const variaveis = { ...this.valoresEnvio() };
+
+    for (const variavel of this.variaveisDoTemplate(template)) {
+      const valor = variaveis[variavel.chave];
+
+      if (!valor) continue;
+
+      if (variavel.tipo === 'TELEFONE') {
+        variaveis[variavel.chave] = normalizePhone(valor);
+      } else if (variavel.tipo === 'MOEDA') {
+        variaveis[variavel.chave] = valor;
+      }
+    }
+
     this.acaoAtual.set('envio');
     this.limparMensagens();
     this.respostaEnvio.set(null);
@@ -501,8 +540,8 @@ export class TemplatesComponent implements OnInit, OnDestroy {
     this.templateService
       .enviar({
         templateKey: template.chave,
-        destinatario: this.sendForm.controls.destinatario.value!.trim(),
-        variaveis: this.valoresEnvio(),
+        destinatario,
+        variaveis,
       })
       .subscribe({
         next: (resposta) => {
@@ -695,15 +734,6 @@ export class TemplatesComponent implements OnInit, OnDestroy {
       .trim()
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-+|-+$/g, '');
-  }
-
-  private formatarData(value: string | null | undefined): string {
-    if (!value) return '-';
-
-    return new Intl.DateTimeFormat('pt-BR', {
-      dateStyle: 'short',
-      timeStyle: 'short',
-    }).format(new Date(value));
   }
 
   private mensagemErro(err: HttpErrorResponse, fallback: string): string {

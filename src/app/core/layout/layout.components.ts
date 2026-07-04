@@ -1,8 +1,9 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import {
   Bell,
+  BookOpen,
   Building2,
   ClipboardList,
   Flag,
@@ -16,10 +17,13 @@ import {
   Package,
   Send,
   Settings,
+  Shield,
   UserCheck,
   UserPlus,
+  X,
 } from 'lucide-angular';
 import { AuthService } from '../auth/auth.service';
+import { LayoutService } from './layout.service';
 
 interface NavItem {
   label: string;
@@ -37,9 +41,10 @@ interface NavItem {
 })
 export class SidebarComponent {
   readonly authService = inject(AuthService);
-  readonly aberta = signal(true);
+  readonly layout = inject(LayoutService);
   readonly brandIcon = Bell;
   readonly logoutIcon = LogOut;
+  readonly closeIcon = X;
 
   readonly navItems: NavItem[] = [
     {
@@ -49,7 +54,7 @@ export class SidebarComponent {
       scope: 'ADMIN_GLOBAL',
     },
     {
-      label: 'Nova Organizacao',
+      label: 'Nova Organização',
       rota: '/admin/organizacoes',
       icon: Building2,
       scope: 'ADMIN_GLOBAL',
@@ -61,7 +66,7 @@ export class SidebarComponent {
       scope: 'ADMIN_GLOBAL',
     },
     {
-      label: 'Configuracoes Globais',
+      label: 'Configurações Globais',
       rota: '/admin/configuracoes',
       icon: Settings,
       scope: 'ADMIN_GLOBAL',
@@ -79,13 +84,13 @@ export class SidebarComponent {
       scope: 'ADMIN_GLOBAL',
     },
     {
-      label: 'Auditoria',
+      label: 'Auditoria Global',
       rota: '/admin/auditoria',
       icon: History,
       scope: 'ADMIN_GLOBAL',
     },
     {
-      label: 'Usuarios por Organizacao',
+      label: 'Usuários por Organização',
       rota: '/admin/usuarios',
       icon: UserPlus,
       scope: 'ADMIN_GLOBAL',
@@ -93,7 +98,7 @@ export class SidebarComponent {
     {
       label: 'Definir Admin',
       rota: '/admin/definir-admin',
-      icon: UserPlus,
+      icon: Shield,
       scope: 'ADMIN_GLOBAL',
     },
     {
@@ -111,7 +116,7 @@ export class SidebarComponent {
       roles: ['ADMIN', 'USER'],
     },
     {
-      label: 'Notificacoes',
+      label: 'Notificações',
       rota: '/app/notificacoes',
       icon: Send,
       scope: 'ORG',
@@ -132,14 +137,21 @@ export class SidebarComponent {
       roles: ['ADMIN', 'USER'],
     },
     {
-      label: 'Historico / Fila',
+      label: 'Tutorial',
+      rota: '/app/tutorial',
+      icon: BookOpen,
+      scope: 'ORG',
+      roles: ['ADMIN', 'USER'],
+    },
+    {
+      label: 'Histórico / Fila',
       rota: '/app/fila',
       icon: History,
       scope: 'ORG',
       roles: ['ADMIN', 'USER'],
     },
     {
-      label: 'Configuracoes',
+      label: 'Configurações',
       rota: '/app/configuracoes',
       icon: Settings,
       scope: 'ORG',
@@ -164,5 +176,11 @@ export class SidebarComponent {
     }
 
     return !item.roles || item.roles.includes(this.authService.role() ?? '');
+  }
+
+  fecharAoNavegar(): void {
+    if (window.innerWidth < 1024) {
+      this.layout.fecharSidebar();
+    }
   }
 }

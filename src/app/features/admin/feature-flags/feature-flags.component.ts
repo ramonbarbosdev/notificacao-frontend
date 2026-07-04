@@ -5,15 +5,13 @@ import { FormsModule } from '@angular/forms';
 import { Check, Flag, LoaderCircle, LucideAngularModule } from 'lucide-angular';
 
 import { AdminService } from '../../../core/http/admin.service';
-import { HeaderComponent } from '../../../core/layout/header/header.component';
-import { SidebarComponent } from '../../../core/layout/layout.components';
 import { FeatureFlagService } from '../../../core/services/feature-flag.service';
 import { FeatureFlag, OrganizacaoAdminResponse, RecursoFeature } from '../../../shared/types/dtos';
 
 @Component({
   selector: 'app-feature-flags',
   standalone: true,
-  imports: [CommonModule, FormsModule, LucideAngularModule, SidebarComponent, HeaderComponent],
+  imports: [CommonModule, FormsModule, LucideAngularModule],
   templateUrl: './feature-flags.component.html',
 })
 export class FeatureFlagsComponent implements OnInit {

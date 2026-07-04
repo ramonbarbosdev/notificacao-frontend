@@ -35,12 +35,12 @@
   </p>
 
   <p class="text-[var(--color-text)] font-semibold text-lg">
-    {{ whatsappStatus?.status ?? (carregandoStatus ? '...' : 'Desconhecido') }}
+    {{ carregandoStatus ? '...' : labelStatus(whatsappStatus?.status) }}
   </p>
 
   @if (whatsappStatus?.telefone) {
     <p class="text-[var(--color-text-subtle)] text-xs mt-1 truncate">
-      {{ whatsappStatus!.telefone }}
+      {{ formatarTelefone(whatsappStatus!.telefone!) }}
     </p>
   }
 </div>

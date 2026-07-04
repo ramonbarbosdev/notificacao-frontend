@@ -8,8 +8,6 @@ import { LucideAngularModule } from 'lucide-angular';
 
 import { AuthService } from '../../core/auth/auth.service';
 import { WhatsappEventsService } from '../../core/http/whatsapp-events.service';
-import { HeaderComponent } from '../../core/layout/header/header.component';
-import { SidebarComponent } from '../../core/layout/layout.components';
 import { WhatsappService } from '../../core/services/whatsapp.service';
 
 import {
@@ -22,6 +20,7 @@ import {
 
 import { STATUS_LABELS, STATUS_TENTATIVA_LABELS } from './whatsapp.constants';
 import { criarFormularioMensagem } from './whatsapp.form';
+import { formatPhone, maskPhoneInput, normalizePhone } from '../../shared/helper/phone.utils';
 import {
   ehErroConsentimento,
   ehStatusDeTentativa,
@@ -39,8 +38,6 @@ type WhatsappConnectionStatus = WhatsappStatusResponse['status'];
     CommonModule,
     ReactiveFormsModule,
     LucideAngularModule,
-    SidebarComponent,
-    HeaderComponent,
   ],
   templateUrl: './whatsapp.component.html',
 })
@@ -89,6 +86,16 @@ export class WhatsappComponent implements OnInit, OnDestroy {
   );
 
   readonly formMensagem = criarFormularioMensagem(this.fb);
+
+  readonly formatarTelefone = formatPhone;
+
+  atualizarTelefone(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const valorFormatado = maskPhoneInput(input.value);
+
+    this.formMensagem.controls.telefone.setValue(valorFormatado, { emitEvent: false });
+    input.value = valorFormatado;
+  }
 
   ngOnInit(): void {
     this.conectarEventosDaOrganizacao();
@@ -151,7 +158,7 @@ export class WhatsappComponent implements OnInit, OnDestroy {
 
     this.whatsappService
       .enviarMensagem({
-        telefone: telefone!,
+        telefone: normalizePhone(telefone!),
         mensagem: mensagem!,
       })
       .subscribe({
@@ -163,8 +170,20 @@ export class WhatsappComponent implements OnInit, OnDestroy {
   labelStatus(status: StatusNotificacao): string {
     return STATUS_LABELS[status];
   }
-  labelTentativaStatus(status: WhatsappStatus): string {
-    return STATUS_TENTATIVA_LABELS[status];
+  labelTentativaStatus(status: WhatsappStatus | null | undefined): string {
+    if (!status) return 'Desconhecido';
+
+    return STATUS_TENTATIVA_LABELS[status] ?? status;
+  }
+
+  labelStatusAtual(): string {
+    const atual = this.status();
+
+    if (!atual) {
+      return this.carregando() ? 'Carregando...' : 'Desconhecido';
+    }
+
+    return this.labelTentativaStatus(atual.status);
   }
 
   ehErroConsentimento(mensagem: string | null | undefined): boolean {

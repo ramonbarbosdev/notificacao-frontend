@@ -1,10 +1,4 @@
-<div class="min-h-screen bg-[var(--color-bg-base)]">
-  <app-sidebar />
-  <app-header />
-
-  <main class="pl-64 pt-16">
-    <div class="p-8 max-w-7xl mx-auto">
-      <div class="flex items-start justify-between gap-4 mb-8">
+<div class="flex items-start justify-between gap-4 mb-8">
         <div>
           <h1 class="text-2xl font-bold text-[var(--color-text)]">
             Templates de Mensagem
@@ -77,8 +71,6 @@
         (previousPage)="paginaAnterior()"
         (pageSizeChange)="alterarTamanhoPagina($event)"
       />
-    </div>
-  </main>
 
   <app-side-panel
     [open]="formPanel.aberto()"
@@ -470,8 +462,10 @@
           </label>
           <input
             formControlName="destinatario"
-            type="text"
-            placeholder="5571999999999"
+            type="tel"
+            inputmode="tel"
+            placeholder="+55 (71) 99999-9999"
+            (input)="atualizarDestinatarioEnvio($event)"
             class="w-full bg-[var(--color-surface-muted)] border border-[var(--color-border-strong)] rounded-xl px-4 py-3 text-[var(--color-text)] placeholder:text-[var(--color-text-subtle)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
           />
         </div>
@@ -483,8 +477,9 @@
             </label>
             <input
               [type]="inputType(variavel.tipo)"
+              [attr.inputmode]="variavel.tipo === 'MOEDA' || variavel.tipo === 'TELEFONE' ? 'numeric' : 'text'"
               [value]="valoresEnvio()[variavel.chave] || ''"
-              (input)="atualizarValorEnvio(variavel.chave, $event)"
+              (input)="atualizarValorEnvio(variavel.chave, variavel.tipo, $event)"
               class="w-full bg-[var(--color-surface-muted)] border border-[var(--color-border-strong)] rounded-xl px-4 py-3 text-[var(--color-text)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
             />
             <p class="text-xs text-[var(--color-text-subtle)] mt-1">
@@ -513,11 +508,13 @@
           >
             <p class="text-sm text-[var(--color-success)]">
               Notificacao #{{ respostaEnvio()!.idNotificacao }} criada com status
-              {{ respostaEnvio()!.status }}.
+              {{ labelStatus(respostaEnvio()!.status) }}.
+              @if (respostaEnvio()!.tempoEstimadoEnvioTexto) {
+                Previsao de envio: {{ respostaEnvio()!.tempoEstimadoEnvioTexto }}.
+              }
             </p>
           </div>
         }
       </form>
     }
   </app-side-panel>
-</div>

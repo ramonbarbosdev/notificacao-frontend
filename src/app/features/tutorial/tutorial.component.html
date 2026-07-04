@@ -1,0 +1,96 @@
+<div class="tutorial-page">
+  <header class="tutorial-header">
+    <div class="tutorial-header__icon">
+      <lucide-icon [img]="bookIcon" class="w-7 h-7" />
+    </div>
+    <div>
+      <h1 class="tutorial-header__title">Tutorial de integração</h1>
+      <p class="tutorial-header__subtitle">
+        Guia para conectar outra API ou sistema externo — autenticação, envio por WhatsApp, e-mail,
+        templates, request/response e erros comuns.
+      </p>
+      <p class="tutorial-header__api">
+        Base URL atual: <code>{{ apiUrl }}</code>
+      </p>
+    </div>
+  </header>
+
+  <div class="tutorial-layout">
+    <nav class="tutorial-nav" aria-label="Tópicos do tutorial">
+      <p class="tutorial-nav__label">Tópicos</p>
+      <ul class="tutorial-nav__list">
+        @for (topico of topicos; track trackTopico($index, topico)) {
+          <li>
+            <button
+              type="button"
+              class="tutorial-nav__item"
+              [class.tutorial-nav__item--active]="topicoAtivoId() === topico.id"
+              (click)="selecionarTopico(topico.id)"
+            >
+              <span class="tutorial-nav__item-title">{{ topico.titulo }}</span>
+              <span class="tutorial-nav__item-resumo">{{ topico.resumo }}</span>
+            </button>
+          </li>
+        }
+      </ul>
+    </nav>
+
+    <article class="tutorial-content">
+      <div class="tutorial-content__hero">
+        <h2>{{ topicoAtivo().titulo }}</h2>
+        <p>{{ topicoAtivo().resumo }}</p>
+      </div>
+
+      @for (secao of topicoAtivo().secoes; track secao.titulo) {
+        <section class="tutorial-section">
+          <h3>{{ secao.titulo }}</h3>
+
+          @for (paragrafo of secao.paragrafos ?? []; track paragrafo) {
+            <p class="tutorial-section__text">{{ paragrafo }}</p>
+          }
+
+          @if (secao.lista?.length) {
+            <ul class="tutorial-section__list">
+              @for (item of secao.lista; track item) {
+                <li>{{ item }}</li>
+              }
+            </ul>
+          }
+
+          @for (exemplo of secao.exemplos ?? []; track exemplo.label) {
+            <div class="tutorial-code-block">
+              <div class="tutorial-code-block__header">
+                <span class="tutorial-code-block__label">{{ exemplo.label }}</span>
+                <button
+                  type="button"
+                  class="tutorial-code-block__copy"
+                  (click)="copiar(exemplo.code, topicoAtivoId() + secao.titulo + exemplo.label)"
+                  [attr.aria-label]="'Copiar ' + exemplo.label"
+                >
+                  @if (copiadoId() === topicoAtivoId() + secao.titulo + exemplo.label) {
+                    <lucide-icon [img]="checkIcon" class="w-4 h-4" />
+                    Copiado
+                  } @else {
+                    <lucide-icon [img]="copyIcon" class="w-4 h-4" />
+                    Copiar
+                  }
+                </button>
+              </div>
+              <pre
+                class="tutorial-code"
+                [class]="classeLinguagem(exemplo.language)"
+              ><code>{{ resolverCodigo(exemplo.code) }}</code></pre>
+            </div>
+          }
+
+          @if (secao.dica) {
+            <div class="tutorial-tip" role="note">
+              <lucide-icon [img]="chevronIcon" class="w-4 h-4 shrink-0 mt-0.5" />
+              <p>{{ secao.dica }}</p>
+            </div>
+          }
+        </section>
+      }
+    </article>
+  </div>
+</div>

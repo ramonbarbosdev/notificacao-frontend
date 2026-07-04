@@ -25,175 +25,166 @@ export const routes: Routes = [
   },
 
   {
-    path: 'app/dashboard',
+    path: 'app',
     canActivate: [authGuard, organizationGuard],
     loadComponent: () =>
-      import('./features/dashboard/dashboard.component').then((m) => m.DashboardComponent),
+      import('./core/layout/app-shell.component').then((m) => m.AppShellComponent),
+    children: [
+      {
+        path: 'dashboard',
+        loadComponent: () =>
+          import('./features/dashboard/dashboard.component').then((m) => m.DashboardComponent),
+      },
+      {
+        path: 'whatsapp',
+        canActivate: [roleGuard],
+        data: { roles: ['ADMIN', 'USER'] },
+        loadComponent: () =>
+          import('./features/whatsapp/whatsapp.component').then((m) => m.WhatsappComponent),
+      },
+      {
+        path: 'notificacoes',
+        canActivate: [roleGuard],
+        data: { roles: ['ADMIN', 'USER'] },
+        loadComponent: () =>
+          import('./features/notificacoes/notificacoes.component').then((m) => m.NotificacoesComponent),
+      },
+      {
+        path: 'contatos',
+        canActivate: [roleGuard],
+        data: { roles: ['ADMIN', 'USER'] },
+        loadComponent: () =>
+          import('./features/contatos/contatos.component').then((m) => m.ContatosComponent),
+      },
+      {
+        path: 'templates',
+        canActivate: [roleGuard],
+        data: { roles: ['ADMIN', 'USER'] },
+        loadComponent: () =>
+          import('./features/templates/templates.component').then((m) => m.TemplatesComponent),
+      },
+      {
+        path: 'tutorial',
+        canActivate: [roleGuard],
+        data: { roles: ['ADMIN', 'USER'] },
+        loadComponent: () =>
+          import('./features/tutorial/tutorial.component').then((m) => m.TutorialComponent),
+      },
+      {
+        path: 'historico',
+        canActivate: [roleGuard],
+        data: { roles: ['ADMIN', 'USER'] },
+        loadComponent: () =>
+          import('./features/historico-fila/historico-fila.component').then((m) => m.HistoricoFilaComponent),
+      },
+      {
+        path: 'fila',
+        canActivate: [roleGuard],
+        data: { roles: ['ADMIN', 'USER'] },
+        loadComponent: () =>
+          import('./features/historico-fila/historico-fila.component').then((m) => m.HistoricoFilaComponent),
+      },
+      {
+        path: 'configuracoes',
+        canActivate: [roleGuard],
+        data: { roles: ['ADMIN', 'USER'] },
+        loadComponent: () =>
+          import('./features/configuracoes/configuracoes-organizacao.component').then(
+            (m) => m.ConfiguracoesOrganizacaoComponent
+          ),
+      },
+      {
+        path: 'auditoria',
+        canActivate: [adminOnlyGuard],
+        loadComponent: () =>
+          import('./features/auditoria/auditoria.component').then((m) => m.AuditoriaComponent),
+      },
+      { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+    ],
   },
 
   {
-    path: 'app/whatsapp',
-    canActivate: [authGuard, organizationGuard, roleGuard],
-    data: { roles: ['ADMIN', 'USER'] },
-    loadComponent: () =>
-      import('./features/whatsapp/whatsapp.component').then((m) => m.WhatsappComponent),
-  },
-
-  {
-    path: 'app/notificacoes',
-    canActivate: [authGuard, organizationGuard, roleGuard],
-    data: { roles: ['ADMIN', 'USER'] },
-    loadComponent: () =>
-      import('./features/notificacoes/notificacoes.component').then(
-        (m) => m.NotificacoesComponent
-      ),
-  },
-
-  {
-    path: 'app/contatos',
-    canActivate: [authGuard, organizationGuard, roleGuard],
-    data: { roles: ['ADMIN', 'USER'] },
-    loadComponent: () =>
-      import('./features/contatos/contatos.component').then((m) => m.ContatosComponent),
-  },
-
-  {
-    path: 'app/templates',
-    canActivate: [authGuard, organizationGuard, roleGuard],
-    data: { roles: ['ADMIN', 'USER'] },
-    loadComponent: () =>
-      import('./features/templates/templates.component').then((m) => m.TemplatesComponent),
-  },
-
-  {
-    path: 'app/historico',
-    canActivate: [authGuard, organizationGuard, roleGuard],
-    data: { roles: ['ADMIN', 'USER'] },
-    loadComponent: () =>
-      import('./features/historico-fila/historico-fila.component').then(
-        (m) => m.HistoricoFilaComponent
-      ),
-  },
-
-  {
-    path: 'app/fila',
-    canActivate: [authGuard, organizationGuard, roleGuard],
-    data: { roles: ['ADMIN', 'USER'] },
-    loadComponent: () =>
-      import('./features/historico-fila/historico-fila.component').then(
-        (m) => m.HistoricoFilaComponent
-      ),
-  },
-
-  {
-    path: 'app/configuracoes',
-    canActivate: [authGuard, organizationGuard, roleGuard],
-    data: { roles: ['ADMIN', 'USER'] },
-    loadComponent: () =>
-      import('./features/configuracoes/configuracoes-organizacao.component').then(
-        (m) => m.ConfiguracoesOrganizacaoComponent
-      ),
-  },
-
-  {
-    path: 'app/auditoria',
-    canActivate: [authGuard, organizationGuard, adminOnlyGuard],
-    loadComponent: () => import('./features/auditoria/auditoria.component').then((m) => m.AuditoriaComponent),
-  },
-
-  {
-    path: 'admin/dashboard',
+    path: 'admin',
     canActivate: [authGuard, superAdminGuard],
     loadComponent: () =>
-      import('./features/admin/admin.component').then((m) => m.AdminComponent),
+      import('./core/layout/app-shell.component').then((m) => m.AppShellComponent),
+    children: [
+      {
+        path: 'dashboard',
+        loadComponent: () =>
+          import('./features/admin/admin.component').then((m) => m.AdminComponent),
+      },
+      {
+        path: 'organizacoes',
+        loadComponent: () =>
+          import('./features/admin/nova-organizacao/nova-organizacao.component').then(
+            (m) => m.NovaOrganizacaoComponent
+          ),
+      },
+      {
+        path: 'planos',
+        loadComponent: () =>
+          import('./features/admin/planos/planos.component').then((m) => m.PlanosComponent),
+      },
+      {
+        path: 'configuracoes',
+        loadComponent: () =>
+          import('./features/admin/configuracoes-globais/configuracoes-globais.component').then(
+            (m) => m.ConfiguracoesGlobaisComponent
+          ),
+      },
+      {
+        path: 'features',
+        loadComponent: () =>
+          import('./features/admin/feature-flags/feature-flags.component').then(
+            (m) => m.FeatureFlagsComponent
+          ),
+      },
+      {
+        path: 'auditoria',
+        loadComponent: () =>
+          import('./features/admin/auditoria-global/auditoria-global.component').then(
+            (m) => m.AuditoriaGlobalComponent
+          ),
+      },
+      {
+        path: 'monitoramento',
+        loadComponent: () =>
+          import('./features/admin/monitoramento/monitoramento.component').then(
+            (m) => m.MonitoramentoComponent
+          ),
+      },
+      {
+        path: 'usuarios',
+        loadComponent: () =>
+          import('./features/admin/usuarios-organizacao/usuarios-organizacao.component').then(
+            (m) => m.UsuariosOrganizacaoComponent
+          ),
+      },
+      {
+        path: 'definir-admin',
+        loadComponent: () =>
+          import('./features/admin/usuarios-organizacao/usuarios-organizacao.component').then(
+            (m) => m.UsuariosOrganizacaoComponent
+          ),
+      },
+      {
+        path: 'roles',
+        canActivate: [roleGuard],
+        data: { roles: ['SUPER_ADMIN'] },
+        loadComponent: () =>
+          import('./features/admin/admin.component').then((m) => m.AdminComponent),
+      },
+      { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+    ],
   },
 
-  {
-    path: 'admin/organizacoes',
-    canActivate: [authGuard, superAdminGuard],
-    loadComponent: () =>
-      import('./features/admin/nova-organizacao/nova-organizacao.component').then(
-        (m) => m.NovaOrganizacaoComponent
-      ),
-  },
-
-  {
-    path: 'admin/planos',
-    canActivate: [authGuard, superAdminGuard],
-    loadComponent: () => import('./features/admin/planos/planos.component').then((m) => m.PlanosComponent),
-  },
-
-  {
-    path: 'admin/configuracoes',
-    canActivate: [authGuard, superAdminGuard],
-    loadComponent: () =>
-      import('./features/admin/configuracoes-globais/configuracoes-globais.component').then(
-        (m) => m.ConfiguracoesGlobaisComponent
-      ),
-  },
-
-  {
-    path: 'admin/features',
-    canActivate: [authGuard, superAdminGuard],
-    loadComponent: () =>
-      import('./features/admin/feature-flags/feature-flags.component').then(
-        (m) => m.FeatureFlagsComponent
-      ),
-  },
-
-  {
-    path: 'admin/auditoria',
-    canActivate: [authGuard, superAdminGuard],
-    loadComponent: () =>
-      import('./features/admin/auditoria-global/auditoria-global.component').then(
-        (m) => m.AuditoriaGlobalComponent
-      ),
-  },
-
-  {
-    path: 'admin/monitoramento',
-    canActivate: [authGuard, superAdminGuard],
-    loadComponent: () =>
-      import('./features/admin/monitoramento/monitoramento.component').then(
-        (m) => m.MonitoramentoComponent
-      ),
-  },
-
-  {
-    path: 'admin/usuarios',
-    canActivate: [authGuard, superAdminGuard],
-    loadComponent: () =>
-      import('./features/admin/usuarios-organizacao/usuarios-organizacao.component').then(
-        (m) => m.UsuariosOrganizacaoComponent
-      ),
-  },
-
-  {
-    path: 'admin/definir-admin',
-    canActivate: [authGuard, superAdminGuard],
-    loadComponent: () =>
-      import('./features/admin/usuarios-organizacao/usuarios-organizacao.component').then(
-        (m) => m.UsuariosOrganizacaoComponent
-      ),
-  },
-
-  {
-    path: 'admin/roles',
-    canActivate: [authGuard, roleGuard],
-    data: { roles: ['SUPER_ADMIN'] },
-    loadComponent: () =>
-      import('./features/admin/admin.component').then((m) => m.AdminComponent),
-  },
-
-  { path: 'admin', pathMatch: 'full', redirectTo: '/admin/dashboard' },
-  { path: 'app', pathMatch: 'full', redirectTo: '/app/dashboard' },
-
-  // Compatibilidade com rotas antigas.
   { path: 'dashboard', redirectTo: '/app/dashboard' },
   { path: 'whatsapp', redirectTo: '/app/whatsapp' },
   { path: 'notificacoes', redirectTo: '/app/notificacoes' },
   { path: 'contatos', redirectTo: '/app/contatos' },
   { path: 'templates', redirectTo: '/app/templates' },
+  { path: 'tutorial', redirectTo: '/app/tutorial' },
   { path: 'historico', redirectTo: '/app/historico' },
   { path: 'fila', redirectTo: '/app/fila' },
   { path: 'configuracoes', redirectTo: '/app/configuracoes' },

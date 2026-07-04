@@ -3,18 +3,17 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { Clock, LucideAngularModule } from 'lucide-angular';
 
-import { HeaderComponent } from '../../../core/layout/header/header.component';
-import { SidebarComponent } from '../../../core/layout/layout.components';
 import { AdminConfiguracaoService } from '../../../core/services/admin-configuracao.service';
 import { DataTableComponent } from '../../../shared/components/data-table/data-table.component';
 import { DataTableColumn } from '../../../shared/components/data-table/data-table.types';
 import { usePaginatedTable } from '../../../shared/helper/paginated-table.state';
+import { formatDateTimePtBr } from '../../../shared/helper/date.utils';
 import { AuditoriaEvento } from '../../../shared/types/dtos';
 
 @Component({
   selector: 'app-auditoria-global',
   standalone: true,
-  imports: [CommonModule, LucideAngularModule, SidebarComponent, HeaderComponent, DataTableComponent],
+  imports: [CommonModule, LucideAngularModule, DataTableComponent],
   templateUrl: './auditoria-global.component.html',
 })
 export class AuditoriaGlobalComponent implements OnInit {
@@ -26,7 +25,7 @@ export class AuditoriaGlobalComponent implements OnInit {
   readonly erro = signal<string | null>(null);
 
   readonly columns: DataTableColumn<AuditoriaEvento>[] = [
-    { key: 'dtCriacao', label: 'Data', formatter: (value) => this.data(value) },
+    { key: 'dtCriacao', label: 'Data', formatter: (value) => formatDateTimePtBr(value) },
     { key: 'idUsuario', label: 'Usuario', formatter: (value) => value ? `#${value}` : '-' },
     { key: 'modulo', label: 'Modulo' },
     { key: 'acao', label: 'Acao' },
@@ -67,9 +66,5 @@ export class AuditoriaGlobalComponent implements OnInit {
 
   alterarTamanhoPagina(size: number): void {
     this.table.alterarTamanhoPagina(size, () => this.carregar());
-  }
-
-  private data(value: string | null): string {
-    return value ? new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(value)) : '-';
   }
 }

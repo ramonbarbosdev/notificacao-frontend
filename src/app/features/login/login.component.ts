@@ -1,16 +1,10 @@
-// src/app/features/login/login.component.ts
 import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
-
-import {
-  Bell,
-  LoaderCircle,
-  LucideAngularModule
-} from 'lucide-angular';
-
+import { Bell, LoaderCircle, LucideAngularModule } from 'lucide-angular';
 import { AuthService } from '../../core/auth/auth.service';
+import { maskCpfInput, normalizeCpf } from '../../shared/helper/cpf.utils';
 
 @Component({
   selector: 'app-login',
@@ -34,6 +28,14 @@ export class LoginComponent {
     senha: ['', [Validators.required]],
   });
 
+  atualizarCpf(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const valorFormatado = maskCpfInput(input.value);
+
+    this.form.controls.login.setValue(valorFormatado, { emitEvent: false });
+    input.value = valorFormatado;
+  }
+
   onSubmit(): void {
     if (this.form.invalid) return;
 
@@ -42,8 +44,8 @@ export class LoginComponent {
     const { login, senha } = this.form.getRawValue();
 
     this.authService.login({
-      login: login!,
-      senha: senha!
+      login: normalizeCpf(login!),
+      senha: senha!,
     }).subscribe({
       next: (res) => {
         if (res.deveSelecionarOrganizacao) {
@@ -51,7 +53,8 @@ export class LoginComponent {
           return;
         }
 
-        this.router.navigate(['/admin/dashboard']);
+        const destino = this.authService.isSuperAdmin() ? '/admin/dashboard' : '/app/dashboard';
+        this.router.navigate([destino]);
       },
       error: (err) => {
         this.erro.set(

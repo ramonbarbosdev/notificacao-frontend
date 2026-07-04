@@ -3,9 +3,8 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CheckCircle2, LoaderCircle, LucideAngularModule, UserPlus } from 'lucide-angular';
-import { SidebarComponent } from '../../../core/layout/layout.components';
-import { HeaderComponent } from '../../../core/layout/header/header.component';
 import { AdminService } from '../../../core/http/admin.service';
+import { formatCpf, maskCpfInput, normalizeCpf } from '../../../shared/helper/cpf.utils';
 import {
   OrganizacaoAdminResponse,
   RoleOrganizacao,
@@ -19,8 +18,6 @@ import {
     CommonModule,
     ReactiveFormsModule,
     LucideAngularModule,
-    SidebarComponent,
-    HeaderComponent,
   ],
   templateUrl: './usuarios-organizacao.component.html',
 })
@@ -56,6 +53,16 @@ export class UsuariosOrganizacaoComponent implements OnInit {
     senha: ['', [Validators.required, Validators.minLength(6)]],
     role: ['USER' as RoleOrganizacao, [Validators.required]],
   });
+
+  readonly formatarCpf = formatCpf;
+
+  atualizarCpf(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const valorFormatado = maskCpfInput(input.value);
+
+    this.form.controls.nuCpf.setValue(valorFormatado, { emitEvent: false });
+    input.value = valorFormatado;
+  }
 
   ngOnInit(): void {
     this.carregarOrganizacoes();
@@ -126,7 +133,7 @@ export class UsuariosOrganizacaoComponent implements OnInit {
     const dados = this.form.getRawValue();
     this.adminService
       .criarUsuarioOrganizacao(dados.idOrganizacao!, {
-        nuCpf: dados.nuCpf!,
+        nuCpf: normalizeCpf(dados.nuCpf!),
         nmUsuario: dados.nmUsuario!,
         nmEmail: dados.nmEmail!,
         senha: dados.senha!,

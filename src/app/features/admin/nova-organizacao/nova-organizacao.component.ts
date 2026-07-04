@@ -9,9 +9,9 @@ import {
   LucideAngularModule,
   UserPlus,
 } from 'lucide-angular';
-import { SidebarComponent } from '../../../core/layout/layout.components';
-import { HeaderComponent } from '../../../core/layout/header/header.component';
 import { AdminService } from '../../../core/http/admin.service';
+import { formatCnpj, maskCnpjInput, normalizeCnpj } from '../../../shared/helper/cnpj.utils';
+import { formatCpf, maskCpfInput, normalizeCpf } from '../../../shared/helper/cpf.utils';
 import {
   OrganizacaoAdminResponse,
   RoleOrganizacao,
@@ -25,8 +25,6 @@ import {
     CommonModule,
     ReactiveFormsModule,
     LucideAngularModule,
-    SidebarComponent,
-    HeaderComponent,
   ],
   templateUrl: './nova-organizacao.component.html',
 })
@@ -40,6 +38,25 @@ export class NovaOrganizacaoComponent implements OnInit {
   protected readonly successIcon = CheckCircle2;
 
   readonly roles: RoleOrganizacao[] = ['ADMIN', 'USER'];
+
+  readonly formatarCpf = formatCpf;
+  readonly formatarCnpj = formatCnpj;
+
+  atualizarDocumento(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const valorFormatado = maskCnpjInput(input.value);
+
+    this.formOrganizacao.controls.dsDocumento.setValue(valorFormatado, { emitEvent: false });
+    input.value = valorFormatado;
+  }
+
+  atualizarCpfUsuario(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const valorFormatado = maskCpfInput(input.value);
+
+    this.formUsuario.controls.nuCpf.setValue(valorFormatado, { emitEvent: false });
+    input.value = valorFormatado;
+  }
   readonly criandoOrganizacao = signal(false);
   readonly criandoUsuario = signal(false);
   readonly erroOrganizacao = signal<string | null>(null);
@@ -81,7 +98,7 @@ export class NovaOrganizacaoComponent implements OnInit {
     const dados = this.formOrganizacao.getRawValue();
     const payload = {
       nmOrganizacao: dados.nmOrganizacao!,
-      dsDocumento: dados.dsDocumento!,
+      dsDocumento: normalizeCnpj(dados.dsDocumento!),
     };
 
     const request = organizacaoEmEdicao
@@ -118,7 +135,7 @@ export class NovaOrganizacaoComponent implements OnInit {
     this.organizacaoEmEdicao.set(org);
     this.formOrganizacao.patchValue({
       nmOrganizacao: org.nmOrganizacao,
-      dsDocumento: org.dsDocumento,
+      dsDocumento: maskCnpjInput(org.dsDocumento),
     });
   }
 
@@ -154,7 +171,7 @@ export class NovaOrganizacaoComponent implements OnInit {
     const dados = this.formUsuario.getRawValue();
     this.adminService
       .criarUsuarioOrganizacao(organizacao.idOrganizacao, {
-        nuCpf: dados.nuCpf!,
+        nuCpf: normalizeCpf(dados.nuCpf!),
         nmUsuario: dados.nmUsuario!,
         nmEmail: dados.nmEmail!,
         senha: dados.senha!,

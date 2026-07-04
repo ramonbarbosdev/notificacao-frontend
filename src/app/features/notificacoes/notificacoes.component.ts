@@ -15,15 +15,15 @@ import {
   ChevronRight,
 } from 'lucide-angular';
 
-import { SidebarComponent } from '../../core/layout/layout.components';
 
 import {
   EnviarNotificacaoResponse,
   CanalNotificacao,
   StatusNotificacao,
 } from '../../shared/types/dtos';
-import { HeaderComponent } from '../../core/layout/header/header.component';
 import { NotificacaoService } from '../../core/services/notificacao.service';
+import { formatCanal } from '../../shared/helper/channel.utils';
+import { maskPhoneInput, normalizePhone } from '../../shared/helper/phone.utils';
 
 interface OpcaoCanal {
   valor: CanalNotificacao;
@@ -38,8 +38,6 @@ interface OpcaoCanal {
     CommonModule,
     ReactiveFormsModule,
     LucideAngularModule,
-    SidebarComponent,
-    HeaderComponent,
   ],
   templateUrl: './notificacoes.component.html',
 })
@@ -85,7 +83,7 @@ export class NotificacoesComponent {
 
   readonly placeholderDestinatario = () => {
     const mapa: Record<CanalNotificacao, string> = {
-      WHATSAPP: '5571991180200',
+      WHATSAPP: '+55 (71) 99118-0200',
       EMAIL: 'destinatario@email.com',
       TELEGRAM: '@usuario ou chat_id',
       WEBHOOK: 'https://seu-webhook.com/endpoint',
@@ -93,6 +91,42 @@ export class NotificacoesComponent {
 
     return mapa[this.canalSelecionado()];
   };
+
+  readonly formatarCanal = formatCanal;
+
+  helperDestinatario(): string {
+    const mapa: Record<CanalNotificacao, string> = {
+      WHATSAPP: 'Telefone com DDI e DDD, ex: +55 (71) 99118-0200',
+      EMAIL: 'Endereço de e-mail do destinatário',
+      TELEGRAM: 'Usuário (@nome) ou chat_id numérico',
+      WEBHOOK: 'URL completa do endpoint que receberá o evento',
+    };
+
+    return mapa[this.canalSelecionado()];
+  }
+
+  atualizarDestinatario(event: Event): void {
+    const input = event.target as HTMLInputElement;
+
+    if (this.canalSelecionado() !== 'WHATSAPP') return;
+
+    const valorFormatado = maskPhoneInput(input.value);
+
+    this.form.controls.destinatario.setValue(valorFormatado, { emitEvent: false });
+    input.value = valorFormatado;
+  }
+
+  private normalizarDestinatario(valor: string): string {
+    if (this.canalSelecionado() === 'WHATSAPP') {
+      return normalizePhone(valor);
+    }
+
+    if (this.canalSelecionado() === 'EMAIL') {
+      return valor.replace(/\s/g, '').toLowerCase();
+    }
+
+    return valor.trim();
+  }
 
   selecionarCanal(canal: CanalNotificacao): void {
     this.canalSelecionado.set(canal);
@@ -137,7 +171,7 @@ export class NotificacoesComponent {
     this.notificacaoService
       .enviar({
         canal: this.canalSelecionado(),
-        destinatario: destinatario!,
+        destinatario: this.normalizarDestinatario(destinatario!),
         assunto: assunto ?? '',
         mensagem: mensagem!,
       })

@@ -1,54 +1,42 @@
-<div class="min-h-screen bg-[var(--color-bg-base)]">
-  <app-sidebar />
-  <app-header />
+<div class="mb-8">
+  <h1 class="text-2xl font-bold text-[var(--color-text)]">
+    {{ saudacao() }}, {{ primeiroNome() }}
+  </h1>
 
-  <main class="pl-64 pt-16">
-    <div class="p-8 max-w-7xl mx-auto">
-      <div class="mb-8">
-        <h1 class="text-2xl font-bold text-[var(--color-text)]">
-          Bom dia, {{ primeiroNome() }}
-        </h1>
+  <p class="text-[var(--color-text-muted)] text-sm mt-1">
+    Visão operacional da fila de notificações da organização.
+  </p>
+</div>
 
-        <p class="text-[var(--color-text-muted)] text-sm mt-1">
-          Visao operacional da fila de notificacoes da organizacao.
-        </p>
-      </div>
+<div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5 mb-8">
+  <app-whatsapp-status-card
+    [whatsappStatus]="whatsappStatus()"
+    [carregandoStatus]="carregandoStatus()"
+    [whatsappIcon]="whatsappIcon"
+  />
 
-      <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5 mb-8">
-        <app-whatsapp-status-card
-          [whatsappStatus]="whatsappStatus()"
-          [carregandoStatus]="carregandoStatus()"
-          [whatsappIcon]="whatsappIcon"
-        />
+  @for (metrica of metricas; track metrica.title) {
+    <app-metric-card
+      [title]="metrica.title"
+      [description]="metrica.description"
+      [icon]="metrica.icon"
+      [tone]="metrica.tone"
+      [value]="valorMetrica(metrica.status)"
+      [label]="'na fila'"
+      [loading]="carregandoMetricas()"
+    />
+  }
+</div>
 
-        @for (metrica of metricas; track metrica.title) {
-          <app-metric-card
-            [title]="metrica.title"
-            [description]="metrica.description"
-            [icon]="metrica.icon"
-            [tone]="metrica.tone"
-            [value]="metrica.value ?? '-'"
-            [label]="metrica.label ?? 'sem endpoint'"
-          />
-        }
-      </div>
-
-      <app-dashboard-alert
-        message="Ainda nao ha endpoint real para metricas agregadas da fila. Os cards acima estao prontos para receber os totais quando a API disponibilizar os dados."
-      />
-
-      <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5">
-        @for (action of quickActions; track action.routerLink) {
-          <app-quick-action-card
-            [title]="action.title"
-            [description]="action.description"
-            [routerLink]="action.routerLink"
-            [icon]="action.icon"
-            [tone]="action.tone ?? 'default'"
-            [chevronIcon]="chevronRightIcon"
-          />
-        }
-      </div>
-    </div>
-  </main>
+<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5">
+  @for (action of quickActions; track action.routerLink) {
+    <app-quick-action-card
+      [title]="action.title"
+      [description]="action.description"
+      [routerLink]="action.routerLink"
+      [icon]="action.icon"
+      [tone]="action.tone ?? 'default'"
+      [chevronIcon]="chevronRightIcon"
+    />
+  }
 </div>

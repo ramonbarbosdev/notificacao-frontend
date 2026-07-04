@@ -2,13 +2,11 @@ import { HttpClient } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { environment } from '../../../environments/environment';
-import {  SidebarComponent } from '../../core/layout/layout.components';
-import { HeaderComponent } from '../../core/layout/header/header.component';
 
 @Component({
   selector: 'app-admin',
   standalone: true,
-  imports: [CommonModule, SidebarComponent, HeaderComponent],
+  imports: [CommonModule],
   templateUrl: './admin.component.html',
 
 })

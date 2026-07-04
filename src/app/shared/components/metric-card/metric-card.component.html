@@ -4,31 +4,32 @@
   <div class="flex items-start justify-between mb-4">
     <div
       class="w-10 h-10 rounded-xl flex items-center justify-center"
-      [class.bg-[var(--color-accent-soft)]]="tone !== 'danger'"
+      [class.bg-[var(--color-accent-soft)]]="tone === 'default' || tone === 'warning'"
+      [class.bg-[var(--color-info-bg)]]="tone === 'info'"
+      [class.bg-[var(--color-success-bg)]]="tone === 'success'"
       [class.bg-[var(--color-danger-bg)]]="tone === 'danger'"
     >
       <lucide-icon
         [img]="icon"
         class="w-5 h-5"
-        [class.text-[var(--color-primary-soft)]]="tone !== 'danger'"
+        [class.text-[var(--color-primary-soft)]]="tone === 'default' || tone === 'warning'"
+        [class.text-[var(--color-info)]]="tone === 'info'"
+        [class.text-[var(--color-success)]]="tone === 'success'"
         [class.text-[var(--color-danger)]]="tone === 'danger'"
+        [class.animate-spin]="loading"
       />
     </div>
 
-    <span class="text-[var(--color-text-faint)] text-xs font-medium">
-      {{ label }}
-    </span>
+    <span class="text-[var(--color-text-faint)] text-xs font-medium">{{ label }}</span>
   </div>
 
-  <p class="text-[var(--color-text-muted)] text-xs uppercase tracking-widest mb-1">
-    {{ title }}
-  </p>
+  <p class="text-[var(--color-text-muted)] text-xs uppercase tracking-widest mb-1">{{ title }}</p>
 
-  <p class="text-[var(--color-text)] font-semibold text-2xl">
-    {{ value }}
-  </p>
+  @if (loading) {
+    <div class="h-8 w-16 bg-[var(--color-surface-muted)] rounded-lg animate-pulse mb-1"></div>
+  } @else {
+    <p class="text-[var(--color-text)] font-semibold text-2xl">{{ value }}</p>
+  }
 
-  <p class="text-[var(--color-text-faint)] text-xs mt-1">
-    {{ description }}
-  </p>
+  <p class="text-[var(--color-text-faint)] text-xs mt-1">{{ description }}</p>
 </div>

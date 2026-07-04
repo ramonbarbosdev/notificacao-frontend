@@ -3,12 +3,13 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { Clock, LoaderCircle, LucideAngularModule, RefreshCw } from 'lucide-angular';
 
-import { HeaderComponent } from '../../core/layout/header/header.component';
-import { SidebarComponent } from '../../core/layout/layout.components';
 import { NotificacaoService } from '../../core/services/notificacao.service';
 import { DataTableComponent } from '../../shared/components/data-table/data-table.component';
 import { DataTableColumn } from '../../shared/components/data-table/data-table.types';
 import { usePaginatedTable } from '../../shared/helper/paginated-table.state';
+import { formatCanal } from '../../shared/helper/channel.utils';
+import { formatDateTimePtBr } from '../../shared/helper/date.utils';
+import { formatPhone } from '../../shared/helper/phone.utils';
 import { CanalNotificacao, FilaNotificacaoItemDTO, StatusNotificacao } from '../../shared/types/dtos';
 
 @Component({
@@ -17,8 +18,6 @@ import { CanalNotificacao, FilaNotificacaoItemDTO, StatusNotificacao } from '../
   imports: [
     CommonModule,
     LucideAngularModule,
-    SidebarComponent,
-    HeaderComponent,
     DataTableComponent,
   ],
   templateUrl: './historico-fila.component.html',
@@ -83,6 +82,8 @@ export class HistoricoFilaComponent implements OnInit {
     {
       key: 'destinatario',
       label: 'Destinatario',
+      formatter: (value, row) =>
+        row.canal === 'WHATSAPP' ? formatPhone(value) : value || '-',
       filter: {
         type: 'text',
         placeholder: 'Buscar destinatario',
@@ -91,6 +92,7 @@ export class HistoricoFilaComponent implements OnInit {
     {
       key: 'canal',
       label: 'Canal',
+      formatter: (value) => formatCanal(value),
       filter: {
         type: 'select',
         options: [
@@ -140,7 +142,7 @@ export class HistoricoFilaComponent implements OnInit {
     {
       key: 'proximaTentativa',
       label: 'Proxima tentativa',
-      formatter: (value) => this.formatarData(value),
+      formatter: (value) => formatDateTimePtBr(value),
     },
     {
       key: 'erro',
@@ -150,7 +152,7 @@ export class HistoricoFilaComponent implements OnInit {
     {
       key: 'criadoEm',
       label: 'Criado em',
-      formatter: (value) => this.formatarData(value),
+      formatter: (value) => formatDateTimePtBr(value),
     },
   ];
 
@@ -226,12 +228,4 @@ export class HistoricoFilaComponent implements OnInit {
     };
   }
 
-  private formatarData(value: string | null): string {
-    if (!value) return '-';
-
-    return new Intl.DateTimeFormat('pt-BR', {
-      dateStyle: 'short',
-      timeStyle: 'short',
-    }).format(new Date(value));
-  }
 }

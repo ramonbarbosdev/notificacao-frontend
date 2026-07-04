@@ -1,12 +1,6 @@
-<div class="min-h-screen bg-[var(--color-bg-base)]">
-  <app-sidebar />
-  <app-header />
-
-  <main class="pl-64 pt-16">
-    <div class="p-8 max-w-7xl mx-auto">
-      <div class="mb-8 flex items-start justify-between gap-4">
+<div class="mb-8 flex flex-col sm:flex-row sm:items-start justify-between gap-4">
         <div>
-          <h1 class="text-2xl font-bold text-[var(--color-text)]">Historico / Fila</h1>
+          <h1 class="text-2xl font-bold text-[var(--color-text)]">Histórico / Fila</h1>
           <p class="text-[var(--color-text-muted)] text-sm mt-1">
             Acompanhe tentativas, bloqueios e reprocessamentos da fila.
           </p>
@@ -33,9 +27,9 @@
         </div>
 
         <div>
-          <h2 class="text-[var(--color-text)] font-semibold">Fila de notificacoes</h2>
+          <h2 class="text-[var(--color-text)] font-semibold">Fila de notificações</h2>
           <p class="text-[var(--color-text-subtle)] text-xs">
-            Dados carregados de /app/notificacoes/fila.
+            Atualize para ver o status mais recente dos envios.
           </p>
         </div>
       </div>
@@ -58,6 +52,4 @@
         (nextPage)="proximaPagina()"
         (previousPage)="paginaAnterior()"
         (pageSizeChange)="alterarTamanhoPagina($event)" />
-    </div>
-  </main>
-</div>
+

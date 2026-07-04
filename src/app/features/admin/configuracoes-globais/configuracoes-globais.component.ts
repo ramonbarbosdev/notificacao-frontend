@@ -4,14 +4,12 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Check, LoaderCircle, LucideAngularModule, Settings } from 'lucide-angular';
 
-import { HeaderComponent } from '../../../core/layout/header/header.component';
-import { SidebarComponent } from '../../../core/layout/layout.components';
 import { AdminConfiguracaoService } from '../../../core/services/admin-configuracao.service';
 
 @Component({
   selector: 'app-configuracoes-globais',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, LucideAngularModule, SidebarComponent, HeaderComponent],
+  imports: [CommonModule, ReactiveFormsModule, LucideAngularModule],
   templateUrl: './configuracoes-globais.component.html',
 })
 export class ConfiguracoesGlobaisComponent implements OnInit {
@@ -31,6 +29,7 @@ export class ConfiguracoesGlobaisComponent implements OnInit {
     nmPlataforma: ['', [Validators.required]],
     nmDominioPrincipal: ['', [Validators.required]],
     nmEmailSuporte: ['', [Validators.required, Validators.email]],
+    nmEmailAlertas: ['', [Validators.email]],
     nuTimezonePadrao: [0],
     dsSmtpHost: [''],
     nuSmtpPorta: [587],
@@ -84,6 +83,7 @@ export class ConfiguracoesGlobaisComponent implements OnInit {
         nmPlataforma: dados.nmPlataforma!,
         nmDominioPrincipal: dados.nmDominioPrincipal!,
         nmEmailSuporte: dados.nmEmailSuporte!,
+        nmEmailAlertas: dados.nmEmailAlertas || null,
         nuTimezonePadrao: Number(dados.nuTimezonePadrao ?? 0),
         dsSmtpHost: dados.dsSmtpHost || null,
         nuSmtpPorta: Number(dados.nuSmtpPorta ?? 587),

@@ -16,6 +16,7 @@ export class MetricCardComponent {
   @Input({ required: true }) icon!: LucideIconData;
 
   @Input() value: string | number = '-';
-  @Input() label = 'sem endpoint';
+  @Input() label = 'total';
   @Input() tone: MetricTone = 'default';
+  @Input() loading = false;
 }

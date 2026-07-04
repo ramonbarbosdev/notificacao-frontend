@@ -1,9 +1,3 @@
-<div class="min-h-screen bg-[var(--color-bg-base)]">
-  <app-sidebar />
-  <app-header />
-
-  <main class="pl-64 pt-16">
-    <div class="p-8 max-w-5xl mx-auto">
       <div class="mb-8">
         <h1 class="text-2xl font-bold text-[var(--color-text)]">Monitoramento</h1>
         <p class="text-[var(--color-text-muted)] text-sm mt-1">Status tecnico exposto pela API.</p>
@@ -21,6 +15,3 @@
           <pre class="bg-[var(--color-bg-base)] border border-[var(--color-border)] rounded-xl p-4 text-xs text-[var(--color-text-muted)] overflow-auto">{{ status() | json }}</pre>
         }
       </section>
-    </div>
-  </main>
-</div>

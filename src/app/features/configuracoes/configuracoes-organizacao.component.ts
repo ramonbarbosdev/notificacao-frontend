@@ -6,21 +6,28 @@ import { RouterModule } from '@angular/router';
 import { Check, KeyRound, LoaderCircle, LucideAngularModule, Settings, Webhook } from 'lucide-angular';
 
 import { AuthService } from '../../core/auth/auth.service';
-import { HeaderComponent } from '../../core/layout/header/header.component';
-import { SidebarComponent } from '../../core/layout/layout.components';
 import { ApiKeyService } from '../../core/services/api-key.service';
 import { OrganizacaoConfiguracaoService } from '../../core/services/organizacao-configuracao.service';
+import { AlertaOperacionalService } from '../../core/services/alerta-operacional.service';
 import { WebhookService } from '../../core/services/webhook.service';
 import { WhatsappService } from '../../core/services/whatsapp.service';
+import { ToastService } from '../../core/services/toast.service';
 import {
   ApiKey,
   ApiKeyCreatedResponse,
   ApiKeyScope,
   OrganizacaoConfiguracao,
+  AlertaOperacional,
   Webhook as WebhookDTO,
   WebhookEvento,
   WhatsappStatusResponse,
 } from '../../shared/types/dtos';
+import { EmptyStateComponent } from '../../shared/components/empty-state/empty-state.component';
+import { FormFieldComponent } from '../../shared/components/forms/form-field/app-form-field';
+import { formatScopes, maskApiKeyPrefix } from '../../shared/helper/api-key.utils';
+import { formatDateTimePtBr } from '../../shared/helper/date.utils';
+import { maskPhoneInput, normalizePhone } from '../../shared/helper/phone.utils';
+import { STATUS_TENTATIVA_LABELS } from '../whatsapp/whatsapp.constants';
 
 type AbaConfiguracao =
   | 'geral'
@@ -36,15 +43,17 @@ type AbaConfiguracao =
 @Component({
   selector: 'app-configuracoes-organizacao',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterModule, LucideAngularModule, SidebarComponent, HeaderComponent],
+  imports: [CommonModule, ReactiveFormsModule, RouterModule, LucideAngularModule, EmptyStateComponent, FormFieldComponent],
   templateUrl: './configuracoes-organizacao.component.html',
 })
 export class ConfiguracoesOrganizacaoComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly configService = inject(OrganizacaoConfiguracaoService);
+  private readonly alertaService = inject(AlertaOperacionalService);
   private readonly apiKeyService = inject(ApiKeyService);
   private readonly webhookService = inject(WebhookService);
-  private readonly whatsappService = inject(WhatsappService);
+  private   readonly whatsappService = inject(WhatsappService);
+  private readonly toast = inject(ToastService);
   readonly authService = inject(AuthService);
 
   protected readonly settingsIcon = Settings;
@@ -75,6 +84,8 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
   readonly webhooks = signal<WebhookDTO[]>([]);
   readonly webhookEditando = signal<WebhookDTO | null>(null);
   readonly whatsappStatus = signal<WhatsappStatusResponse | null>(null);
+  readonly alertasOperacionais = signal<AlertaOperacional[]>([]);
+  readonly carregandoAlertas = signal(false);
 
   readonly scopes: { value: ApiKeyScope; label: string }[] = [
     { value: 'NOTIFICACOES_ENVIAR', label: 'Enviar notificacoes' },
@@ -103,6 +114,7 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
     timezone: ['America/Bahia'],
     nuTelefoneOperacional: [''],
     dsEmailOperacional: ['', [Validators.email]],
+    dsEmailAlertas: ['', [Validators.email]],
     whatsappReconexaoAutomatica: [true],
     whatsappDelayMinSegundos: [2],
     whatsappDelayMaxSegundos: [8],
@@ -142,6 +154,36 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
 
   readonly isAdmin = () => this.authService.role() === 'ADMIN';
 
+  readonly formatarData = formatDateTimePtBr;
+  readonly mascararPrefixo = maskApiKeyPrefix;
+
+  labelWhatsappStatus(status: string | null | undefined): string {
+    if (!status) return 'Desconhecido';
+
+    return STATUS_TENTATIVA_LABELS[status as keyof typeof STATUS_TENTATIVA_LABELS] ?? status;
+  }
+
+  formatarScopes(scopes: ApiKeyScope[]): string {
+    const labels = Object.fromEntries(this.scopes.map((item) => [item.value, item.label]));
+
+    return formatScopes(scopes, labels);
+  }
+
+  atualizarTelefoneOperacional(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const valorFormatado = maskPhoneInput(input.value);
+
+    this.form.controls.nuTelefoneOperacional.setValue(valorFormatado, { emitEvent: false });
+    input.value = valorFormatado;
+  }
+
+  copiarChave(chave: string): void {
+    navigator.clipboard.writeText(chave).then(
+      () => this.toast.success('Chave copiada'),
+      () => this.toast.error('Nao foi possivel copiar a chave'),
+    );
+  }
+
   ngOnInit(): void {
     this.carregar();
     this.carregarWhatsappStatus();
@@ -152,6 +194,7 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
     this.aba.set(aba);
     if (aba === 'apiKeys') this.carregarApiKeys();
     if (aba === 'webhooks') this.carregarWebhooks();
+    if (aba === 'notificacoes') this.carregarAlertasOperacionais();
   }
 
   carregar(): void {
@@ -159,7 +202,12 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
     this.erro.set(null);
     this.configService.buscar().subscribe({
       next: (config) => {
-        this.form.patchValue(config);
+        this.form.patchValue({
+          ...config,
+          nuTelefoneOperacional: config.nuTelefoneOperacional
+            ? maskPhoneInput(config.nuTelefoneOperacional)
+            : '',
+        });
         if (!this.isAdmin()) this.form.disable();
         this.carregando.set(false);
       },
@@ -178,17 +226,29 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
     if (this.form.invalid) return;
 
     const dados = this.form.getRawValue() as OrganizacaoConfiguracao;
+
+    if (dados.nuTelefoneOperacional) {
+      dados.nuTelefoneOperacional = normalizePhone(dados.nuTelefoneOperacional);
+    }
+
     this.salvando.set(true);
     this.erro.set(null);
     this.sucesso.set(null);
     this.configService.atualizar(dados).subscribe({
       next: (config) => {
-        this.form.patchValue(config);
-        this.sucesso.set('Configuracoes salvas.');
+        this.form.patchValue({
+          ...config,
+          nuTelefoneOperacional: config.nuTelefoneOperacional
+            ? maskPhoneInput(config.nuTelefoneOperacional)
+            : '',
+        });
+        this.sucesso.set('Configurações salvas.');
+        this.toast.success('Configurações salvas');
         this.salvando.set(false);
       },
       error: (err: HttpErrorResponse) => {
-        this.erro.set(this.mensagemErro(err, 'Nao foi possivel salvar configuracoes.'));
+        this.erro.set(this.mensagemErro(err, 'Não foi possível salvar configurações.'));
+        this.toast.error('Erro ao salvar', this.erro() ?? undefined);
         this.salvando.set(false);
       },
     });
@@ -196,6 +256,18 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
 
   carregarWhatsappStatus(): void {
     this.whatsappService.status().subscribe({ next: (status) => this.whatsappStatus.set(status) });
+  }
+
+  carregarAlertasOperacionais(): void {
+    if (!this.isAdmin()) return;
+    this.carregandoAlertas.set(true);
+    this.alertaService.listar(0, 8).subscribe({
+      next: (page) => {
+        this.alertasOperacionais.set(page.content ?? []);
+        this.carregandoAlertas.set(false);
+      },
+      error: () => this.carregandoAlertas.set(false),
+    });
   }
 
   carregarApiKeys(): void {
@@ -223,6 +295,7 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
         this.apiKeyCriada.set(res);
         this.apiKeyForm.reset({ nome: '', expiraEm: '', scopes: [] });
         this.carregarApiKeys();
+        this.toast.success('API Key gerada', 'Copie a chave completa agora — ela não será exibida novamente.');
       },
       error: (err: HttpErrorResponse) => this.erro.set(this.mensagemErro(err, 'Erro ao criar API Key.')),
     });
@@ -274,6 +347,7 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
       next: () => {
         this.novoWebhook();
         this.carregarWebhooks();
+        this.toast.success('Webhook salvo');
       },
       error: (err: HttpErrorResponse) => this.erro.set(this.mensagemErro(err, 'Erro ao salvar webhook.')),
     });

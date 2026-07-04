@@ -1,11 +1,4 @@
-<div class="min-h-screen bg-[var(--color-bg-base)]">
-  <app-sidebar />
-  <app-header />
-
-  <main class="pl-64 pt-16">
-    <div class="p-8 max-w-4xl mx-auto">
-
-      <div class="mb-8">
+<div class="mb-8">
         <h1 class="text-2xl font-bold text-[var(--color-text)]">
           WhatsApp
         </h1>
@@ -61,12 +54,12 @@
 
             <div>
               <p class="text-[var(--color-text)] font-semibold text-lg">
-                {{ labelTentativaStatus(status()!.status) }}
+                {{ labelStatusAtual() }}
               </p>
 
               @if (status()?.telefone) {
                 <p class="text-[var(--color-text-subtle)] text-sm">
-                  {{ status()!.telefone }}
+                  {{ formatarTelefone(status()?.telefone) }}
                 </p>
               } @else if (tentativaEmAndamento()) {
                 <p class="text-[var(--color-text-subtle)] text-sm">
@@ -104,7 +97,7 @@
                         rounded-xl px-4 py-3">
 
               <p class="text-[var(--color-danger)] text-sm">
-                {{ status()!.erro }}
+                {{ status()?.erro }}
               </p>
             </div>
           }
@@ -256,8 +249,10 @@
 
               <input
                 formControlName="telefone"
-                type="text"
-                placeholder="5571991180200"
+                type="tel"
+                inputmode="tel"
+                placeholder="+55 (71) 99118-0200"
+                (input)="atualizarTelefone($event)"
                 class="w-full
                        bg-[var(--color-surface-muted)]
                        border border-[var(--color-border-strong)]
@@ -274,12 +269,12 @@
                    formMensagem.get('telefone')?.touched) {
 
                 <p class="text-[var(--color-danger)] text-xs mt-1">
-                  Informe o telefone no formato internacional (ex: 5571991180200)
+                  Informe o telefone com DDI e DDD
                 </p>
               }
 
               <p class="text-[var(--color-text-faint)] text-xs mt-1">
-                Código do país + DDD + número, sem espaços
+                Formato: +55 (DDD) 9XXXX-XXXX
               </p>
             </div>
 
@@ -366,7 +361,7 @@
 
                 @if (ehErroConsentimento(erroEnvio())) {
                   <p class="text-[var(--color-text-muted)] text-xs mt-2">
-                    Oriente o usuario a cadastrar/autorizAR o contato antes de uma nova tentativa.
+                    Oriente o usuário a cadastrar ou autorizar o contato antes de uma nova tentativa.
                   </p>
                 }
               </div>
@@ -408,6 +403,4 @@
           </form>
         </div>
       </div>
-    </div>
-  </main>
-</div>
+

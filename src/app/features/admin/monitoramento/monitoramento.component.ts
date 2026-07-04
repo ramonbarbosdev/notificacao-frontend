@@ -4,13 +4,10 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { Activity, LucideAngularModule } from 'lucide-angular';
 
 import { environment } from '../../../../environments/environment';
-import { HeaderComponent } from '../../../core/layout/header/header.component';
-import { SidebarComponent } from '../../../core/layout/layout.components';
-
 @Component({
   selector: 'app-monitoramento',
   standalone: true,
-  imports: [CommonModule, LucideAngularModule, SidebarComponent, HeaderComponent],
+  imports: [CommonModule, LucideAngularModule],
   templateUrl: './monitoramento.component.html',
 })
 export class MonitoramentoComponent implements OnInit {

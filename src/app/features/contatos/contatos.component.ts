@@ -3,13 +3,12 @@ import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormBuilder } from '@angular/forms';
 import { catchError, concatMap, from, map, of, toArray } from 'rxjs';
 
-import { HeaderComponent } from '../../core/layout/header/header.component';
-import { SidebarComponent } from '../../core/layout/layout.components';
 import { ContatoService } from '../../core/services/contato.service';
 import { DataTableColumn } from '../../shared/components/data-table/data-table.types';
 import { usePaginatedTable } from '../../shared/helper/paginated-table.state';
 import { CanalNotificacao, ContatoRequestDTO, ContatoResponseDTO } from '../../shared/types/dtos';
-import { formatPhone, normalizePhone } from '../../shared/helper/phone.utils';
+import { formatPhone, maskPhoneInput, normalizePhone } from '../../shared/helper/phone.utils';
+import { formatCanal } from '../../shared/helper/channel.utils';
 import { useSidePanel } from '../../shared/helper/side-panel.state';
 import { ContatoListComponent } from './components/contato-list/contato-list.component';
 import { ContatoSummaryCardsComponent } from './components/contato-summary-cards/contato-summary-cards.component';
@@ -46,8 +45,6 @@ interface ResultadoImportacao {
   standalone: true,
   imports: [
     CommonModule,
-    SidebarComponent,
-    HeaderComponent,
     ContatoListComponent,
     ContatoSummaryCardsComponent,
     FormPanelComponent,
@@ -112,6 +109,7 @@ export class ContatosComponent implements OnInit {
     {
       key: 'canal',
       label: 'Canal',
+      formatter: (value) => formatCanal(value),
       filter: {
         type: 'select',
         options: [
@@ -552,7 +550,7 @@ export class ContatosComponent implements OnInit {
 
   private formatarDestinatario(value: string): string {
     if (this.form.controls.canal.value === 'WHATSAPP') {
-      return this.aplicarMascaraWhatsapp(value);
+      return maskPhoneInput(value);
     }
 
     if (this.form.controls.canal.value === 'EMAIL') {
@@ -560,38 +558,6 @@ export class ContatosComponent implements OnInit {
     }
 
     return value.trimStart();
-  }
-
-  private aplicarMascaraWhatsapp(value: string): string {
-    const digits = normalizePhone(value).slice(0, 13);
-
-    if (!digits) return '';
-
-    if (digits.startsWith('55')) {
-      const ddi = digits.slice(0, 2);
-      const ddd = digits.slice(2, 4);
-      const prefixo = digits.length > 12 ? digits.slice(4, 9) : digits.slice(4, 8);
-      const sufixo = digits.length > 12 ? digits.slice(9, 13) : digits.slice(8, 12);
-
-      return [
-        `+${ddi}`,
-        ddd ? ` (${ddd}` : '',
-        ddd.length === 2 ? ')' : '',
-        prefixo ? ` ${prefixo}` : '',
-        sufixo ? `-${sufixo}` : '',
-      ].join('');
-    }
-
-    const ddd = digits.slice(0, 2);
-    const prefixo = digits.length > 10 ? digits.slice(2, 7) : digits.slice(2, 6);
-    const sufixo = digits.length > 10 ? digits.slice(7, 11) : digits.slice(6, 10);
-
-    return [
-      ddd ? `(${ddd}` : '',
-      ddd.length === 2 ? ')' : '',
-      prefixo ? ` ${prefixo}` : '',
-      sufixo ? `-${sufixo}` : '',
-    ].join('');
   }
 
   private normalizarDestinatarioParaApi(dados: Pick<ContatoFormData, 'canal' | 'destinatario'>): string {

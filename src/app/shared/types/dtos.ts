@@ -123,6 +123,9 @@ export interface EnviarNotificacaoResponse {
   canal: CanalNotificacao;
   status: StatusNotificacao;
   erro: string | null;
+  tempoEstimadoEnvioSegundos?: number | null;
+  posicaoFila?: number | null;
+  tempoEstimadoEnvioTexto?: string | null;
 }
 
 export type EnviarMensagemResponse = EnviarNotificacaoResponse;
@@ -342,6 +345,7 @@ export interface ConfiguracaoGlobal {
   nmPlataforma: string;
   nmDominioPrincipal: string;
   nmEmailSuporte: string;
+  nmEmailAlertas: string | null;
   dsSmtpHost: string | null;
   nuSmtpPorta: number | null;
   nmSmtpUsuario: string | null;
@@ -361,6 +365,7 @@ export interface ConfiguracaoGlobalRequest {
   nmPlataforma: string;
   nmDominioPrincipal: string;
   nmEmailSuporte: string;
+  nmEmailAlertas?: string | null;
   dsSmtpHost?: string | null;
   nuSmtpPorta?: number | null;
   nmSmtpUsuario?: string | null;
@@ -414,6 +419,7 @@ export interface OrganizacaoConfiguracao {
   timezone: string | null;
   nuTelefoneOperacional: string | null;
   dsEmailOperacional: string | null;
+  dsEmailAlertas: string | null;
   whatsappReconexaoAutomatica: boolean;
   whatsappDelayMinSegundos: number | null;
   whatsappDelayMaxSegundos: number | null;
@@ -443,6 +449,20 @@ export type OrganizacaoConfiguracaoRequest = Omit<
   OrganizacaoConfiguracao,
   'idOrganizacaoConfiguracao' | 'idOrganizacao' | 'dtCriacao' | 'dtAtualizacao'
 >;
+
+export interface AlertaOperacional {
+  idAlerta: number;
+  idOrganizacao: number | null;
+  idNotificacao: number | null;
+  tpOrigem: string;
+  dsTitulo: string;
+  dsMensagem: string;
+  dsDestinatario: string | null;
+  dsCanal: string | null;
+  dsCodigoErro: string | null;
+  flEmailEnviado: boolean;
+  dtCriacao: string;
+}
 
 export interface ApiKey {
   idApiKey: number;

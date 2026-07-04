@@ -37,6 +37,12 @@
 
   /* Accent soft (badge bg, icon bg) */
   --color-accent-soft:    #281400;
+
+  /* Info / warning */
+  --color-info:           #60a5fa;
+  --color-info-bg:        #0a1628;
+  --color-warning:        #fbbf24;
+  --color-warning-bg:     #281400;
 }
 
 :root {
@@ -138,6 +144,29 @@
     padding: 0.75rem 1rem;
     color: var(--app-text);
     font-size: 0.875rem;
+  }
+
+  .config-toggle input[type='checkbox'] {
+    width: 1rem;
+    height: 1rem;
+    accent-color: var(--app-primary);
+    cursor: pointer;
+  }
+
+  .form-checkbox-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.75rem;
+    border: 1px solid var(--app-border);
+    font-size: 0.75rem;
+    color: var(--app-text);
+    cursor: pointer;
+  }
+
+  .form-checkbox-label input[type='checkbox'] {
+    accent-color: var(--app-primary);
   }
 
   .app-button-primary {

@@ -8,6 +8,7 @@ import {
   SimpleChanges,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { EmptyStateComponent } from '../empty-state/empty-state.component';
 
 import {
   DataTableAction,
@@ -17,7 +18,7 @@ import {
 @Component({
   selector: 'app-data-table',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, EmptyStateComponent],
   templateUrl: './data-table.component.html',
 })
 export class DataTableComponent<T = any> implements OnChanges, OnDestroy {
@@ -28,6 +29,8 @@ export class DataTableComponent<T = any> implements OnChanges, OnDestroy {
   @Input() pageSize = 10;
   @Input() totalElements = 0;
   @Input() totalPages = 0;
+  @Input() emptyTitle = 'Nenhum registro encontrado';
+  @Input() emptyDescription = 'Ajuste os filtros ou crie um novo registro.';
 
   @Output() nextPage = new EventEmitter<void>();
   @Output() previousPage = new EventEmitter<void>();

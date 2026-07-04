@@ -79,11 +79,15 @@
 
       <tbody>
         @if (loading) {
-          <tr>
-            <td [attr.colspan]="columns.length" class="px-5 py-10 text-center text-[var(--color-text-muted)]">
-              Carregando...
-            </td>
-          </tr>
+          @for (row of [1, 2, 3, 4, 5]; track row) {
+            <tr class="border-t border-[var(--color-border)]">
+              @for (column of columns; track column.key) {
+                <td class="px-5 py-4">
+                  <div class="h-4 bg-[var(--color-surface-muted)] rounded animate-pulse"></div>
+                </td>
+              }
+            </tr>
+          }
         } @else {
           @for (row of items; track row) {
             <tr class="border-t border-[var(--color-border)]">
@@ -132,8 +136,10 @@
             </tr>
           } @empty {
             <tr>
-              <td [attr.colspan]="columns.length" class="px-5 py-10 text-center text-[var(--color-text-muted)]">
-                Nenhum registro encontrado.
+              <td [attr.colspan]="columns.length" class="p-0">
+                <app-empty-state [title]="emptyTitle" [description]="emptyDescription">
+                  <ng-content select="[empty-action]" />
+                </app-empty-state>
               </td>
             </tr>
           }

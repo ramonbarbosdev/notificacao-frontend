@@ -47,7 +47,10 @@
           <input
             formControlName="login"
             type="text"
+            inputmode="numeric"
+            autocomplete="username"
             placeholder="000.000.000-00"
+            (input)="atualizarCpf($event)"
             class="w-full
                    bg-[var(--color-surface-muted)]
                    border border-[var(--color-border-strong)]
