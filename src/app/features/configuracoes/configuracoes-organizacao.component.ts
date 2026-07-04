@@ -28,6 +28,10 @@ import { formatScopes, maskApiKeyPrefix } from '../../shared/helper/api-key.util
 import { formatDateTimePtBr } from '../../shared/helper/date.utils';
 import { maskPhoneInput, normalizePhone } from '../../shared/helper/phone.utils';
 import { labelWhatsappStatus as traduzirStatusWhatsapp, extrairMensagemErroHttp } from '../../shared/labels/notificacao.labels';
+import {
+  labelStatusOperacional,
+  severidadeOperacional,
+} from '../../shared/labels/whatsapp-operacional.labels';
 
 type AbaConfiguracao =
   | 'geral'
@@ -160,6 +164,9 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
   labelWhatsappStatus(status: string | null | undefined): string {
     return traduzirStatusWhatsapp(status);
   }
+
+  readonly labelStatusOperacional = labelStatusOperacional;
+  readonly severidadeOperacional = severidadeOperacional;
 
   formatarScopes(scopes: ApiKeyScope[]): string {
     const labels = Object.fromEntries(this.scopes.map((item) => [item.value, item.label]));

@@ -8,6 +8,7 @@ import {
   SimpleChanges,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router';
 import { EmptyStateComponent } from '../empty-state/empty-state.component';
 
 import {
@@ -18,7 +19,7 @@ import {
 @Component({
   selector: 'app-data-table',
   standalone: true,
-  imports: [CommonModule, EmptyStateComponent],
+  imports: [CommonModule, RouterModule, EmptyStateComponent],
   templateUrl: './data-table.component.html',
 })
 export class DataTableComponent<T = any> implements OnChanges, OnDestroy {

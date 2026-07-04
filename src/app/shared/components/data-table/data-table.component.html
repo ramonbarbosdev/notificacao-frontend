@@ -123,6 +123,28 @@
                       </div>
                     }
 
+                    @case ('rich') {
+                      @if (column.rich) {
+                        @let rich = column.rich(getValue(row, column.key.toString()), row);
+                        <div class="max-w-xs">
+                          <p class="text-[var(--color-text)] text-sm font-medium m-0">{{ rich.title }}</p>
+                          @if (rich.description) {
+                            <p class="text-[var(--color-text-muted)] text-xs mt-1 m-0">{{ rich.description }}</p>
+                          }
+                          @if (rich.hint) {
+                            <p class="text-[var(--color-text-faint)] text-xs mt-1 m-0">{{ rich.hint }}</p>
+                          }
+                          @if (rich.link) {
+                            <a
+                              [routerLink]="rich.link.href"
+                              class="inline-block text-xs font-semibold text-[var(--color-primary-soft)] mt-2 hover:underline">
+                              {{ rich.link.label }}
+                            </a>
+                          }
+                        </div>
+                      }
+                    }
+
                     @default {
                       {{
                         column.formatter

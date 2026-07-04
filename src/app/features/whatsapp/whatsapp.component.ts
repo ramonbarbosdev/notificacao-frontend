@@ -23,6 +23,13 @@ import {
   labelWhatsappStatus,
   resolverMensagemExibicao,
 } from '../../shared/labels/notificacao.labels';
+import {
+  labelStatusOperacional,
+  severidadeOperacional,
+} from '../../shared/labels/whatsapp-operacional.labels';
+import {
+  AcaoSessaoWhatsapp,
+} from '../../shared/types/dtos';
 import { criarFormularioMensagem } from './whatsapp.form';
 import { formatPhone, maskPhoneInput, normalizePhone } from '../../shared/helper/phone.utils';
 import {
@@ -72,6 +79,9 @@ export class WhatsappComponent implements OnInit, OnDestroy {
   readonly mensagemEvento = signal<string | null>(null);
   readonly podeConectar = signal(true);
   readonly segundosRestantes = signal(0);
+  readonly acaoOperacionalCarregando = signal(false);
+
+  readonly operacional = computed(() => this.status()?.operacional ?? null);
 
   readonly statusEmTentativa = computed(() =>
     ehStatusDeTentativa(this.status()?.status)
@@ -181,6 +191,61 @@ export class WhatsappComponent implements OnInit, OnDestroy {
 
   labelMensagemErro(mensagem?: string | null, fallback = 'Erro desconhecido'): string {
     return resolverMensagemExibicao(mensagem, null, fallback);
+  }
+
+  readonly labelStatusOperacional = labelStatusOperacional;
+  readonly severidadeOperacional = severidadeOperacional;
+
+  executarAcaoOperacional(acao: AcaoSessaoWhatsapp): void {
+    if (!acao.habilitada || this.acaoOperacionalCarregando()) {
+      return;
+    }
+
+    switch (acao.codigo) {
+      case 'ATUALIZAR_STATUS':
+        this.atualizarStatus();
+        return;
+      case 'CONECTAR':
+        this.conectar();
+        return;
+      case 'DESCONECTAR':
+        this.desconectar();
+        return;
+      case 'REATIVAR_OPERACAO':
+        this.reativarOperacao();
+        return;
+      case 'AGUARDAR_PAUSA':
+        return;
+    }
+  }
+
+  classeAcaoOperacional(acao: AcaoSessaoWhatsapp): string {
+    const base =
+      'w-full font-semibold py-2.5 rounded-xl transition-all duration-200 text-sm flex items-center justify-center gap-2 border';
+    if (!acao.habilitada) {
+      return `${base} opacity-50 cursor-not-allowed bg-[var(--color-surface-muted)] border-[var(--color-border)] text-[var(--color-text-muted)]`;
+    }
+    if (acao.primaria) {
+      return `${base} bg-[var(--color-primary)] hover:brightness-110 text-[var(--color-bg-base)] border-transparent`;
+    }
+    return `${base} bg-[var(--color-surface-muted)] hover:bg-[var(--color-surface)] border-[var(--color-border)] text-[var(--color-text)]`;
+  }
+
+  private reativarOperacao(): void {
+    this.acaoOperacionalCarregando.set(true);
+    this.erroConexao.set(null);
+
+    this.whatsappService.reativarOperacao().subscribe({
+      next: (status) => {
+        this.processarStatusRecebido(status, true);
+        this.acaoOperacionalCarregando.set(false);
+        this.mensagemEvento.set('Sessão reativada. A fila de envios pode retomar.');
+      },
+      error: (err: HttpErrorResponse) => {
+        this.acaoOperacionalCarregando.set(false);
+        this.erroConexao.set(extrairMensagemErro(err, 'Não foi possível reativar a sessão.'));
+      },
+    });
   }
 
   labelStatusAtual(): string {

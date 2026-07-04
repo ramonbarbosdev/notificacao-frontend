@@ -1,55 +1,263 @@
 <div class="mb-8 flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-        <div>
-          <h1 class="text-2xl font-bold text-[var(--color-text)]">Histórico / Fila</h1>
-          <p class="text-[var(--color-text-muted)] text-sm mt-1">
-            Acompanhe tentativas, bloqueios e reprocessamentos da fila.
-          </p>
+  <div>
+    <h1 class="text-2xl font-bold text-[var(--color-text)]">Histórico / Fila</h1>
+    <p class="text-[var(--color-text-muted)] text-sm mt-1">
+      Visão resumida dos envios. Expanda um item para ver tentativas, provider e motivo completo.
+    </p>
+  </div>
+
+  <button
+    type="button"
+    (click)="carregarFila()"
+    [disabled]="table.loading()"
+    class="px-4 py-3 rounded-xl border border-[var(--color-border)] text-[var(--color-text-muted)]
+           hover:text-[var(--color-text)] hover:bg-[var(--color-surface)]
+           disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm flex items-center gap-2">
+    <lucide-icon
+      [img]="table.loading() ? loaderIcon : refreshIcon"
+      class="w-4 h-4"
+      [class.animate-spin]="table.loading()" />
+    Atualizar
+  </button>
+</div>
+
+@if (erro()) {
+  <div class="mb-6 bg-[var(--color-danger-bg)] border border-[var(--color-danger-border)] rounded-xl px-4 py-3">
+    <p class="text-[var(--color-danger)] text-sm m-0">{{ erro() }}</p>
+  </div>
+}
+
+<div class="mb-6 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-5 space-y-4">
+  <div class="flex flex-col lg:flex-row lg:items-end gap-3">
+    <div class="flex-1 min-w-0">
+      <label class="block text-xs font-medium text-[var(--color-text-muted)] mb-1.5">Destinatário</label>
+      <div class="relative">
+        <lucide-icon [img]="searchIcon" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-faint)]" />
+        <input
+          type="text"
+          [value]="filtroDestinatario()"
+          (input)="atualizarFiltroDestinatario($event)"
+          placeholder="Buscar por telefone ou e-mail"
+          class="w-full bg-[var(--color-bg-base)] border border-[var(--color-border-strong)] rounded-xl pl-10 pr-4 py-2.5 text-sm text-[var(--color-text)] placeholder:text-[var(--color-text-subtle)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]" />
+      </div>
+    </div>
+
+    <div class="w-full lg:w-44">
+      <label class="block text-xs font-medium text-[var(--color-text-muted)] mb-1.5">Canal</label>
+      <select
+        [value]="filtroCanal()"
+        (change)="atualizarFiltroCanal($event)"
+        class="w-full bg-[var(--color-bg-base)] border border-[var(--color-border-strong)] rounded-xl px-3 py-2.5 text-sm text-[var(--color-text)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]">
+        @for (opcao of canais; track opcao.value) {
+          <option [value]="opcao.value">{{ opcao.label }}</option>
+        }
+      </select>
+    </div>
+
+    <div class="w-full lg:w-44">
+      <label class="block text-xs font-medium text-[var(--color-text-muted)] mb-1.5">Status</label>
+      <select
+        [value]="filtroStatus()"
+        (change)="atualizarFiltroStatus($event)"
+        class="w-full bg-[var(--color-bg-base)] border border-[var(--color-border-strong)] rounded-xl px-3 py-2.5 text-sm text-[var(--color-text)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]">
+        @for (opcao of statusOpcoes; track opcao.value) {
+          <option [value]="opcao.value">{{ opcao.label }}</option>
+        }
+      </select>
+    </div>
+
+    @if (temFiltrosAtivos()) {
+      <button
+        type="button"
+        (click)="limparFiltros()"
+        class="px-4 py-2.5 rounded-xl border border-[var(--color-border)] text-xs text-[var(--color-text-muted)] hover:text-[var(--color-text)]">
+        Limpar filtros
+      </button>
+    }
+  </div>
+
+  @if (!table.loading() && itensFiltrados().length > 0) {
+    <div class="flex flex-wrap gap-2 pt-1">
+      @for (resumo of resumoStatus(); track resumo.status) {
+        @let badge = statusBadge(resumo.status);
+        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs" [class]="badge.className">
+          {{ badge.label }}
+          <span class="font-semibold">{{ resumo.total }}</span>
+        </span>
+      }
+    </div>
+  }
+</div>
+
+<div class="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl overflow-hidden">
+  @if (table.loading()) {
+    <div class="divide-y divide-[var(--color-border)]">
+      @for (row of [1, 2, 3, 4, 5]; track row) {
+        <div class="px-5 py-4 animate-pulse">
+          <div class="h-4 bg-[var(--color-surface-muted)] rounded w-2/5 mb-2"></div>
+          <div class="h-3 bg-[var(--color-surface-muted)] rounded w-1/4"></div>
         </div>
+      }
+    </div>
+  } @else if (itensPaginados().length === 0) {
+    <app-empty-state
+      title="Nenhum envio encontrado"
+      description="Ajuste os filtros ou atualize a lista para ver itens da fila." />
+  } @else {
+    <div class="divide-y divide-[var(--color-border)]">
+      @for (item of itensPaginados(); track item.idNotificacao) {
+        @let badge = statusBadge(item.status);
+        @let motivo = resumoMotivo(item.erro);
+        @let expandido = estaExpandido(item.idNotificacao);
+        @let erroDetalhe = detalheErro(item.erro);
+
+        <article>
+          <button
+            type="button"
+            (click)="toggleDetalhes(item.idNotificacao)"
+            class="w-full text-left px-4 sm:px-5 py-4 hover:bg-[var(--color-surface-muted)]/60 transition-colors">
+            <div class="flex items-start gap-3">
+              <div class="mt-0.5 text-[var(--color-text-muted)] shrink-0">
+                <lucide-icon [img]="expandido ? chevronUpIcon : chevronDownIcon" class="w-4 h-4" />
+              </div>
+
+              <div class="flex-1 min-w-0">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                  <div class="min-w-0">
+                    <p class="text-[var(--color-text)] font-semibold text-sm m-0 truncate">
+                      {{ formatarDestinatario(item) }}
+                    </p>
+                    <p class="text-[var(--color-text-faint)] text-xs mt-0.5 m-0">
+                      {{ formatarData(item.criadoEm) }}
+                    </p>
+                  </div>
+
+                  <div class="flex flex-wrap items-center gap-2 shrink-0">
+                    <span
+                      class="inline-flex px-2.5 py-1 rounded-full border text-xs font-medium"
+                      [class]="classeCanal(item.canal)">
+                      {{ formatarCanal(item.canal) }}
+                    </span>
+                    <span
+                      class="inline-flex px-2.5 py-1 rounded-full border text-xs font-semibold"
+                      [class]="badge.className">
+                      {{ badge.label }}
+                    </span>
+                  </div>
+                </div>
+
+                @if (motivo) {
+                  <p class="text-xs text-amber-400 mt-2 m-0 line-clamp-1">
+                    {{ motivo }}
+                  </p>
+                } @else if (item.status === 'PENDENTE' || item.status === 'PROCESSANDO') {
+                  <p class="text-xs text-[var(--color-text-muted)] mt-2 m-0">
+                    Aguardando processamento
+                    @if (item.proximaTentativa) {
+                      · próxima tentativa {{ formatarData(item.proximaTentativa) }}
+                    }
+                  </p>
+                }
+
+                <p class="text-[10px] text-[var(--color-text-faint)] mt-2 m-0 sm:hidden">
+                  Toque para {{ expandido ? 'ocultar' : 'ver' }} detalhes
+                </p>
+              </div>
+            </div>
+          </button>
+
+          @if (expandido) {
+            <div class="px-4 sm:px-5 pb-4 pt-0">
+              <div class="ml-7 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-base)]/50 p-4 space-y-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-sm">
+                  <div>
+                    <p class="text-[var(--color-text-faint)] text-xs m-0 mb-1">ID notificação</p>
+                    <p class="text-[var(--color-text)] font-medium m-0">#{{ item.idNotificacao }}</p>
+                  </div>
+                  <div>
+                    <p class="text-[var(--color-text-faint)] text-xs m-0 mb-1">Tentativas</p>
+                    <p class="text-[var(--color-text)] font-medium m-0">{{ item.tentativas }}</p>
+                  </div>
+                  <div>
+                    <p class="text-[var(--color-text-faint)] text-xs m-0 mb-1">Provider</p>
+                    <p class="text-[var(--color-text)] font-medium m-0">{{ item.provider || '—' }}</p>
+                  </div>
+                  <div>
+                    <p class="text-[var(--color-text-faint)] text-xs m-0 mb-1">Próxima tentativa</p>
+                    <p class="text-[var(--color-text)] font-medium m-0">{{ formatarData(item.proximaTentativa) }}</p>
+                  </div>
+                </div>
+
+                @if (item.erro) {
+                  <div class="rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-3">
+                    <p class="text-sm font-semibold text-[var(--color-text)] m-0">
+                      {{ erroDetalhe.titulo ?? erroDetalhe.mensagem }}
+                    </p>
+                    @if (erroDetalhe.explicacao) {
+                      <p class="text-sm text-[var(--color-text-muted)] mt-2 m-0">{{ erroDetalhe.explicacao }}</p>
+                    }
+                    @if (erroDetalhe.acao) {
+                      <p class="text-sm text-[var(--color-text)] mt-2 m-0">
+                        <strong>O que fazer:</strong> {{ erroDetalhe.acao }}
+                      </p>
+                    }
+                    @if (linkWhatsappOperacional(item.erro)) {
+                      <a
+                        routerLink="/app/whatsapp"
+                        class="inline-block text-xs font-semibold text-[var(--color-primary-soft)] mt-3 hover:underline">
+                        Ir para WhatsApp
+                      </a>
+                    }
+                    <details class="mt-3">
+                      <summary class="text-xs text-[var(--color-text-faint)] cursor-pointer hover:text-[var(--color-text-muted)]">
+                        Ver mensagem técnica
+                      </summary>
+                      <p class="text-xs text-[var(--color-text-subtle)] mt-2 m-0 font-mono break-all">{{ item.erro }}</p>
+                    </details>
+                  </div>
+                } @else {
+                  <p class="text-sm text-[var(--color-text-muted)] m-0">Nenhum erro registrado para este envio.</p>
+                }
+              </div>
+            </div>
+          }
+        </article>
+      }
+    </div>
+
+    <div class="px-5 py-4 border-t border-[var(--color-border)] flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+      <p class="text-sm text-[var(--color-text-muted)] m-0">
+        Página {{ table.paginaAtual() + 1 }} de {{ totalPaginas() }}
+        · {{ totalElementos() }} registro(s)
+      </p>
+
+      <div class="flex items-center gap-3">
+        <select
+          [value]="table.tamanhoPagina()"
+          (change)="alterarTamanhoPagina($event)"
+          class="bg-[var(--color-surface-muted)] border border-[var(--color-border-strong)] rounded-xl px-3 py-2 text-sm">
+          <option [value]="5">5</option>
+          <option [value]="10">10</option>
+          <option [value]="20">20</option>
+          <option [value]="50">50</option>
+        </select>
 
         <button
           type="button"
-          (click)="carregarFila()"
-          [disabled]="table.loading()"
-          class="px-4 py-3 rounded-xl border border-[var(--color-border)] text-[var(--color-text-muted)]
-                 hover:text-[var(--color-text)] hover:bg-[var(--color-surface)]
-                 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm flex items-center gap-2">
-          <lucide-icon
-            [img]="table.loading() ? loaderIcon : refreshIcon"
-            class="w-4 h-4"
-            [class.animate-spin]="table.loading()" />
-          Atualizar
+          (click)="paginaAnterior()"
+          [disabled]="table.paginaAtual() <= 0"
+          class="px-4 py-2 rounded-xl border border-[var(--color-border)] disabled:opacity-40 text-sm">
+          Anterior
+        </button>
+
+        <button
+          type="button"
+          (click)="proximaPagina()"
+          [disabled]="table.paginaAtual() + 1 >= totalPaginas()"
+          class="px-4 py-2 rounded-xl border border-[var(--color-border)] disabled:opacity-40 text-sm">
+          Próxima
         </button>
       </div>
-
-      <div class="mb-6 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl px-6 py-4 flex items-center gap-3">
-        <div class="w-10 h-10 bg-[var(--color-accent-soft)] rounded-xl flex items-center justify-center">
-          <lucide-icon [img]="clockIcon" class="w-5 h-5 text-[var(--color-primary-soft)]" />
-        </div>
-
-        <div>
-          <h2 class="text-[var(--color-text)] font-semibold">Fila de notificações</h2>
-          <p class="text-[var(--color-text-subtle)] text-xs">
-            Atualize para ver o status mais recente dos envios.
-          </p>
-        </div>
-      </div>
-
-      @if (erro()) {
-        <div class="mb-6 bg-[var(--color-danger-bg)] border border-[var(--color-danger-border)] rounded-xl px-4 py-3">
-          <p class="text-[var(--color-danger)] text-sm">{{ erro() }}</p>
-        </div>
-      }
-
-      <app-data-table
-        [columns]="columns"
-        [items]="itensPaginados()"
-        [loading]="table.loading()"
-        [page]="table.paginaAtual()"
-        [pageSize]="table.tamanhoPagina()"
-        [totalElements]="totalElementos()"
-        [totalPages]="totalPaginas()"
-        (filterChange)="aplicarFiltros($event)"
-        (nextPage)="proximaPagina()"
-        (previousPage)="paginaAnterior()"
-        (pageSizeChange)="alterarTamanhoPagina($event)" />
-
+    </div>
+  }
+</div>

@@ -73,6 +73,56 @@
             </div>
           </div>
 
+          @if (operacional(); as op) {
+            <div
+              class="mb-6 rounded-xl border px-4 py-4"
+              [class.bg-[var(--color-danger-bg)]]="severidadeOperacional(op.statusOperacional) === 'danger'"
+              [class.border-[var(--color-danger-border)]]="severidadeOperacional(op.statusOperacional) === 'danger'"
+              [class.bg-amber-500/10]="severidadeOperacional(op.statusOperacional) === 'warn'"
+              [class.border-amber-500/30]="severidadeOperacional(op.statusOperacional) === 'warn'"
+              [class.bg-[var(--color-success-bg)]]="severidadeOperacional(op.statusOperacional) === 'success'"
+              [class.border-[var(--color-success-border)]]="severidadeOperacional(op.statusOperacional) === 'success'"
+              [class.bg-[var(--color-surface-muted)]]="severidadeOperacional(op.statusOperacional) === 'info'"
+              [class.border-[var(--color-border)]]="severidadeOperacional(op.statusOperacional) === 'info'"
+            >
+              <div class="flex flex-wrap items-center gap-2 mb-2">
+                <span class="text-sm font-semibold text-[var(--color-text)]">{{ op.titulo }}</span>
+                <span class="text-xs px-2 py-0.5 rounded-full border border-[var(--color-border)] text-[var(--color-text-muted)]">
+                  {{ labelStatusOperacional(op.statusOperacional) }}
+                </span>
+                @if (op.falhasConsecutivas > 0) {
+                  <span class="text-xs text-[var(--color-text-muted)]">
+                    {{ op.falhasConsecutivas }}/{{ op.maximoFalhasConsecutivas }} falhas
+                  </span>
+                }
+              </div>
+
+              <p class="text-sm text-[var(--color-text-muted)] m-0 mb-2">{{ op.explicacao }}</p>
+              <p class="text-sm text-[var(--color-text)] m-0 mb-3"><strong>O que fazer:</strong> {{ op.orientacao }}</p>
+
+              @if (op.dtPausadoAte) {
+                <p class="text-xs text-[var(--color-text-faint)] m-0 mb-3">Pausa até: {{ op.dtPausadoAte }}</p>
+              }
+
+              <div class="flex flex-col gap-2">
+                @for (acao of op.acoes; track acao.codigo) {
+                  <button
+                    type="button"
+                    [class]="classeAcaoOperacional(acao)"
+                    [disabled]="!acao.habilitada || acaoOperacionalCarregando() || carregando()"
+                    (click)="executarAcaoOperacional(acao)"
+                  >
+                    @if (acaoOperacionalCarregando() && acao.habilitada && acao.primaria) {
+                      <lucide-icon [img]="loaderIcon" class="animate-spin h-4 w-4" />
+                    }
+                    {{ acao.rotulo }}
+                  </button>
+                  <p class="text-xs text-[var(--color-text-faint)] m-0 -mt-1">{{ acao.descricao }}</p>
+                }
+              </div>
+            </div>
+          }
+
           @if (status()?.qrImagem) {
             <div class="mb-6">
 

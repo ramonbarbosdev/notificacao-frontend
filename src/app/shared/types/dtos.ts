@@ -72,6 +72,40 @@ export interface WhatsappStatusResponse {
   qrImagem: string | null;
   telefone: string | null;
   erro: string | null;
+  operacional?: SessaoOperacionalContexto | null;
+}
+
+export type StatusOperacionalSessao =
+  | 'ATIVA'
+  | 'PAUSADA'
+  | 'DESCONECTADA'
+  | 'RISCO_BANIMENTO'
+  | 'BLOQUEADA';
+
+export type AcaoSessaoWhatsappCodigo =
+  | 'ATUALIZAR_STATUS'
+  | 'CONECTAR'
+  | 'DESCONECTAR'
+  | 'REATIVAR_OPERACAO'
+  | 'AGUARDAR_PAUSA';
+
+export interface AcaoSessaoWhatsapp {
+  codigo: AcaoSessaoWhatsappCodigo;
+  rotulo: string;
+  descricao: string;
+  primaria: boolean;
+  habilitada: boolean;
+}
+
+export interface SessaoOperacionalContexto {
+  statusOperacional: StatusOperacionalSessao;
+  falhasConsecutivas: number;
+  maximoFalhasConsecutivas: number;
+  dtPausadoAte: string | null;
+  titulo: string;
+  explicacao: string;
+  orientacao: string;
+  acoes: AcaoSessaoWhatsapp[];
 }
 
 export type WhatsappEventoTipo =

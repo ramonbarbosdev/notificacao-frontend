@@ -85,6 +85,26 @@
                 </div>
                 <a routerLink="/app/whatsapp" class="px-3 py-2 rounded-xl border border-[var(--color-border)] text-sm text-[var(--color-text)]">Ir para WhatsApp</a>
               </div>
+
+              @if (whatsappStatus()?.operacional; as op) {
+                <div
+                  class="rounded-xl border px-4 py-3"
+                  [class.bg-[var(--color-danger-bg)]]="severidadeOperacional(op.statusOperacional) === 'danger'"
+                  [class.border-[var(--color-danger-border)]]="severidadeOperacional(op.statusOperacional) === 'danger'"
+                  [class.bg-amber-500/10]="severidadeOperacional(op.statusOperacional) === 'warn'"
+                  [class.border-amber-500/30]="severidadeOperacional(op.statusOperacional) === 'warn'"
+                  [class.bg-[var(--color-success-bg)]]="severidadeOperacional(op.statusOperacional) === 'success'"
+                  [class.border-[var(--color-success-border)]]="severidadeOperacional(op.statusOperacional) === 'success'"
+                >
+                  <p class="text-sm font-semibold text-[var(--color-text)] m-0">{{ op.titulo }}</p>
+                  <p class="text-xs text-[var(--color-text-muted)] mt-1 m-0">{{ op.explicacao }}</p>
+                  <p class="text-xs text-[var(--color-text)] mt-2 m-0"><strong>O que fazer:</strong> {{ op.orientacao }}</p>
+                  <a routerLink="/app/whatsapp" class="inline-block text-xs font-semibold text-[var(--color-primary-soft)] mt-2 hover:underline">
+                    Abrir WhatsApp para ações
+                  </a>
+                </div>
+              }
+
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <app-form-field label="Delay mínimo (segundos)" helper="Pausa mínima entre envios">
                   <input formControlName="whatsappDelayMinSegundos" type="number" class="form-input-admin" placeholder="2" />

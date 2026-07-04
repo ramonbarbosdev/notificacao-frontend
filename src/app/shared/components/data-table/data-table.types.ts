@@ -11,9 +11,17 @@ export interface DataTableColumn<T = any> {
     | 'badge'
     | 'date'
     | 'boolean'
-    | 'actions';
+    | 'actions'
+    | 'rich';
 
   formatter?: (value: any, row: T) => string;
+
+  rich?: (value: any, row: T) => {
+    title: string;
+    description?: string;
+    hint?: string;
+    link?: { label: string; href: string };
+  };
 
   badge?: (value: any, row: T) => {
     label: string;
