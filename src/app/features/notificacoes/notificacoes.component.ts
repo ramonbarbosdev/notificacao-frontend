@@ -26,7 +26,7 @@ import { labelStatusNotificacao, extrairMensagemErroHttp } from '../../shared/la
 import { explicarErroFila } from '../../shared/labels/whatsapp-operacional.labels';
 import { NotificacaoService } from '../../core/services/notificacao.service';
 import { formatCanal } from '../../shared/helper/channel.utils';
-import { maskPhoneInput, normalizePhone } from '../../shared/helper/phone.utils';
+import { maskPhoneInput, normalizeBrazilWhatsappMobile } from '../../shared/helper/phone.utils';
 
 interface OpcaoCanal {
   valor: CanalNotificacao;
@@ -113,7 +113,7 @@ export class NotificacoesComponent {
 
   private normalizarDestinatario(valor: string): string {
     if (this.canalSelecionado() === 'WHATSAPP') {
-      return normalizePhone(valor);
+      return normalizeBrazilWhatsappMobile(valor);
     }
 
     if (this.canalSelecionado() === 'EMAIL') {

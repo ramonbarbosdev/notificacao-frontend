@@ -1,12 +1,12 @@
 export function montarUrlsStompWebSocket(apiUrl: string, token?: string | null): string[] {
   const wsBase = apiUrl.replace(/\/$/, '').replace(/^http/, 'ws') + '/ws';
-  const urls = [wsBase];
+  const urls = new Set<string>([wsBase]);
 
   if (token) {
-    urls.push(`${wsBase}?access_token=${encodeURIComponent(token)}`);
+    urls.add(`${wsBase}?access_token=${encodeURIComponent(token)}`);
   }
 
-  return urls;
+  return [...urls];
 }
 
 export function hostStompDaApi(apiUrl: string): string {

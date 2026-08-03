@@ -2,6 +2,19 @@ export function normalizePhone(value: string): string {
   return value.replace(/\D/g, '');
 }
 
+/** Garante 9o digito em celular BR (55 + DDD + 8 digitos) para WhatsApp. */
+export function normalizeBrazilWhatsappMobile(value: string): string {
+  const digits = normalizePhone(value);
+  if (
+    digits.startsWith('55')
+    && digits.length === 12
+    && ['7', '8', '9'].includes(digits.charAt(4))
+  ) {
+    return digits.substring(0, 4) + '9' + digits.substring(4);
+  }
+  return digits;
+}
+
 /** Máscara progressiva para WhatsApp: +55 (71) 99118-0200 */
 export function maskPhoneInput(value: string): string {
   const digits = normalizePhone(value).slice(0, 13);

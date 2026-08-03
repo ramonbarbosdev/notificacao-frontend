@@ -31,7 +31,7 @@ import {
   AcaoSessaoWhatsapp,
 } from '../../shared/types/dtos';
 import { criarFormularioMensagem } from './whatsapp.form';
-import { formatPhone, maskPhoneInput, normalizePhone } from '../../shared/helper/phone.utils';
+import { formatPhone, maskPhoneInput, normalizeBrazilWhatsappMobile } from '../../shared/helper/phone.utils';
 import {
   ehErroConsentimento,
   ehStatusDeTentativa,
@@ -173,7 +173,7 @@ export class WhatsappComponent implements OnInit, OnDestroy {
 
     this.whatsappService
       .enviarMensagem({
-        telefone: normalizePhone(telefone!),
+        telefone: normalizeBrazilWhatsappMobile(telefone!),
         mensagem: mensagem!,
       })
       .subscribe({

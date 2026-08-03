@@ -24,7 +24,7 @@ import { usePaginatedTable } from '../../shared/helper/paginated-table.state';
 import { useSidePanel } from '../../shared/helper/side-panel.state';
 import { maskBrlInput } from '../../shared/helper/currency.utils';
 import { formatDateTimePtBr } from '../../shared/helper/date.utils';
-import { maskPhoneInput, normalizePhone } from '../../shared/helper/phone.utils';
+import { maskPhoneInput, normalizeBrazilWhatsappMobile } from '../../shared/helper/phone.utils';
 import { labelStatusNotificacao, extrairMensagemErroHttp } from '../../shared/labels/notificacao.labels';
 import {
   CanalNotificacao,
@@ -517,7 +517,7 @@ export class TemplatesComponent implements OnInit, OnDestroy {
 
     const destinatarioBruto = this.sendForm.controls.destinatario.value!.trim();
     const destinatario =
-      template.canal === 'WHATSAPP' ? normalizePhone(destinatarioBruto) : destinatarioBruto;
+      template.canal === 'WHATSAPP' ? normalizeBrazilWhatsappMobile(destinatarioBruto) : destinatarioBruto;
 
     const variaveis = { ...this.valoresEnvio() };
 
@@ -527,7 +527,7 @@ export class TemplatesComponent implements OnInit, OnDestroy {
       if (!valor) continue;
 
       if (variavel.tipo === 'TELEFONE') {
-        variaveis[variavel.chave] = normalizePhone(valor);
+        variaveis[variavel.chave] = normalizeBrazilWhatsappMobile(valor);
       } else if (variavel.tipo === 'MOEDA') {
         variaveis[variavel.chave] = valor;
       }

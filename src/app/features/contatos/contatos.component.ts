@@ -7,7 +7,7 @@ import { ContatoService } from '../../core/services/contato.service';
 import { DataTableColumn } from '../../shared/components/data-table/data-table.types';
 import { usePaginatedTable } from '../../shared/helper/paginated-table.state';
 import { CanalNotificacao, ContatoRequestDTO, ContatoResponseDTO } from '../../shared/types/dtos';
-import { formatPhone, maskPhoneInput, normalizePhone } from '../../shared/helper/phone.utils';
+import { formatPhone, maskPhoneInput, normalizeBrazilWhatsappMobile } from '../../shared/helper/phone.utils';
 import { formatCanal } from '../../shared/helper/channel.utils';
 import { useSidePanel } from '../../shared/helper/side-panel.state';
 import { ContatoListComponent } from './components/contato-list/contato-list.component';
@@ -562,7 +562,7 @@ export class ContatosComponent implements OnInit {
 
   private normalizarDestinatarioParaApi(dados: Pick<ContatoFormData, 'canal' | 'destinatario'>): string {
     if (dados.canal === 'WHATSAPP') {
-      return normalizePhone(dados.destinatario);
+      return normalizeBrazilWhatsappMobile(dados.destinatario);
     }
 
     if (dados.canal === 'EMAIL') {

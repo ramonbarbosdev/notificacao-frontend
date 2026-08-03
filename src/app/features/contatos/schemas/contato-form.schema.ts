@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { normalizePhone } from '../../../shared/helper/phone.utils';
+import { normalizeBrazilWhatsappMobile } from '../../../shared/helper/phone.utils';
 
 export const contatoFormSchema = z
   .object({
@@ -11,7 +11,7 @@ export const contatoFormSchema = z
   })
   .superRefine((value, ctx) => {
     if (value.canal === 'WHATSAPP') {
-      const telefone = normalizePhone(value.destinatario);
+      const telefone = normalizeBrazilWhatsappMobile(value.destinatario);
 
       if (telefone.length < 10 || telefone.length > 15) {
         ctx.addIssue({
