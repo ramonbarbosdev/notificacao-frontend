@@ -78,6 +78,12 @@ export class SidebarComponent {
       scope: 'ADMIN_GLOBAL',
     },
     {
+      label: 'Histórico de Envios',
+      rota: '/admin/historico-envios',
+      icon: Send,
+      scope: 'ADMIN_GLOBAL',
+    },
+    {
       label: 'Monitoramento',
       rota: '/admin/monitoramento',
       icon: ClipboardList,

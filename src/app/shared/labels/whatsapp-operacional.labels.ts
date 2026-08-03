@@ -52,6 +52,22 @@ export function labelStatusOperacional(status?: StatusOperacionalSessao | string
   return STATUS_OPERACIONAL_LABELS[status as StatusOperacionalSessao] ?? status;
 }
 
+export function ehErroNumeroInexistente(mensagem?: string | null): boolean {
+  if (!mensagem?.trim()) return false;
+
+  const normalizado = mensagem.toLowerCase();
+  return (
+    normalizado.includes('nao encontrado no whatsapp') ||
+    normalizado.includes('não encontrado no whatsapp') ||
+    normalizado.includes('numero informado nao encontrado') ||
+    normalizado.includes('número informado não encontrado') ||
+    normalizado.includes('not registered on whatsapp') ||
+    normalizado.includes('nao esta no whatsapp') ||
+    normalizado.includes('não está no whatsapp') ||
+    normalizado.includes('is not on whatsapp')
+  );
+}
+
 export function explicarErroFila(erro?: string | null): {
   mensagem: string;
   titulo?: string;
@@ -70,6 +86,40 @@ export function explicarErroFila(erro?: string | null): {
       titulo: conhecido.titulo,
       explicacao: conhecido.explicacao,
       acao: conhecido.acao,
+    };
+  }
+
+  const normalizado = texto.toLowerCase();
+
+  if (ehErroNumeroInexistente(texto)) {
+    return {
+      mensagem: 'Número não encontrado no WhatsApp',
+      titulo: 'Número não encontrado no WhatsApp',
+      explicacao:
+        'O WhatsApp não reconhece este número como um usuário ativo. ' +
+        'Isso pode indicar número incorreto, inexistente ou sem conta WhatsApp.',
+      acao:
+        'Confira DDI + DDD + número completo, teste abrir o contato no celular ' +
+        'e corrija o destinatário antes de tentar novamente.',
+    };
+  }
+
+  if (
+    normalizado.includes('463') ||
+    normalizado.includes('tctoken') ||
+    normalizado.includes('restricao 463') ||
+    normalizado.includes('restrição 463') ||
+    normalizado.includes('account restricted')
+  ) {
+    return {
+      mensagem: 'WhatsApp bloqueou o envio (463)',
+      titulo: 'Restrição do WhatsApp para novo contato',
+      explicacao:
+        'O WhatsApp recusou a mensagem porque este número ainda não tem histórico de conversa com você, ' +
+        'ou a conta está com limite temporário de novas conversas.',
+      acao:
+        'Peça para o destinatário enviar uma mensagem para o seu número primeiro. ' +
+        'Use o WhatsApp no celular normalmente e evite disparos em massa por algumas horas.',
     };
   }
 

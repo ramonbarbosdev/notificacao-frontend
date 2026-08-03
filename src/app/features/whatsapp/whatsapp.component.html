@@ -384,16 +384,23 @@
             }
 
             @if (respostaMensagem()?.sucesso === false) {
+              @let erroDetalhe = detalheErro(respostaMensagem()?.erro);
               <div class="bg-[var(--color-danger-bg)]
                           border border-[var(--color-danger-border)]
                           rounded-xl px-4 py-3">
 
-                <p class="text-[var(--color-danger)] text-sm">
-                  {{ labelMensagemErro(respostaMensagem()?.erro, 'Erro ao enviar mensagem.') }}
+                <p class="text-[var(--color-danger)] text-sm font-semibold m-0">
+                  {{ erroDetalhe.titulo ?? labelMensagemErro(respostaMensagem()?.erro, 'Erro ao enviar mensagem.') }}
                 </p>
-
-                @if (ehErroConsentimento(respostaMensagem()?.erro)) {
-                  <p class="text-[var(--color-text-muted)] text-xs mt-2">
+                @if (erroDetalhe.explicacao) {
+                  <p class="text-[var(--color-text-muted)] text-xs mt-2 m-0">{{ erroDetalhe.explicacao }}</p>
+                }
+                @if (erroDetalhe.acao) {
+                  <p class="text-[var(--color-text)] text-xs mt-2 m-0">
+                    <strong>O que fazer:</strong> {{ erroDetalhe.acao }}
+                  </p>
+                } @else if (ehErroConsentimento(respostaMensagem()?.erro)) {
+                  <p class="text-[var(--color-text-muted)] text-xs mt-2 m-0">
                     Cadastre o consentimento do contato, ou verifique se ele esta bloqueado.
                   </p>
                 }
@@ -401,16 +408,23 @@
             }
 
             @if (erroEnvio()) {
+              @let erroDetalhe = detalheErro(erroEnvio());
               <div class="bg-[var(--color-danger-bg)]
                           border border-[var(--color-danger-border)]
                           rounded-xl px-4 py-3">
 
-                <p class="text-[var(--color-danger)] text-sm">
-                  {{ erroEnvio() }}
+                <p class="text-[var(--color-danger)] text-sm font-semibold m-0">
+                  {{ erroDetalhe.titulo ?? erroEnvio() }}
                 </p>
-
-                @if (ehErroConsentimento(erroEnvio())) {
-                  <p class="text-[var(--color-text-muted)] text-xs mt-2">
+                @if (erroDetalhe.explicacao) {
+                  <p class="text-[var(--color-text-muted)] text-xs mt-2 m-0">{{ erroDetalhe.explicacao }}</p>
+                }
+                @if (erroDetalhe.acao) {
+                  <p class="text-[var(--color-text)] text-xs mt-2 m-0">
+                    <strong>O que fazer:</strong> {{ erroDetalhe.acao }}
+                  </p>
+                } @else if (ehErroConsentimento(erroEnvio())) {
+                  <p class="text-[var(--color-text-muted)] text-xs mt-2 m-0">
                     Oriente o usuário a cadastrar ou autorizar o contato antes de uma nova tentativa.
                   </p>
                 }

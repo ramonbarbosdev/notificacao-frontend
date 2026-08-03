@@ -165,16 +165,31 @@
                     {{ resposta()!.posicaoFila }} mensagem(ns) na fila antes desta.
                   </p>
                 }
+                <a
+                  routerLink="/app/fila"
+                  class="inline-flex items-center gap-1 text-xs font-semibold text-[var(--color-primary-soft)] mt-3 hover:underline">
+                  Acompanhar na fila
+                  <lucide-icon [img]="chevronRightIcon" class="w-3 h-3" />
+                </a>
               </div>
             }
 
             @if (resposta()!.erro) {
+              @let erroDetalhe = detalheErro(resposta()!.erro);
               <div class="bg-[var(--color-danger-bg)]/50 rounded-xl p-3 col-span-2">
                 <p class="text-[var(--color-text-subtle)] text-xs mb-1">Erro</p>
-                <p class="text-[var(--color-danger)] text-sm">{{ resposta()!.erro }}</p>
-
-                @if (ehErroConsentimento(resposta()!.erro)) {
-                  <p class="text-[var(--color-text-muted)] text-xs mt-2">
+                <p class="text-[var(--color-danger)] text-sm font-semibold">
+                  {{ erroDetalhe.titulo ?? erroDetalhe.mensagem }}
+                </p>
+                @if (erroDetalhe.explicacao) {
+                  <p class="text-[var(--color-text-muted)] text-xs mt-2 m-0">{{ erroDetalhe.explicacao }}</p>
+                }
+                @if (erroDetalhe.acao) {
+                  <p class="text-[var(--color-text)] text-xs mt-2 m-0">
+                    <strong>O que fazer:</strong> {{ erroDetalhe.acao }}
+                  </p>
+                } @else if (ehErroConsentimento(resposta()!.erro)) {
+                  <p class="text-[var(--color-text-muted)] text-xs mt-2 m-0">
                     Verifique se o contato possui consentimento valido e se nao esta bloqueado antes de
                     tentar novamente.
                   </p>
@@ -205,11 +220,20 @@
       }
 
       @if (erroRede()) {
+        @let erroDetalhe = detalheErro(erroRede());
         <div class="mt-6 bg-[var(--color-danger-bg)] border border-[var(--color-danger-border)] rounded-2xl px-5 py-4">
-          <p class="text-[var(--color-danger)] text-sm">{{ erroRede() }}</p>
-
-          @if (ehErroConsentimento(erroRede())) {
-            <p class="text-[var(--color-text-muted)] text-xs mt-2">
+          <p class="text-[var(--color-danger)] text-sm font-semibold m-0">
+            {{ erroDetalhe.titulo ?? erroDetalhe.mensagem }}
+          </p>
+          @if (erroDetalhe.explicacao) {
+            <p class="text-[var(--color-text-muted)] text-xs mt-2 m-0">{{ erroDetalhe.explicacao }}</p>
+          }
+          @if (erroDetalhe.acao) {
+            <p class="text-[var(--color-text)] text-xs mt-2 m-0">
+              <strong>O que fazer:</strong> {{ erroDetalhe.acao }}
+            </p>
+          } @else if (ehErroConsentimento(erroRede())) {
+            <p class="text-[var(--color-text-muted)] text-xs mt-2 m-0">
               Cadastre o consentimento do contato ou remova o bloqueio conforme a politica da
               sua organizacao.
             </p>

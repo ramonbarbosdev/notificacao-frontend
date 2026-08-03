@@ -1,0 +1,213 @@
+<div class="mb-8 flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+  <div>
+    <h1 class="text-2xl font-bold text-[var(--color-text)]">Histórico global de envios</h1>
+    <p class="text-[var(--color-text-muted)] text-sm mt-1">
+      Visualize todas as notificações por organização. Reenvie, cancele ou reative a sessão WhatsApp quando necessário.
+    </p>
+  </div>
+
+  <button
+    type="button"
+    (click)="carregar()"
+    [disabled]="table.loading()"
+    class="px-4 py-3 rounded-xl border border-[var(--color-border)] text-[var(--color-text-muted)]
+           hover:text-[var(--color-text)] hover:bg-[var(--color-surface)] disabled:opacity-50 transition-colors text-sm flex items-center gap-2">
+    <lucide-icon
+      [img]="table.loading() ? loaderIcon : refreshIcon"
+      class="w-4 h-4"
+      [class.animate-spin]="table.loading()" />
+    Atualizar
+  </button>
+</div>
+
+@if (erro()) {
+  <div class="mb-6 bg-[var(--color-danger-bg)] border border-[var(--color-danger-border)] rounded-xl px-4 py-3">
+    <p class="text-[var(--color-danger)] text-sm m-0">{{ erro() }}</p>
+  </div>
+}
+
+<div class="mb-6 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-5 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-3">
+  <div>
+    <label class="block text-xs font-medium text-[var(--color-text-muted)] mb-1.5">Organização</label>
+    <select
+      [(ngModel)]="filtroOrganizacao"
+      class="w-full bg-[var(--color-bg-base)] border border-[var(--color-border-strong)] rounded-xl px-3 py-2.5 text-sm">
+      <option [ngValue]="null">Todas</option>
+      @for (org of organizacoes(); track org.idOrganizacao) {
+        <option [ngValue]="org.idOrganizacao">{{ org.nmOrganizacao }}</option>
+      }
+    </select>
+  </div>
+
+  <div>
+    <label class="block text-xs font-medium text-[var(--color-text-muted)] mb-1.5">Destinatário</label>
+    <input
+      type="text"
+      [(ngModel)]="filtroDestinatario"
+      placeholder="Telefone ou e-mail"
+      class="w-full bg-[var(--color-bg-base)] border border-[var(--color-border-strong)] rounded-xl px-3 py-2.5 text-sm" />
+  </div>
+
+  <div>
+    <label class="block text-xs font-medium text-[var(--color-text-muted)] mb-1.5">Canal</label>
+    <select [(ngModel)]="filtroCanal" class="w-full bg-[var(--color-bg-base)] border border-[var(--color-border-strong)] rounded-xl px-3 py-2.5 text-sm">
+      <option value="">Todos</option>
+      <option value="WHATSAPP">WhatsApp</option>
+      <option value="EMAIL">E-mail</option>
+      <option value="TELEGRAM">Telegram</option>
+      <option value="WEBHOOK">Webhook</option>
+    </select>
+  </div>
+
+  <div>
+    <label class="block text-xs font-medium text-[var(--color-text-muted)] mb-1.5">Status</label>
+    <select [(ngModel)]="filtroStatus" class="w-full bg-[var(--color-bg-base)] border border-[var(--color-border-strong)] rounded-xl px-3 py-2.5 text-sm">
+      <option value="">Todos</option>
+      <option value="PENDENTE">Pendente</option>
+      <option value="PROCESSANDO">Processando</option>
+      <option value="ENVIADA">Enviada</option>
+      <option value="FALHOU">Falhou</option>
+      <option value="BLOQUEADA">Bloqueada</option>
+      <option value="CANCELADA">Cancelada</option>
+    </select>
+  </div>
+
+  <div class="flex items-end gap-2">
+    <button type="button" (click)="aplicarFiltros()" class="flex-1 px-4 py-2.5 rounded-xl bg-[var(--color-primary)] text-white text-sm">
+      Filtrar
+    </button>
+    <button type="button" (click)="limparFiltros()" class="px-4 py-2.5 rounded-xl border border-[var(--color-border)] text-sm">
+      Limpar
+    </button>
+  </div>
+</div>
+
+@if (table.loading() && itens().length === 0) {
+  <div class="flex justify-center py-16">
+    <lucide-icon [img]="loaderIcon" class="w-8 h-8 animate-spin text-[var(--color-text-muted)]" />
+  </div>
+} @else if (itens().length === 0) {
+  <app-empty-state titulo="Nenhum envio encontrado" descricao="Ajuste os filtros ou aguarde novas notificações." />
+} @else {
+  <div class="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead class="bg-[var(--color-surface-muted)] text-[var(--color-text-muted)]">
+          <tr>
+            <th class="text-left px-4 py-3 font-medium">Data</th>
+            <th class="text-left px-4 py-3 font-medium">Organização</th>
+            <th class="text-left px-4 py-3 font-medium">Canal</th>
+            <th class="text-left px-4 py-3 font-medium">Destinatário</th>
+            <th class="text-left px-4 py-3 font-medium">Status</th>
+            <th class="text-left px-4 py-3 font-medium">Retomada</th>
+            <th class="text-right px-4 py-3 font-medium">Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of itens(); track item.idNotificacao) {
+            <tr class="border-t border-[var(--color-border)] hover:bg-[var(--color-surface-muted)]/40">
+              <td class="px-4 py-3 whitespace-nowrap">{{ formatarData(item.criadoEm) }}</td>
+              <td class="px-4 py-3">
+                <div class="font-medium text-[var(--color-text)]">{{ item.nmOrganizacao }}</div>
+                <div class="text-xs text-[var(--color-text-subtle)]">#{{ item.idOrganizacao }}</div>
+              </td>
+              <td class="px-4 py-3">{{ formatarCanal(item.canal) }}</td>
+              <td class="px-4 py-3">{{ formatarDestinatario(item) }}</td>
+              <td class="px-4 py-3">
+                <span class="inline-flex px-2.5 py-1 rounded-full border text-xs font-medium" [ngClass]="statusBadge(item.status).className">
+                  {{ statusBadge(item.status).label }}
+                </span>
+              </td>
+              <td class="px-4 py-3 text-[var(--color-text-muted)]">
+                {{ item.retomadaPrevistaTexto ?? '—' }}
+              </td>
+              <td class="px-4 py-3">
+                <div class="flex justify-end gap-2">
+                  <button type="button" (click)="abrirDetalhe(item)" class="px-3 py-1.5 rounded-lg border border-[var(--color-border)] text-xs">
+                    Detalhes
+                  </button>
+                  @if (podeReenviar(item.status)) {
+                    <button type="button" (click)="reenviar(item)" class="px-3 py-1.5 rounded-lg bg-[var(--color-primary)] text-white text-xs">
+                      Reenviar
+                    </button>
+                  }
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 py-3 border-t border-[var(--color-border)]">
+      <p class="text-xs text-[var(--color-text-muted)] m-0">
+        Página {{ table.paginaAtual() + 1 }} de {{ table.totalPaginas() }} · {{ table.totalElementos() }} registros
+      </p>
+      <div class="flex items-center gap-2">
+        <select [value]="table.tamanhoPagina()" (change)="alterarTamanhoPagina($event)" class="rounded-lg border border-[var(--color-border)] px-2 py-1 text-xs">
+          <option [value]="10">10</option>
+          <option [value]="20">20</option>
+          <option [value]="50">50</option>
+        </select>
+        <button type="button" (click)="paginaAnterior()" [disabled]="table.paginaAtual() <= 0" class="px-3 py-1.5 rounded-lg border text-xs disabled:opacity-40">Anterior</button>
+        <button type="button" (click)="proximaPagina()" [disabled]="table.paginaAtual() + 1 >= table.totalPaginas()" class="px-3 py-1.5 rounded-lg border text-xs disabled:opacity-40">Próxima</button>
+      </div>
+    </div>
+  </div>
+}
+
+<app-side-panel
+  [open]="panel.aberto()"
+  [title]="panel.item() ? 'Notificação #' + panel.item()!.idNotificacao : 'Detalhe'"
+  size="lg"
+  (closed)="panel.fechar()">
+  @if (panel.item(); as detalhe) {
+    <div class="space-y-4 text-sm">
+      <div class="grid grid-cols-2 gap-3">
+        <div><span class="text-[var(--color-text-muted)]">Organização</span><p class="m-0 font-medium">{{ detalhe.nmOrganizacao }}</p></div>
+        <div><span class="text-[var(--color-text-muted)]">Status</span><p class="m-0 font-medium">{{ statusLabels[detalhe.status] }}</p></div>
+        <div><span class="text-[var(--color-text-muted)]">Canal</span><p class="m-0">{{ formatarCanal(detalhe.canal) }}</p></div>
+        <div><span class="text-[var(--color-text-muted)]">Destinatário</span><p class="m-0">{{ formatarDestinatario(detalhe) }}</p></div>
+        <div><span class="text-[var(--color-text-muted)]">Tentativas</span><p class="m-0">{{ detalhe.tentativas }} / {{ detalhe.tentativasMaximas ?? '—' }}</p></div>
+        <div><span class="text-[var(--color-text-muted)]">Criado em</span><p class="m-0">{{ formatarData(detalhe.criadoEm) }}</p></div>
+      </div>
+
+      @if (detalhe.retomadaPrevistaTexto) {
+        <div class="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3">
+          <p class="m-0 text-amber-300 font-medium">Retomada prevista: {{ detalhe.retomadaPrevistaTexto }}</p>
+        </div>
+      }
+
+      @if (detalhe.erro) {
+        <div class="rounded-xl border border-[var(--color-danger-border)] bg-[var(--color-danger-bg)] px-4 py-3">
+          <p class="m-0 font-medium text-[var(--color-danger)]">{{ detalheErro(detalhe.erro).titulo ?? 'Erro' }}</p>
+          <p class="m-0 mt-1 text-[var(--color-text-muted)]">{{ detalhe.erro }}</p>
+        </div>
+      }
+
+      <div>
+        <span class="text-[var(--color-text-muted)]">Mensagem</span>
+        <pre class="mt-1 whitespace-pre-wrap rounded-xl bg-[var(--color-bg-base)] border border-[var(--color-border)] p-3 text-xs">{{ detalhe.mensagem }}</pre>
+      </div>
+
+      <div class="flex flex-wrap gap-2 pt-2">
+        @if (podeReenviar(detalhe.status)) {
+          <button type="button" (click)="reenviar(detalhe)" [disabled]="acaoLoading()" class="px-4 py-2 rounded-xl bg-[var(--color-primary)] text-white text-sm disabled:opacity-50">
+            Reenviar
+          </button>
+        }
+        @if (podeCancelar(detalhe.status)) {
+          <input type="text" [(ngModel)]="motivoCancelamento" placeholder="Motivo do cancelamento (opcional)" class="flex-1 min-w-[200px] rounded-xl border px-3 py-2 text-sm" />
+          <button type="button" (click)="cancelar(detalhe)" [disabled]="acaoLoading()" class="px-4 py-2 rounded-xl border border-[var(--color-danger-border)] text-[var(--color-danger)] text-sm">
+            Cancelar envio
+          </button>
+        }
+        @if (detalhe.canal === 'WHATSAPP') {
+          <button type="button" (click)="reativarWhatsapp(detalhe)" [disabled]="acaoLoading()" class="px-4 py-2 rounded-xl border text-sm">
+            Reativar WhatsApp da org
+          </button>
+        }
+      </div>
+    </div>
+  }
+</app-side-panel>

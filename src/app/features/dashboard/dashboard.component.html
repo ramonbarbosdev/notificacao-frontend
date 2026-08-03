@@ -5,7 +5,15 @@
 
   <p class="text-[var(--color-text-muted)] text-sm mt-1">
     Visão operacional da fila de notificações da organização.
+    @if (aoVivo()) {
+      <span class="text-emerald-400">· atualização ao vivo</span>
+    }
   </p>
+  @if (resumoFila()?.proximoEnvioTexto) {
+    <p class="text-amber-300 text-sm mt-2 m-0">
+      Próximo envio previsto {{ resumoFila()!.proximoEnvioTexto }}
+    </p>
+  }
 </div>
 
 <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5 mb-8">

@@ -3,11 +3,12 @@ import { RouterModule } from '@angular/router';
 import { SidebarComponent } from './layout.components';
 import { HeaderComponent } from './header/header.component';
 import { LayoutService } from './layout.service';
+import { StatusEnvioBannerComponent } from '../../shared/components/status-envio-banner/status-envio-banner.component';
 
 @Component({
   selector: 'app-shell',
   standalone: true,
-  imports: [RouterModule, SidebarComponent, HeaderComponent],
+  imports: [RouterModule, SidebarComponent, HeaderComponent, StatusEnvioBannerComponent],
   template: `
     <div class="min-h-screen bg-[var(--color-bg-base)]">
       @if (layout.sidebarAberta()) {
@@ -25,6 +26,7 @@ import { LayoutService } from './layout.service';
 
       <main class="pt-16 pl-0 lg:pl-64 transition-[padding] duration-300">
         <div class="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
+          <app-status-envio-banner />
           <router-outlet />
         </div>
       </main>

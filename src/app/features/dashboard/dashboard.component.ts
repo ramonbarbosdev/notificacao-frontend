@@ -1,8 +1,8 @@
 
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
-import { finalize } from 'rxjs';
+import { finalize, Subscription, timer } from 'rxjs';
 import {
   Ban,
   ChevronRight,
@@ -21,8 +21,9 @@ import {
 import { formatNumberPtBr } from '../../shared/helper/number.utils';
 import { AuthService } from '../../core/auth/auth.service';
 import { NotificacaoService } from '../../core/services/notificacao.service';
+import { NotificacaoFilaEventsService } from '../../core/http/notificacao-fila-events.service';
 import { WhatsappService } from '../../core/services/whatsapp.service';
-import { FilaNotificacaoResponseDTO, StatusNotificacao, WhatsappStatusResponse } from '../../shared/types/dtos';
+import { FilaResumoResponseDTO, StatusNotificacao, WhatsappStatusResponse } from '../../shared/types/dtos';
 import { WhatsappStatusCardComponent } from '../../shared/components/whatsapp-status-card/whatsapp-status-card.component';
 import { MetricCardComponent, MetricTone } from '../../shared/components/metric-card/metric-card.component';
 import {
@@ -59,10 +60,17 @@ interface QuickAction {
   ],
   templateUrl: './dashboard.component.html',
 })
-export class DashboardComponent implements OnInit {
+export class DashboardComponent implements OnInit, OnDestroy {
   private readonly authService = inject(AuthService);
   private readonly whatsappService = inject(WhatsappService);
   private readonly notificacaoService = inject(NotificacaoService);
+  private readonly filaEventsService = inject(NotificacaoFilaEventsService);
+
+  private wsSub?: Subscription;
+  private pollSub?: Subscription;
+
+  readonly resumoFila = signal<FilaResumoResponseDTO | null>(null);
+  readonly aoVivo = signal(false);
 
   protected readonly whatsappIcon = MessageCircle;
   protected readonly chevronRightIcon = ChevronRight;
@@ -169,6 +177,44 @@ export class DashboardComponent implements OnInit {
   ngOnInit(): void {
     this.carregarStatus();
     this.carregarMetricas();
+    this.iniciarAoVivo();
+  }
+
+  ngOnDestroy(): void {
+    this.wsSub?.unsubscribe();
+    this.pollSub?.unsubscribe();
+  }
+
+  private iniciarAoVivo(): void {
+    const idOrganizacao = this.authService.idOrganizacaoAtual();
+    if (!idOrganizacao) return;
+
+    this.wsSub?.unsubscribe();
+    this.wsSub = this.filaEventsService.conectar(idOrganizacao).subscribe({
+      next: (evento) => {
+        this.aoVivo.set(true);
+        if (evento.resumo) {
+          this.aplicarResumo(evento.resumo);
+        } else {
+          this.carregarMetricasSilencioso();
+        }
+      },
+      error: () => this.aoVivo.set(false),
+      complete: () => this.aoVivo.set(false),
+    });
+
+    this.pollSub?.unsubscribe();
+    this.pollSub = timer(8000, 8000).subscribe(() => {
+      if (this.temFilaAtiva()) {
+        this.carregarMetricasSilencioso();
+      }
+    });
+  }
+
+  private temFilaAtiva(): boolean {
+    const resumo = this.resumoFila();
+    if (!resumo) return true;
+    return resumo.pendente > 0 || resumo.processando > 0;
   }
 
   private carregarStatus(): void {
@@ -185,26 +231,10 @@ export class DashboardComponent implements OnInit {
   private carregarMetricas(): void {
     this.carregandoMetricas.set(true);
     this.notificacaoService
-      .listar({ page: 0, size: 500 })
+      .resumoFila()
       .pipe(finalize(() => this.carregandoMetricas.set(false)))
       .subscribe({
-        next: (page) => {
-          const totais = {
-            PENDENTE: 0,
-            PROCESSANDO: 0,
-            ENVIADA: 0,
-            ENTREGUE: 0,
-            LIDA: 0,
-            FALHOU: 0,
-            BLOQUEADA: 0,
-            CANCELADA: 0,
-          } satisfies Record<StatusNotificacao, number>;
-
-          for (const item of page.data as FilaNotificacaoResponseDTO[]) {
-            totais[item.status] = (totais[item.status] ?? 0) + 1;
-          }
-          this.contadores.set(totais);
-        },
+        next: (resumo) => this.aplicarResumo(resumo),
         error: () => this.contadores.set({
           PENDENTE: 0,
           PROCESSANDO: 0,
@@ -216,5 +246,25 @@ export class DashboardComponent implements OnInit {
           CANCELADA: 0,
         }),
       });
+  }
+
+  private carregarMetricasSilencioso(): void {
+    this.notificacaoService.resumoFila().subscribe({
+      next: (resumo) => this.aplicarResumo(resumo),
+    });
+  }
+
+  private aplicarResumo(resumo: FilaResumoResponseDTO): void {
+    this.resumoFila.set(resumo);
+    this.contadores.set({
+      PENDENTE: resumo.pendente,
+      PROCESSANDO: resumo.processando,
+      ENVIADA: resumo.enviada,
+      ENTREGUE: 0,
+      LIDA: 0,
+      FALHOU: resumo.falhou,
+      BLOQUEADA: resumo.bloqueada,
+      CANCELADA: 0,
+    });
   }
 }

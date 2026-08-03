@@ -1,11 +1,21 @@
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, OnInit, inject, signal } from '@angular/core';
-import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { FormBuilder, FormControl, ReactiveFormsModule } from '@angular/forms';
 import { Check, ChevronDown, ChevronUp, CircleHelp, ExternalLink, LoaderCircle, LucideAngularModule, Settings } from 'lucide-angular';
+import { z } from 'zod';
 
 import { AdminConfiguracaoService } from '../../../core/services/admin-configuracao.service';
-import { FormFieldComponent } from '../../../shared/components/forms/form-field/app-form-field';
+import { SidePanelComponent } from '../../../shared/components/side-panel/side-panel.component';
+import { FormInputComponent } from '../../../shared/components/forms/text-input/app-text-input';
+import { useSidePanel } from '../../../shared/helper/side-panel.state';
+import { getZodFieldErrors } from '../../../shared/helper/zod-form.helper';
+import { ConfiguracaoGlobal } from '../../../shared/types/dtos';
+import {
+  ConfigGlobalFormData,
+  ConfigGlobalFormErrors,
+  schemaConfigGlobalPorAba,
+} from '../schemas/config-global-form.schema';
 import {
   ABAS_CONFIG_GLOBAL,
   AbaConfiguracaoGlobal,
@@ -16,18 +26,16 @@ import {
 
 const STORAGE_ORIENTACOES = 'notificacao.config-global.mostrar-orientacoes';
 
-function emailOpcional(control: AbstractControl): ValidationErrors | null {
-  const valor = control.value;
-  if (valor == null || String(valor).trim() === '') {
-    return null;
-  }
-  return Validators.email(control);
-}
-
 @Component({
   selector: 'app-configuracoes-globais',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, LucideAngularModule, FormFieldComponent],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    LucideAngularModule,
+    SidePanelComponent,
+    FormInputComponent,
+  ],
   templateUrl: './configuracoes-globais.component.html',
   styleUrl: './configuracoes-globais.component.scss',
 })
@@ -45,6 +53,7 @@ export class ConfiguracoesGlobaisComponent implements OnInit {
 
   readonly abas = ABAS_CONFIG_GLOBAL;
   readonly instrucoes = INSTRUCOES_CONFIG_GLOBAL;
+  readonly panel = useSidePanel<AbaConfiguracaoGlobal>();
 
   readonly aba = signal<AbaConfiguracaoGlobal>('plataforma');
   readonly mostrarOrientacoes = signal(this.lerPreferenciaOrientacoes());
@@ -52,24 +61,8 @@ export class ConfiguracoesGlobaisComponent implements OnInit {
   readonly salvando = signal(false);
   readonly erro = signal<string | null>(null);
   readonly sucesso = signal<string | null>(null);
-
-  readonly form = this.fb.group({
-    nmPlataforma: ['', [Validators.required]],
-    nmDominioPrincipal: ['', [Validators.required]],
-    nmEmailSuporte: ['', [Validators.required, Validators.email]],
-    nmEmailAlertas: ['', [emailOpcional]],
-    nuTimezonePadrao: [0],
-    dsSmtpHost: [''],
-    nuSmtpPorta: [587],
-    nmSmtpUsuario: [''],
-    dsSmtpSenha: [''],
-    flWhatsappProviderPadrao: [true],
-    flEmailHabilitado: [true],
-    flTelegramHabilitado: [true],
-    flWebhooksHabilitado: [true],
-    flApiPublicaHabilitada: [false],
-    flTemplatesHabilitado: [true],
-  });
+  readonly errosFormulario = signal<ConfigGlobalFormErrors>({});
+  readonly configAtual = signal<Partial<ConfigGlobalFormData>>({});
 
   readonly provedores = [
     { control: 'flWhatsappProviderPadrao', label: 'WhatsApp padrão', helper: 'Canal principal sugerido nas integrações' },
@@ -80,12 +73,52 @@ export class ConfiguracoesGlobaisComponent implements OnInit {
     { control: 'flTemplatesHabilitado', label: 'Templates habilitados', helper: 'Mensagens padronizadas com variáveis' },
   ] as const;
 
+  readonly form = this.fb.nonNullable.group({
+    nmPlataforma: '',
+    nmDominioPrincipal: '',
+    nmEmailSuporte: '',
+    nmEmailAlertas: '',
+    nuTimezonePadrao: 0,
+    dsSmtpHost: '',
+    nuSmtpPorta: 587,
+    nmSmtpUsuario: '',
+    dsSmtpSenha: '',
+    flWhatsappProviderPadrao: true,
+    flEmailHabilitado: true,
+    flTelegramHabilitado: true,
+    flWebhooksHabilitado: true,
+    flApiPublicaHabilitada: false,
+    flTemplatesHabilitado: true,
+  });
+
+  readonly abaPainel = computed(() => this.panel.item() ?? 'plataforma');
+
   ngOnInit(): void {
     this.carregar();
   }
 
+  getControl(name: keyof ConfigGlobalFormData): FormControl {
+    return this.form.get(name) as FormControl;
+  }
+
+  campoErro(campo: keyof ConfigGlobalFormData): string | null {
+    return this.errosFormulario()[campo] ?? null;
+  }
+
   selecionarAba(id: AbaConfiguracaoGlobal): void {
     this.aba.set(id);
+  }
+
+  abrirEdicao(id: AbaConfiguracaoGlobal): void {
+    this.erro.set(null);
+    this.errosFormulario.set({});
+    this.form.patchValue(this.configAtual() as ConfigGlobalFormData);
+    this.panel.abrir(id);
+  }
+
+  fecharPainel(): void {
+    this.panel.fechar();
+    this.errosFormulario.set({});
   }
 
   alternarOrientacoes(): void {
@@ -110,36 +143,11 @@ export class ConfiguracoesGlobaisComponent implements OnInit {
   }
 
   instrucaoAtiva() {
-    return this.instrucoes[this.aba()];
+    return this.instrucoes[this.abaPainel()];
   }
 
   rotuloAbaAtiva(): string {
-    return ROTULO_ABA[this.aba()];
-  }
-
-  abaAtualInvalida(): boolean {
-    return this.camposDaAbaAtual().some((nome) => this.form.get(nome)?.invalid);
-  }
-
-  private camposDaAbaAtual(): readonly string[] {
-    return CAMPOS_POR_ABA[this.aba()];
-  }
-
-  private validarAbaAtual(): boolean {
-    let invalido = false;
-    for (const nome of this.camposDaAbaAtual()) {
-      const control = this.form.get(nome);
-      control?.markAsTouched();
-      control?.updateValueAndValidity();
-      if (control?.invalid) {
-        invalido = true;
-      }
-    }
-    if (invalido) {
-      this.erro.set(`Corrija os campos da aba ${this.rotuloAbaAtiva()} antes de salvar.`);
-      this.sucesso.set(null);
-    }
-    return !invalido;
+    return ROTULO_ABA[this.abaPainel()];
   }
 
   carregar(): void {
@@ -148,24 +156,38 @@ export class ConfiguracoesGlobaisComponent implements OnInit {
 
     this.service.buscar().subscribe({
       next: (config) => {
-        this.form.patchValue({
-          ...config,
-          dsSmtpSenha: '',
-        });
+        const dados = this.normalizarConfig(config);
+        this.configAtual.set(dados);
+        this.form.patchValue(dados);
         this.carregando.set(false);
       },
       error: (err: HttpErrorResponse) => {
-        this.erro.set(this.mensagemErro(err, 'Não foi possível carregar as configurações.'));
+        this.erro.set(this.mensagemErro(err, 'Nao foi possivel carregar as configuracoes.'));
         this.carregando.set(false);
       },
     });
   }
 
   salvar(): void {
-    if (!this.validarAbaAtual()) {
+    const aba = this.abaPainel();
+    this.form.markAllAsTouched();
+
+    const schema = schemaConfigGlobalPorAba(aba);
+    const campos = CAMPOS_POR_ABA[aba];
+    const valoresParciais = campos.reduce((acc, campo) => {
+      acc[campo as keyof ConfigGlobalFormData] = this.form.get(campo)?.value;
+      return acc;
+    }, {} as Record<string, unknown>);
+
+    const resultado = schema.safeParse(valoresParciais);
+
+    if (!resultado.success) {
+      this.errosFormulario.set(getZodFieldErrors(resultado.error as z.ZodError<ConfigGlobalFormData>));
+      this.erro.set(`Corrija os campos da aba ${this.rotuloAbaAtiva()} antes de salvar.`);
       return;
     }
 
+    this.errosFormulario.set({});
     const dados = this.form.getRawValue();
 
     this.salvando.set(true);
@@ -174,9 +196,9 @@ export class ConfiguracoesGlobaisComponent implements OnInit {
 
     this.service
       .atualizar({
-        nmPlataforma: dados.nmPlataforma!,
-        nmDominioPrincipal: dados.nmDominioPrincipal!,
-        nmEmailSuporte: dados.nmEmailSuporte!,
+        nmPlataforma: dados.nmPlataforma,
+        nmDominioPrincipal: dados.nmDominioPrincipal,
+        nmEmailSuporte: dados.nmEmailSuporte,
         nmEmailAlertas: dados.nmEmailAlertas || null,
         nuTimezonePadrao: Number(dados.nuTimezonePadrao ?? 0),
         dsSmtpHost: dados.dsSmtpHost || null,
@@ -192,20 +214,22 @@ export class ConfiguracoesGlobaisComponent implements OnInit {
       })
       .subscribe({
         next: () => {
+          this.configAtual.set({ ...dados, dsSmtpSenha: '' });
           this.sucesso.set(`${this.rotuloAbaAtiva()} salva com sucesso.`);
           this.erro.set(null);
           this.salvando.set(false);
           this.form.patchValue({ dsSmtpSenha: '' });
+          this.panel.fechar();
         },
         error: (err: HttpErrorResponse) => {
-          this.erro.set(this.mensagemErro(err, 'Não foi possível salvar as configurações.'));
+          this.erro.set(this.mensagemErro(err, 'Nao foi possivel salvar as configuracoes.'));
           this.salvando.set(false);
         },
       });
   }
 
   restaurarPadrao(): void {
-    switch (this.aba()) {
+    switch (this.abaPainel()) {
       case 'plataforma':
         this.form.patchValue({
           nmPlataforma: 'Notificacao SaaS',
@@ -235,11 +259,38 @@ export class ConfiguracoesGlobaisComponent implements OnInit {
         break;
     }
     this.erro.set(null);
-    this.sucesso.set(null);
+    this.errosFormulario.set({});
+  }
+
+  valorResumo(campo: keyof ConfigGlobalFormData): string {
+    const valor = this.configAtual()[campo];
+    if (typeof valor === 'boolean') return valor ? 'Sim' : 'Nao';
+    if (valor === null || valor === undefined || valor === '') return '—';
+    return String(valor);
+  }
+
+  private normalizarConfig(config: ConfiguracaoGlobal): Partial<ConfigGlobalFormData> {
+    return {
+      nmPlataforma: config.nmPlataforma ?? '',
+      nmDominioPrincipal: config.nmDominioPrincipal ?? '',
+      nmEmailSuporte: config.nmEmailSuporte ?? '',
+      nmEmailAlertas: config.nmEmailAlertas ?? '',
+      nuTimezonePadrao: config.nuTimezonePadrao ?? 0,
+      dsSmtpHost: config.dsSmtpHost ?? '',
+      nuSmtpPorta: config.nuSmtpPorta ?? 587,
+      nmSmtpUsuario: config.nmSmtpUsuario ?? '',
+      dsSmtpSenha: '',
+      flWhatsappProviderPadrao: !!config.flWhatsappProviderPadrao,
+      flEmailHabilitado: !!config.flEmailHabilitado,
+      flTelegramHabilitado: !!config.flTelegramHabilitado,
+      flWebhooksHabilitado: !!config.flWebhooksHabilitado,
+      flApiPublicaHabilitada: !!config.flApiPublicaHabilitada,
+      flTemplatesHabilitado: !!config.flTemplatesHabilitado,
+    };
   }
 
   private mensagemErro(err: HttpErrorResponse, fallback: string): string {
-    if (err.status === 403) return 'Você não tem permissão para executar esta ação.';
+    if (err.status === 403) return 'Voce nao tem permissao para executar esta acao.';
     return err.error?.mensagem ?? err.error?.erro ?? err.error?.message ?? fallback;
   }
 }

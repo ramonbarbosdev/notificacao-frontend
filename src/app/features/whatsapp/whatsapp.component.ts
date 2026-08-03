@@ -36,6 +36,7 @@ import {
   ehErroConsentimento,
   ehStatusDeTentativa,
   extrairMensagemErro,
+  detalheErroEnvio,
   montarQrImagemSrc,
 } from './whatsapp.helpers';
 import { WHATSAPP_ICONS } from './whatsapp.icons';
@@ -260,6 +261,10 @@ export class WhatsappComponent implements OnInit, OnDestroy {
 
   ehErroConsentimento(mensagem: string | null | undefined): boolean {
     return ehErroConsentimento(mensagem);
+  }
+
+  detalheErro(mensagem: string | null | undefined) {
+    return detalheErroEnvio(mensagem);
   }
 
   private buscarStatusSemLoading(): void {

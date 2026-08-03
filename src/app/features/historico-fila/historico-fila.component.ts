@@ -1,24 +1,28 @@
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, effect, inject, signal } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import {
   ChevronDown,
   ChevronUp,
   LoaderCircle,
   LucideAngularModule,
+  Radio,
   RefreshCw,
   Search,
 } from 'lucide-angular';
+import { Subscription, timer } from 'rxjs';
 
 import { NotificacaoService } from '../../core/services/notificacao.service';
+import { NotificacaoFilaEventsService } from '../../core/http/notificacao-fila-events.service';
+import { AuthService } from '../../core/auth/auth.service';
 import { EmptyStateComponent } from '../../shared/components/empty-state/empty-state.component';
 import { usePaginatedTable } from '../../shared/helper/paginated-table.state';
 import { formatCanal } from '../../shared/helper/channel.utils';
 import { formatDateTimePtBr } from '../../shared/helper/date.utils';
 import { formatPhone } from '../../shared/helper/phone.utils';
 import { explicarErroFila } from '../../shared/labels/whatsapp-operacional.labels';
-import { CanalNotificacao, FilaNotificacaoItemDTO, StatusNotificacao } from '../../shared/types/dtos';
+import { CanalNotificacao, FilaNotificacaoItemDTO, FilaResumoResponseDTO, StatusNotificacao } from '../../shared/types/dtos';
 
 @Component({
   selector: 'app-historico-fila',
@@ -26,14 +30,25 @@ import { CanalNotificacao, FilaNotificacaoItemDTO, StatusNotificacao } from '../
   imports: [CommonModule, RouterModule, LucideAngularModule, EmptyStateComponent],
   templateUrl: './historico-fila.component.html',
 })
-export class HistoricoFilaComponent implements OnInit {
+export class HistoricoFilaComponent implements OnInit, OnDestroy {
   private readonly notificacaoService = inject(NotificacaoService);
+  private readonly filaEventsService = inject(NotificacaoFilaEventsService);
+  private readonly authService = inject(AuthService);
+
+  private wsSub?: Subscription;
+  private pollSub?: Subscription;
+
+  readonly reenviandoId = signal<number | null>(null);
+  readonly aoVivo = signal(false);
+  readonly resumoFila = signal<FilaResumoResponseDTO | null>(null);
+  readonly ultimaAtualizacao = signal<Date | null>(null);
 
   protected readonly loaderIcon = LoaderCircle;
   protected readonly refreshIcon = RefreshCw;
   protected readonly searchIcon = Search;
   protected readonly chevronDownIcon = ChevronDown;
   protected readonly chevronUpIcon = ChevronUp;
+  protected readonly aoVivoIcon = Radio;
 
   readonly table = usePaginatedTable(10);
   readonly itens = signal<FilaNotificacaoItemDTO[]>([]);
@@ -112,8 +127,26 @@ export class HistoricoFilaComponent implements OnInit {
     return Array.from(contagem.entries()).map(([status, total]) => ({ status, total }));
   });
 
+  readonly temItensAtivos = computed(() =>
+    this.itens().some((item) => item.status === 'PENDENTE' || item.status === 'PROCESSANDO')
+  );
+
+  constructor() {
+    effect(() => {
+      this.temItensAtivos();
+      this.reagendarPolling();
+    });
+  }
+
   ngOnInit(): void {
     this.carregarFila();
+    this.carregarResumo();
+    this.iniciarAoVivo();
+  }
+
+  ngOnDestroy(): void {
+    this.wsSub?.unsubscribe();
+    this.pollSub?.unsubscribe();
   }
 
   carregarFila(): void {
@@ -132,12 +165,87 @@ export class HistoricoFilaComponent implements OnInit {
           this.table.paginaAtual.set(0);
           this.expandidos.set(new Set());
           this.table.loading.set(false);
+          this.ultimaAtualizacao.set(new Date());
         },
         error: (err: HttpErrorResponse) => {
           this.erro.set(err.error?.mensagem ?? err.error?.erro ?? 'Erro ao carregar a fila.');
           this.table.loading.set(false);
         },
       });
+  }
+
+  private carregarFilaSilencioso(): void {
+    this.notificacaoService
+      .listar({
+        page: 0,
+        size: 200,
+        sort: 'dtCriacao,desc',
+      })
+      .subscribe({
+        next: (res) => {
+          this.itens.set(res.data);
+          this.ultimaAtualizacao.set(new Date());
+        },
+      });
+
+    this.carregarResumo();
+  }
+
+  private carregarResumo(): void {
+    this.notificacaoService.resumoFila().subscribe({
+      next: (resumo) => this.resumoFila.set(resumo),
+    });
+  }
+
+  private iniciarAoVivo(): void {
+    const idOrganizacao = this.authService.idOrganizacaoAtual();
+    if (!idOrganizacao) return;
+
+    this.wsSub?.unsubscribe();
+    this.wsSub = this.filaEventsService.conectar(idOrganizacao).subscribe({
+      next: (evento) => {
+        this.aoVivo.set(true);
+        if (evento.resumo) {
+          this.resumoFila.set(evento.resumo);
+        }
+        this.carregarFilaSilencioso();
+      },
+      error: () => {
+        this.aoVivo.set(false);
+      },
+      complete: () => {
+        this.aoVivo.set(false);
+      },
+    });
+  }
+
+  private reagendarPolling(): void {
+    this.pollSub?.unsubscribe();
+
+    if (!this.temItensAtivos()) return;
+
+    this.pollSub = timer(6000, 6000).subscribe(() => this.carregarFilaSilencioso());
+  }
+
+  textoPrevisao(item: FilaNotificacaoItemDTO): string | null {
+    if (item.status !== 'PENDENTE' && item.status !== 'PROCESSANDO') {
+      return null;
+    }
+
+    if (item.tempoEstimadoEnvioTexto) {
+      return `Previsão de envio: ${item.tempoEstimadoEnvioTexto}`;
+    }
+
+    if (item.retomadaPrevistaTexto) {
+      return `Retomada ${item.retomadaPrevistaTexto}`;
+    }
+
+    return 'Aguardando processamento';
+  }
+
+  horarioPrevisao(item: FilaNotificacaoItemDTO): string | null {
+    if (!item.previsaoEnvioEm) return null;
+    return formatDateTimePtBr(item.previsaoEnvioEm);
   }
 
   atualizarFiltroDestinatario(event: Event): void {
@@ -231,6 +339,29 @@ export class HistoricoFilaComponent implements OnInit {
       typeof erro === 'string' &&
       (erro.includes('risco operacional') || erro.includes('pausada automaticamente'))
     );
+  }
+
+  isAdminOrganizacao(): boolean {
+    return this.authService.role() === 'ADMIN';
+  }
+
+  podeReenviar(status: StatusNotificacao): boolean {
+    return status === 'FALHOU' || status === 'BLOQUEADA' || status === 'CANCELADA';
+  }
+
+  reenviar(item: FilaNotificacaoItemDTO): void {
+    if (!confirm(`Reenviar notificação #${item.idNotificacao}?`)) return;
+    this.reenviandoId.set(item.idNotificacao);
+    this.notificacaoService.reenviar(item.idNotificacao).subscribe({
+      next: () => {
+        this.reenviandoId.set(null);
+        this.carregarFila();
+      },
+      error: (err: HttpErrorResponse) => {
+        this.erro.set(err.error?.mensagem ?? err.error?.erro ?? 'Erro ao reenviar notificação.');
+        this.reenviandoId.set(null);
+      },
+    });
   }
 
   statusBadge(status: StatusNotificacao): { label: string; className: string } {

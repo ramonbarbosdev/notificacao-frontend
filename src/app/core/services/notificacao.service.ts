@@ -7,7 +7,9 @@ import {
   EnviarNotificacaoRequest,
   EnviarNotificacaoResponse,
   FilaNotificacaoResponseDTO,
+  FilaResumoResponseDTO,
   PageResult,
+  StatusEnvioOrganizacaoResponse,
 } from '../../shared/types/dtos';
 
 
@@ -43,5 +45,19 @@ export class NotificacaoService {
           totalPages: Number(response.headers.get('X-Total-Pages') ?? 0),
         }))
       );
+  }
+
+  resumoFila(): Observable<FilaResumoResponseDTO> {
+    return this.http.get<FilaResumoResponseDTO>(`${this.base}/fila/resumo`);
+  }
+
+  consultarStatusEnvio(canal: string = 'WHATSAPP'): Observable<StatusEnvioOrganizacaoResponse> {
+    return this.http.get<StatusEnvioOrganizacaoResponse>(`${this.base}/status-envio`, {
+      params: { canal },
+    });
+  }
+
+  reenviar(idNotificacao: number): Observable<FilaNotificacaoResponseDTO> {
+    return this.http.post<FilaNotificacaoResponseDTO>(`${this.base}/${idNotificacao}/reenviar`, {});
   }
 }

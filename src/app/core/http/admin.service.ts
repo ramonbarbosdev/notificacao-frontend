@@ -60,4 +60,41 @@ export class AdminService {
       dados
     );
   }
+
+  inativarOrganizacao(idOrganizacao: number): Observable<OrganizacaoAdminResponse> {
+    return this.http.delete<OrganizacaoAdminResponse>(`${this.base}/organizacoes/${idOrganizacao}`);
+  }
+
+  ativarOrganizacao(idOrganizacao: number): Observable<OrganizacaoAdminResponse> {
+    return this.http.patch<OrganizacaoAdminResponse>(
+      `${this.base}/organizacoes/${idOrganizacao}/ativar`,
+      {}
+    );
+  }
+
+  excluirOrganizacaoPermanentemente(idOrganizacao: number): Observable<void> {
+    return this.http.delete<void>(`${this.base}/organizacoes/${idOrganizacao}/permanente`);
+  }
+
+  inativarUsuarioOrganizacao(idOrganizacao: number, idUsuario: number): Observable<void> {
+    return this.http.delete<void>(
+      `${this.base}/organizacoes/${idOrganizacao}/usuarios/${idUsuario}`
+    );
+  }
+
+  ativarUsuarioOrganizacao(
+    idOrganizacao: number,
+    idUsuario: number
+  ): Observable<UsuarioOrganizacaoResponse> {
+    return this.http.patch<UsuarioOrganizacaoResponse>(
+      `${this.base}/organizacoes/${idOrganizacao}/usuarios/${idUsuario}/ativar`,
+      {}
+    );
+  }
+
+  excluirUsuarioPermanentemente(idOrganizacao: number, idUsuario: number): Observable<void> {
+    return this.http.delete<void>(
+      `${this.base}/organizacoes/${idOrganizacao}/usuarios/${idUsuario}/permanente`
+    );
+  }
 }

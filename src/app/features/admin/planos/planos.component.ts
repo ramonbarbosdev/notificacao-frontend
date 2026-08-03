@@ -1,19 +1,34 @@
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormControl, ReactiveFormsModule } from '@angular/forms';
 import { Check, LoaderCircle, LucideAngularModule, PackagePlus } from 'lucide-angular';
 
 import { PlanoService } from '../../../core/services/plano.service';
 import { SidePanelComponent } from '../../../shared/components/side-panel/side-panel.component';
+import { FormInputComponent } from '../../../shared/components/forms/text-input/app-text-input';
+import { FormTextareaComponent } from '../../../shared/components/forms/textarea-input/form-textarea.component';
 import { useSidePanel } from '../../../shared/helper/side-panel.state';
 import { formatNumberPtBr } from '../../../shared/helper/number.utils';
+import { getZodFieldErrors } from '../../../shared/helper/zod-form.helper';
 import { Plano } from '../../../shared/types/dtos';
+import {
+  planoFormSchema,
+  PlanoFormData,
+  PlanoFormErrors,
+} from '../schemas/plano-form.schema';
 
 @Component({
   selector: 'app-planos',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, LucideAngularModule, SidePanelComponent],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    LucideAngularModule,
+    SidePanelComponent,
+    FormInputComponent,
+    FormTextareaComponent,
+  ],
   templateUrl: './planos.component.html',
 })
 export class PlanosComponent implements OnInit {
@@ -33,6 +48,7 @@ export class PlanosComponent implements OnInit {
   readonly salvando = signal(false);
   readonly erro = signal<string | null>(null);
   readonly sucesso = signal<string | null>(null);
+  readonly errosFormulario = signal<PlanoFormErrors>({});
 
   readonly planosFiltrados = computed(() => {
     const termo = this.termo().toLowerCase();
@@ -45,23 +61,40 @@ export class PlanosComponent implements OnInit {
     });
   });
 
-  readonly form = this.fb.group({
-    nmPlano: ['', [Validators.required]],
-    dsPlano: [''],
-    nuLimiteMensagensMensal: [10000],
-    nuLimiteUsuarios: [10],
-    nuLimiteTemplates: [100],
-    nuLimiteContatos: [10000],
-    flWhatsappHabilitado: [true],
-    flEmailHabilitado: [true],
-    flTelegramHabilitado: [true],
-    flWebhookHabilitado: [true],
-    flApiPublicaHabilitada: [false],
-    flAtivo: [true],
+  readonly toggles = [
+    { control: 'flWhatsappHabilitado', label: 'WhatsApp' },
+    { control: 'flEmailHabilitado', label: 'Email' },
+    { control: 'flTelegramHabilitado', label: 'Telegram' },
+    { control: 'flWebhookHabilitado', label: 'Webhook' },
+    { control: 'flApiPublicaHabilitada', label: 'API publica' },
+    { control: 'flAtivo', label: 'Ativo' },
+  ] as const;
+
+  readonly form = this.fb.nonNullable.group({
+    nmPlano: '',
+    dsPlano: '',
+    nuLimiteMensagensMensal: 10000,
+    nuLimiteUsuarios: 10,
+    nuLimiteTemplates: 100,
+    nuLimiteContatos: 10000,
+    flWhatsappHabilitado: true,
+    flEmailHabilitado: true,
+    flTelegramHabilitado: true,
+    flWebhookHabilitado: true,
+    flApiPublicaHabilitada: false,
+    flAtivo: true,
   });
 
   ngOnInit(): void {
     this.carregar();
+  }
+
+  getControl(name: keyof PlanoFormData): FormControl {
+    return this.form.get(name) as FormControl;
+  }
+
+  campoErro(campo: keyof PlanoFormData): string | null {
+    return this.errosFormulario()[campo] ?? null;
   }
 
   carregar(): void {
@@ -94,34 +127,61 @@ export class PlanosComponent implements OnInit {
       flApiPublicaHabilitada: false,
       flAtivo: true,
     });
+    this.errosFormulario.set({});
+    this.erro.set(null);
     this.panel.abrir();
   }
 
   editar(plano: Plano): void {
-    this.form.patchValue(plano);
+    this.form.patchValue({
+      nmPlano: plano.nmPlano,
+      dsPlano: plano.dsPlano ?? '',
+      nuLimiteMensagensMensal: plano.nuLimiteMensagensMensal ?? 0,
+      nuLimiteUsuarios: plano.nuLimiteUsuarios ?? 0,
+      nuLimiteTemplates: plano.nuLimiteTemplates ?? 0,
+      nuLimiteContatos: plano.nuLimiteContatos ?? 0,
+      flWhatsappHabilitado: plano.flWhatsappHabilitado,
+      flEmailHabilitado: plano.flEmailHabilitado,
+      flTelegramHabilitado: plano.flTelegramHabilitado,
+      flWebhookHabilitado: plano.flWebhookHabilitado,
+      flApiPublicaHabilitada: plano.flApiPublicaHabilitada,
+      flAtivo: plano.flAtivo,
+    });
+    this.errosFormulario.set({});
+    this.erro.set(null);
     this.panel.abrir(plano);
   }
 
+  fecharPainel(): void {
+    this.panel.fechar();
+    this.errosFormulario.set({});
+  }
+
   salvar(): void {
-    if (this.form.invalid) {
-      this.form.markAllAsTouched();
+    this.form.markAllAsTouched();
+
+    const resultado = planoFormSchema.safeParse(this.form.getRawValue());
+
+    if (!resultado.success) {
+      this.errosFormulario.set(getZodFieldErrors(resultado.error));
       return;
     }
 
-    const dados = this.form.getRawValue();
+    this.errosFormulario.set({});
+    const dados = resultado.data;
     const request = {
-      nmPlano: dados.nmPlano!,
+      nmPlano: dados.nmPlano,
       dsPlano: dados.dsPlano || null,
-      nuLimiteMensagensMensal: Number(dados.nuLimiteMensagensMensal ?? 0),
-      nuLimiteUsuarios: Number(dados.nuLimiteUsuarios ?? 0),
-      nuLimiteTemplates: Number(dados.nuLimiteTemplates ?? 0),
-      nuLimiteContatos: Number(dados.nuLimiteContatos ?? 0),
-      flWhatsappHabilitado: !!dados.flWhatsappHabilitado,
-      flEmailHabilitado: !!dados.flEmailHabilitado,
-      flTelegramHabilitado: !!dados.flTelegramHabilitado,
-      flWebhookHabilitado: !!dados.flWebhookHabilitado,
-      flApiPublicaHabilitada: !!dados.flApiPublicaHabilitada,
-      flAtivo: !!dados.flAtivo,
+      nuLimiteMensagensMensal: dados.nuLimiteMensagensMensal,
+      nuLimiteUsuarios: dados.nuLimiteUsuarios,
+      nuLimiteTemplates: dados.nuLimiteTemplates,
+      nuLimiteContatos: dados.nuLimiteContatos,
+      flWhatsappHabilitado: dados.flWhatsappHabilitado,
+      flEmailHabilitado: dados.flEmailHabilitado,
+      flTelegramHabilitado: dados.flTelegramHabilitado,
+      flWebhookHabilitado: dados.flWebhookHabilitado,
+      flApiPublicaHabilitada: dados.flApiPublicaHabilitada,
+      flAtivo: dados.flAtivo,
     };
     const atual = this.panel.item();
 

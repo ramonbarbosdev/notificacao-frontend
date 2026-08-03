@@ -2,6 +2,7 @@
 import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
+import { RouterModule } from '@angular/router';
 
 import {
   LucideAngularModule,
@@ -22,6 +23,7 @@ import {
   StatusNotificacao,
 } from '../../shared/types/dtos';
 import { labelStatusNotificacao, extrairMensagemErroHttp } from '../../shared/labels/notificacao.labels';
+import { explicarErroFila } from '../../shared/labels/whatsapp-operacional.labels';
 import { NotificacaoService } from '../../core/services/notificacao.service';
 import { formatCanal } from '../../shared/helper/channel.utils';
 import { maskPhoneInput, normalizePhone } from '../../shared/helper/phone.utils';
@@ -38,6 +40,7 @@ interface OpcaoCanal {
   imports: [
     CommonModule,
     ReactiveFormsModule,
+    RouterModule,
     LucideAngularModule,
   ],
   templateUrl: './notificacoes.component.html',
@@ -144,6 +147,10 @@ export class NotificacoesComponent {
 
     const texto = mensagem.toLowerCase();
     return texto.includes('consentimento') || texto.includes('opt-in') || texto.includes('opt in') || texto.includes('bloque');
+  }
+
+  detalheErro(mensagem: string | null | undefined) {
+    return explicarErroFila(mensagem);
   }
 
   enviar(): void {

@@ -1,17 +1,18 @@
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, OnInit, inject, signal } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { Check, Flag, LoaderCircle, LucideAngularModule } from 'lucide-angular';
 
 import { AdminService } from '../../../core/http/admin.service';
 import { FeatureFlagService } from '../../../core/services/feature-flag.service';
+import { SidePanelComponent } from '../../../shared/components/side-panel/side-panel.component';
+import { useSidePanel } from '../../../shared/helper/side-panel.state';
 import { FeatureFlag, OrganizacaoAdminResponse, RecursoFeature } from '../../../shared/types/dtos';
 
 @Component({
   selector: 'app-feature-flags',
   standalone: true,
-  imports: [CommonModule, FormsModule, LucideAngularModule],
+  imports: [CommonModule, LucideAngularModule, SidePanelComponent],
   templateUrl: './feature-flags.component.html',
 })
 export class FeatureFlagsComponent implements OnInit {
@@ -23,13 +24,15 @@ export class FeatureFlagsComponent implements OnInit {
   protected readonly checkIcon = Check;
 
   readonly recursos: RecursoFeature[] = ['WHATSAPP', 'EMAIL', 'TELEGRAM', 'WEBHOOK', 'TEMPLATES', 'API_PUBLICA', 'ANALYTICS'];
+  readonly panel = useSidePanel<OrganizacaoAdminResponse>();
   readonly organizacoes = signal<OrganizacaoAdminResponse[]>([]);
-  readonly idOrganizacao = signal<number | null>(null);
   readonly features = signal<Partial<Record<RecursoFeature, boolean>>>({});
   readonly carregando = signal(false);
   readonly salvando = signal(false);
   readonly erro = signal<string | null>(null);
   readonly sucesso = signal<string | null>(null);
+
+  readonly organizacaoAtual = computed(() => this.panel.item());
 
   ngOnInit(): void {
     this.adminService.listarOrganizacoes().subscribe({
@@ -38,11 +41,16 @@ export class FeatureFlagsComponent implements OnInit {
     });
   }
 
-  selecionarOrganizacao(event: Event): void {
-    const id = Number((event.target as HTMLSelectElement).value);
-    this.idOrganizacao.set(id || null);
+  abrirConfiguracao(org: OrganizacaoAdminResponse): void {
+    this.erro.set(null);
+    this.sucesso.set(null);
     this.features.set({});
-    if (id) this.carregarFeatures(id);
+    this.panel.abrir(org);
+    this.carregarFeatures(org.idOrganizacao);
+  }
+
+  fecharPainel(): void {
+    this.panel.fechar();
   }
 
   carregarFeatures(idOrganizacao: number): void {
@@ -65,18 +73,19 @@ export class FeatureFlagsComponent implements OnInit {
   }
 
   salvar(): void {
-    const id = this.idOrganizacao();
-    if (!id) return;
+    const org = this.organizacaoAtual();
+    if (!org) return;
 
     this.salvando.set(true);
     this.erro.set(null);
     this.sucesso.set(null);
 
-    this.featureService.atualizarAdmin(id, { features: this.features() }).subscribe({
+    this.featureService.atualizarAdmin(org.idOrganizacao, { features: this.features() }).subscribe({
       next: (features) => {
         this.features.set(this.mapFeatures(features));
         this.sucesso.set('Feature flags salvas.');
         this.salvando.set(false);
+        this.panel.fechar();
       },
       error: (err: HttpErrorResponse) => {
         this.erro.set(this.mensagemErro(err, 'Erro ao salvar features.'));

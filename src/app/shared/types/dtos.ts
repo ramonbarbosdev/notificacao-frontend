@@ -174,6 +174,14 @@ export interface FilaNotificacaoItemDTO {
   proximaTentativa: string | null;
   erro: string | null;
   criadoEm: string;
+  tentativasMaximas?: number | null;
+  enviadoEm?: string | null;
+  retomadaPrevistaEm?: string | null;
+  retomadaPrevistaTexto?: string | null;
+  tempoEstimadoEnvioSegundos?: number | null;
+  posicaoFila?: number | null;
+  tempoEstimadoEnvioTexto?: string | null;
+  previsaoEnvioEm?: string | null;
 }
 
 export interface FilaNotificacaoResponseDTO {
@@ -186,6 +194,70 @@ export interface FilaNotificacaoResponseDTO {
   proximaTentativa: string | null;
   erro: string | null;
   criadoEm: string;
+  tentativasMaximas?: number | null;
+  enviadoEm?: string | null;
+  retomadaPrevistaEm?: string | null;
+  retomadaPrevistaTexto?: string | null;
+  tempoEstimadoEnvioSegundos?: number | null;
+  posicaoFila?: number | null;
+  tempoEstimadoEnvioTexto?: string | null;
+  previsaoEnvioEm?: string | null;
+}
+
+export interface FilaResumoResponseDTO {
+  pendente: number;
+  processando: number;
+  enviada: number;
+  falhou: number;
+  bloqueada: number;
+  proximoEnvioTexto: string | null;
+  proximoEnvioEm: string | null;
+  atualizadoEm: string;
+}
+
+export interface NotificacaoFilaEvento {
+  idOrganizacao: number;
+  tipo: string;
+  idNotificacao: number | null;
+  status: StatusNotificacao | null;
+  resumo: FilaResumoResponseDTO | null;
+  dtEvento: string;
+}
+
+export interface StatusEnvioOrganizacaoResponse {
+  podeEnviar: boolean;
+  canal: CanalNotificacao;
+  retomadaPrevistaEm: string | null;
+  retomadaPrevistaTexto: string | null;
+  titulo: string;
+  motivo: string | null;
+  orientacao: string | null;
+  operacionalWhatsapp?: SessaoOperacionalContexto | null;
+}
+
+export interface AdminNotificacaoFilaItem {
+  idNotificacao: number;
+  idOrganizacao: number;
+  nmOrganizacao: string;
+  canal: CanalNotificacao;
+  destinatario: string;
+  assunto: string | null;
+  mensagemResumo: string | null;
+  status: StatusNotificacao;
+  provider: string | null;
+  tentativas: number;
+  tentativasMaximas: number | null;
+  proximaTentativa: string | null;
+  enviadoEm: string | null;
+  retomadaPrevistaEm: string | null;
+  retomadaPrevistaTexto: string | null;
+  erro: string | null;
+  criadoEm: string;
+  atualizadoEm: string;
+}
+
+export interface AdminNotificacaoDetalhe extends AdminNotificacaoFilaItem {
+  mensagem: string;
 }
 
 // TEMPLATES
@@ -328,7 +400,7 @@ export interface CriarUsuarioOrganizacaoRequest {
   nuCpf: string;
   nmUsuario: string;
   nmEmail: string;
-  senha: string;
+  senha?: string | null;
   role: RoleOrganizacao;
 }
 

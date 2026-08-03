@@ -4,6 +4,25 @@
     <p class="text-[var(--color-text-muted)] text-sm mt-1">
       Visão resumida dos envios. Expanda um item para ver tentativas, provider e motivo completo.
     </p>
+    @if (resumoFila()?.proximoEnvioTexto) {
+      <p class="text-amber-300 text-sm mt-2 m-0">
+        Próximo envio previsto {{ resumoFila()!.proximoEnvioTexto }}
+        @if (resumoFila()!.proximoEnvioEm) {
+          · {{ formatarData(resumoFila()!.proximoEnvioEm) }}
+        }
+      </p>
+    }
+    @if (ultimaAtualizacao()) {
+      <p class="text-[var(--color-text-faint)] text-xs mt-1 m-0">
+        Atualizado {{ formatarData(ultimaAtualizacao()!.toISOString()) }}
+        @if (aoVivo()) {
+          · <span class="inline-flex items-center gap-1 text-emerald-400">
+            <lucide-icon [img]="aoVivoIcon" class="w-3 h-3" />
+            ao vivo
+          </span>
+        }
+      </p>
+    }
   </div>
 
   <button
@@ -152,9 +171,12 @@
                   </p>
                 } @else if (item.status === 'PENDENTE' || item.status === 'PROCESSANDO') {
                   <p class="text-xs text-[var(--color-text-muted)] mt-2 m-0">
-                    Aguardando processamento
-                    @if (item.proximaTentativa) {
-                      · próxima tentativa {{ formatarData(item.proximaTentativa) }}
+                    {{ textoPrevisao(item) }}
+                    @if (horarioPrevisao(item)) {
+                      · {{ horarioPrevisao(item) }}
+                    }
+                    @if (item.posicaoFila != null && item.posicaoFila > 0) {
+                      · {{ item.posicaoFila }} na fila
                     }
                   </p>
                 }
@@ -186,7 +208,32 @@
                     <p class="text-[var(--color-text-faint)] text-xs m-0 mb-1">Próxima tentativa</p>
                     <p class="text-[var(--color-text)] font-medium m-0">{{ formatarData(item.proximaTentativa) }}</p>
                   </div>
+                  @if (item.retomadaPrevistaTexto) {
+                    <div class="sm:col-span-2">
+                      <p class="text-[var(--color-text-faint)] text-xs m-0 mb-1">Retomada prevista</p>
+                      <p class="text-amber-300 font-medium m-0">{{ item.retomadaPrevistaTexto }}</p>
+                    </div>
+                  }
+                  @if (item.tempoEstimadoEnvioTexto) {
+                    <div class="sm:col-span-2">
+                      <p class="text-[var(--color-text-faint)] text-xs m-0 mb-1">Previsão de envio</p>
+                      <p class="text-[var(--color-text)] font-medium m-0">{{ item.tempoEstimadoEnvioTexto }}</p>
+                      @if (horarioPrevisao(item)) {
+                        <p class="text-[var(--color-text-muted)] text-xs mt-1 m-0">{{ horarioPrevisao(item) }}</p>
+                      }
+                    </div>
+                  }
                 </div>
+
+                @if (isAdminOrganizacao() && podeReenviar(item.status)) {
+                  <button
+                    type="button"
+                    (click)="reenviar(item); $event.stopPropagation()"
+                    [disabled]="reenviandoId() === item.idNotificacao"
+                    class="px-4 py-2 rounded-xl bg-[var(--color-primary)] text-white text-sm disabled:opacity-50">
+                    {{ reenviandoId() === item.idNotificacao ? 'Reenviando...' : 'Reenviar manualmente' }}
+                  </button>
+                }
 
                 @if (item.erro) {
                   <div class="rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-3">

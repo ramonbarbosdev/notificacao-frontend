@@ -1,15 +1,25 @@
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { CheckCircle2, LoaderCircle, LucideAngularModule, UserPlus } from 'lucide-angular';
+import { FormBuilder, FormControl, ReactiveFormsModule } from '@angular/forms';
+import { CheckCircle2, LoaderCircle, LucideAngularModule, Trash2, UserPlus } from 'lucide-angular';
 import { AdminService } from '../../../core/http/admin.service';
+import { SidePanelComponent } from '../../../shared/components/side-panel/side-panel.component';
+import { FormInputComponent } from '../../../shared/components/forms/text-input/app-text-input';
+import { FormSelectComponent } from '../../../shared/components/forms/select-input/form-select.component';
 import { formatCpf, maskCpfInput, normalizeCpf } from '../../../shared/helper/cpf.utils';
+import { useSidePanel } from '../../../shared/helper/side-panel.state';
+import { getZodFieldErrors } from '../../../shared/helper/zod-form.helper';
 import {
   OrganizacaoAdminResponse,
   RoleOrganizacao,
   UsuarioOrganizacaoResponse,
 } from '../../../shared/types/dtos';
+import {
+  usuarioOrganizacaoFormSchema,
+  UsuarioOrganizacaoFormData,
+  UsuarioOrganizacaoFormErrors,
+} from '../schemas/usuario-organizacao-form.schema';
 
 @Component({
   selector: 'app-usuarios-organizacao',
@@ -18,6 +28,9 @@ import {
     CommonModule,
     ReactiveFormsModule,
     LucideAngularModule,
+    SidePanelComponent,
+    FormInputComponent,
+    FormSelectComponent,
   ],
   templateUrl: './usuarios-organizacao.component.html',
 })
@@ -28,33 +41,77 @@ export class UsuariosOrganizacaoComponent implements OnInit {
   protected readonly userPlusIcon = UserPlus;
   protected readonly loaderIcon = LoaderCircle;
   protected readonly successIcon = CheckCircle2;
+  protected readonly trashIcon = Trash2;
 
   readonly roles: RoleOrganizacao[] = ['ADMIN', 'USER'];
+  readonly usuarioPanel = useSidePanel<void>();
   readonly carregando = signal(false);
   readonly carregandoOrganizacoes = signal(false);
   readonly carregandoUsuarios = signal(false);
+  readonly excluindoUsuarioId = signal<number | null>(null);
   readonly erro = signal<string | null>(null);
   readonly erroOrganizacoes = signal<string | null>(null);
   readonly erroUsuarios = signal<string | null>(null);
   readonly sucesso = signal<UsuarioOrganizacaoResponse | null>(null);
+  readonly errosFormulario = signal<UsuarioOrganizacaoFormErrors>({});
   readonly organizacoes = signal<OrganizacaoAdminResponse[]>([]);
   readonly usuarios = signal<UsuarioOrganizacaoResponse[]>([]);
   readonly idOrganizacaoSelecionada = signal<number | null>(null);
+
   readonly organizacaoSelecionada = computed(() => {
     const id = this.idOrganizacaoSelecionada();
     return this.organizacoes().find((org) => org.idOrganizacao === id) ?? null;
   });
 
-  readonly form = this.fb.group({
-    idOrganizacao: [null as number | null, [Validators.required, Validators.min(1)]],
-    nuCpf: ['', [Validators.required, Validators.minLength(11)]],
-    nmUsuario: ['', [Validators.required, Validators.minLength(2)]],
-    nmEmail: ['', [Validators.required, Validators.email]],
-    senha: ['', [Validators.required, Validators.minLength(6)]],
-    role: ['USER' as RoleOrganizacao, [Validators.required]],
+  readonly roleOptions = computed(() =>
+    this.roles.map((role) => ({ label: role, value: role }))
+  );
+
+  readonly form = this.fb.nonNullable.group({
+    idOrganizacao: 0,
+    nuCpf: '',
+    nmUsuario: '',
+    nmEmail: '',
+    senha: '',
+    role: 'USER' as RoleOrganizacao,
   });
 
   readonly formatarCpf = formatCpf;
+
+  ngOnInit(): void {
+    this.carregarOrganizacoes();
+  }
+
+  getControl(name: keyof UsuarioOrganizacaoFormData): FormControl {
+    return this.form.get(name) as FormControl;
+  }
+
+  campoErro(campo: keyof UsuarioOrganizacaoFormData): string | null {
+    return this.errosFormulario()[campo] ?? null;
+  }
+
+  abrirNovoUsuario(): void {
+    const id = this.idOrganizacaoSelecionada();
+    if (!id) return;
+
+    this.form.reset({
+      idOrganizacao: id,
+      nuCpf: '',
+      nmUsuario: '',
+      nmEmail: '',
+      senha: '',
+      role: 'USER',
+    });
+    this.erro.set(null);
+    this.sucesso.set(null);
+    this.errosFormulario.set({});
+    this.usuarioPanel.abrir();
+  }
+
+  fecharPainel(): void {
+    this.usuarioPanel.fechar();
+    this.errosFormulario.set({});
+  }
 
   atualizarCpf(event: Event): void {
     const input = event.target as HTMLInputElement;
@@ -62,10 +119,7 @@ export class UsuariosOrganizacaoComponent implements OnInit {
 
     this.form.controls.nuCpf.setValue(valorFormatado, { emitEvent: false });
     input.value = valorFormatado;
-  }
-
-  ngOnInit(): void {
-    this.carregarOrganizacoes();
+    this.errosFormulario.update((erros) => ({ ...erros, nuCpf: undefined }));
   }
 
   carregarOrganizacoes(): void {
@@ -77,9 +131,9 @@ export class UsuariosOrganizacaoComponent implements OnInit {
         this.organizacoes.set(res);
         this.carregandoOrganizacoes.set(false);
 
-        const idAtual = this.form.controls.idOrganizacao.value;
+        const idAtual = this.idOrganizacaoSelecionada();
         if (idAtual) {
-          this.selecionarOrganizacao(Number(idAtual));
+          this.selecionarOrganizacao(idAtual);
         }
       },
       error: (err: HttpErrorResponse) => {
@@ -121,32 +175,36 @@ export class UsuariosOrganizacaoComponent implements OnInit {
   }
 
   criarUsuario(): void {
-    if (this.form.invalid) {
-      this.form.markAllAsTouched();
+    this.form.markAllAsTouched();
+
+    const resultado = usuarioOrganizacaoFormSchema.safeParse(this.form.getRawValue());
+
+    if (!resultado.success) {
+      this.errosFormulario.set(getZodFieldErrors(resultado.error));
       return;
     }
+
+    this.errosFormulario.set({});
+    const dados = resultado.data;
 
     this.carregando.set(true);
     this.erro.set(null);
     this.sucesso.set(null);
 
-    const dados = this.form.getRawValue();
     this.adminService
-      .criarUsuarioOrganizacao(dados.idOrganizacao!, {
-        nuCpf: normalizeCpf(dados.nuCpf!),
-        nmUsuario: dados.nmUsuario!,
-        nmEmail: dados.nmEmail!,
-        senha: dados.senha!,
-        role: dados.role!,
+      .criarUsuarioOrganizacao(dados.idOrganizacao, {
+        nuCpf: normalizeCpf(dados.nuCpf),
+        nmUsuario: dados.nmUsuario,
+        nmEmail: dados.nmEmail,
+        senha: dados.senha?.trim() || null,
+        role: dados.role,
       })
       .subscribe({
         next: (res) => {
-          const idOrganizacao = dados.idOrganizacao;
           this.sucesso.set(res);
           this.usuarios.update((usuarios) => [res, ...usuarios]);
-          this.form.reset({ idOrganizacao, role: 'USER' });
-          this.idOrganizacaoSelecionada.set(idOrganizacao);
           this.carregando.set(false);
+          this.usuarioPanel.fechar();
         },
         error: (err: HttpErrorResponse) => {
           this.erro.set(this.mensagemErro(err));
@@ -155,9 +213,90 @@ export class UsuariosOrganizacaoComponent implements OnInit {
       });
   }
 
+  excluirUsuario(usuario: UsuarioOrganizacaoResponse): void {
+    this.inativarUsuario(usuario);
+  }
+
+  inativarUsuario(usuario: UsuarioOrganizacaoResponse): void {
+    const idOrganizacao = this.idOrganizacaoSelecionada();
+    if (!idOrganizacao || !usuario.flAtivo || this.excluindoUsuarioId()) return;
+
+    const confirmado = confirm(
+      `Inativar o usuario ${usuario.nmUsuario} da organizacao ${usuario.nmOrganizacao}?`
+    );
+    if (!confirmado) return;
+
+    this.excluindoUsuarioId.set(usuario.idUsuario);
+    this.erro.set(null);
+
+    this.adminService.inativarUsuarioOrganizacao(idOrganizacao, usuario.idUsuario).subscribe({
+      next: () => {
+        this.usuarios.update((lista) =>
+          lista.map((item) =>
+            item.idUsuario === usuario.idUsuario ? { ...item, flAtivo: false } : item
+          )
+        );
+        this.excluindoUsuarioId.set(null);
+      },
+      error: (err: HttpErrorResponse) => {
+        this.erro.set(this.mensagemErro(err, 'Erro ao inativar usuario.'));
+        this.excluindoUsuarioId.set(null);
+      },
+    });
+  }
+
+  ativarUsuario(usuario: UsuarioOrganizacaoResponse): void {
+    const idOrganizacao = this.idOrganizacaoSelecionada();
+    if (!idOrganizacao || usuario.flAtivo || this.excluindoUsuarioId()) return;
+
+    this.excluindoUsuarioId.set(usuario.idUsuario);
+    this.erro.set(null);
+
+    this.adminService.ativarUsuarioOrganizacao(idOrganizacao, usuario.idUsuario).subscribe({
+      next: (res) => {
+        this.usuarios.update((lista) =>
+          lista.map((item) => (item.idUsuario === usuario.idUsuario ? res : item))
+        );
+        this.excluindoUsuarioId.set(null);
+      },
+      error: (err: HttpErrorResponse) => {
+        this.erro.set(this.mensagemErro(err, 'Erro ao ativar usuario.'));
+        this.excluindoUsuarioId.set(null);
+      },
+    });
+  }
+
+  excluirUsuarioPermanentemente(usuario: UsuarioOrganizacaoResponse): void {
+    const idOrganizacao = this.idOrganizacaoSelecionada();
+    if (!idOrganizacao || this.excluindoUsuarioId()) return;
+
+    const confirmado = confirm(
+      `ATENCAO: remover permanentemente ${usuario.nmUsuario} do banco?\n\n` +
+        'O vinculo com a organizacao sera apagado. Se o usuario nao pertencer a outra organizacao, ' +
+        'a conta tambem sera removida. Esta acao nao pode ser desfeita.'
+    );
+    if (!confirmado) return;
+
+    this.excluindoUsuarioId.set(usuario.idUsuario);
+    this.erro.set(null);
+
+    this.adminService.excluirUsuarioPermanentemente(idOrganizacao, usuario.idUsuario).subscribe({
+      next: () => {
+        this.usuarios.update((lista) =>
+          lista.filter((item) => item.idUsuario !== usuario.idUsuario)
+        );
+        this.excluindoUsuarioId.set(null);
+      },
+      error: (err: HttpErrorResponse) => {
+        this.erro.set(this.mensagemErro(err, 'Erro ao remover usuario permanentemente.'));
+        this.excluindoUsuarioId.set(null);
+      },
+    });
+  }
+
   private mensagemErro(err: HttpErrorResponse, fallback = 'Erro ao cadastrar usuario.'): string {
     if (err.status === 409) {
-      return 'CPF ou e-mail ja cadastrado.';
+      return err.error?.mensagem ?? err.error?.erro ?? 'Operacao nao permitida.';
     }
 
     if (err.status === 401 || err.status === 403) {

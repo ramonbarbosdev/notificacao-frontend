@@ -4,6 +4,7 @@ import {
   extrairMensagemErroHttp,
   resolverMensagemExibicao,
 } from '../../shared/labels/notificacao.labels';
+import { explicarErroFila } from '../../shared/labels/whatsapp-operacional.labels';
 
 export { ehStatusDeTentativa, resolverMensagemExibicao };
 
@@ -33,4 +34,8 @@ export function extrairMensagemErro(
   fallback: string
 ): string {
   return extrairMensagemErroHttp(err, fallback);
+}
+
+export function detalheErroEnvio(mensagem: string | null | undefined) {
+  return explicarErroFila(mensagem);
 }

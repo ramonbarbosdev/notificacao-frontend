@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { TokenService } from '../auth/token.service';
-import { WhatsappEvento } from '../../shared/types/dtos';
+import { NotificacaoFilaEvento } from '../../shared/types/dtos';
 import {
   frameStomp,
   hostStompDaApi,
@@ -11,14 +11,14 @@ import {
 } from './stomp-websocket.util';
 
 @Injectable({ providedIn: 'root' })
-export class WhatsappEventsService {
+export class NotificacaoFilaEventsService {
   private readonly tokenService = inject(TokenService);
 
-  conectar(idOrganizacao: number): Observable<WhatsappEvento> {
-    return new Observable<WhatsappEvento>((subscriber) => {
+  conectar(idOrganizacao: number): Observable<NotificacaoFilaEvento> {
+    return new Observable<NotificacaoFilaEvento>((subscriber) => {
       const urls = montarUrlsStompWebSocket(environment.apiUrl, this.tokenService.obter());
       const stompHost = hostStompDaApi(environment.apiUrl);
-      const subscriptionId = `whatsapp-org-${idOrganizacao}`;
+      const subscriptionId = `notificacao-fila-org-${idOrganizacao}`;
       const tentativas: string[] = [];
       let socket: WebSocket | null = null;
       let conectado = false;
@@ -60,7 +60,7 @@ export class WhatsappEventsService {
               socket?.send(
                 frameStomp('SUBSCRIBE', {
                   id: subscriptionId,
-                  destination: `/topic/whatsapp/organizacao/${idOrganizacao}`,
+                  destination: `/topic/notificacoes/organizacao/${idOrganizacao}`,
                   ack: 'auto',
                 })
               );
@@ -68,7 +68,7 @@ export class WhatsappEventsService {
             }
 
             if (parsed.command === 'MESSAGE' && parsed.body) {
-              subscriber.next(JSON.parse(parsed.body) as WhatsappEvento);
+              subscriber.next(JSON.parse(parsed.body) as NotificacaoFilaEvento);
               continue;
             }
 

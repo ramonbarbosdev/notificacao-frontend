@@ -155,6 +155,13 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'historico-envios',
+        loadComponent: () =>
+          import('./features/admin/historico-envios/historico-envios-admin.component').then(
+            (m) => m.HistoricoEnviosAdminComponent
+          ),
+      },
+      {
         path: 'usuarios',
         loadComponent: () =>
           import('./features/admin/usuarios-organizacao/usuarios-organizacao.component').then(

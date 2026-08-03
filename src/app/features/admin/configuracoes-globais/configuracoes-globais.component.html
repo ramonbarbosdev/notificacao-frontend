@@ -1,8 +1,8 @@
 <div class="flex items-start justify-between gap-4 mb-8">
   <div>
-    <h1 class="text-2xl font-bold text-[var(--color-text)]">Configurações globais</h1>
+    <h1 class="text-2xl font-bold text-[var(--color-text)]">Configuracoes globais</h1>
     <p class="text-[var(--color-text-muted)] text-sm mt-1">
-      Parâmetros da plataforma, SMTP de alertas e canais disponíveis para todas as organizações.
+      Parametros da plataforma, SMTP de alertas e canais disponiveis para todas as organizacoes.
     </p>
   </div>
   <lucide-icon [img]="settingsIcon" class="w-7 h-7 text-[var(--color-primary-soft)]" />
@@ -11,10 +11,10 @@
 @if (carregando()) {
   <div class="flex items-center justify-center gap-3 py-16 text-[var(--color-text-muted)]">
     <lucide-icon [img]="loaderIcon" class="w-5 h-5 animate-spin" />
-    Carregando configurações...
+    Carregando configuracoes...
   </div>
 } @else {
-  @if (erro()) {
+  @if (erro() && !panel.aberto()) {
     <div class="mb-6 bg-[var(--color-danger-bg)] border border-[var(--color-danger-border)] rounded-xl px-4 py-3">
       <p class="text-[var(--color-danger)] text-sm">{{ erro() }}</p>
     </div>
@@ -43,168 +43,147 @@
     }
   </div>
 
-  <form [formGroup]="form" class="space-y-6">
-    <aside
-      class="config-global-instructions"
-      [class.config-global-instructions--collapsed]="!mostrarOrientacoes()"
-      aria-label="Como configurar"
-    >
-      <div class="config-global-instructions__header">
-        <div class="flex items-start gap-2 min-w-0 flex-1">
-          <lucide-icon [img]="helpIcon" class="w-4 h-4 mt-0.5 text-[var(--color-primary-soft)] shrink-0" />
-          <div class="min-w-0">
-            <h2 class="config-global-instructions__title">{{ instrucaoAtiva().titulo }}</h2>
-            @if (mostrarOrientacoes()) {
-              <p class="config-global-instructions__resumo">{{ instrucaoAtiva().resumo }}</p>
-            }
-          </div>
+  @switch (aba()) {
+    @case ('plataforma') {
+      <section class="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-6">
+        <div class="flex items-center justify-between gap-4 mb-5">
+          <h2 class="text-[var(--color-text)] font-semibold">Plataforma</h2>
+          <button type="button" (click)="abrirEdicao('plataforma')" class="px-4 py-2 rounded-xl bg-[var(--color-primary)] text-[var(--color-bg-base)] text-sm font-semibold">
+            Editar
+          </button>
         </div>
-        <button
-          type="button"
-          class="config-global-instructions__toggle"
-          (click)="alternarOrientacoes()"
-          [attr.aria-expanded]="mostrarOrientacoes()"
-        >
+        <dl class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+          <div><dt class="text-[var(--color-text-muted)]">Nome</dt><dd class="text-[var(--color-text)] font-medium mt-1">{{ valorResumo('nmPlataforma') }}</dd></div>
+          <div><dt class="text-[var(--color-text-muted)]">Dominio</dt><dd class="text-[var(--color-text)] font-medium mt-1">{{ valorResumo('nmDominioPrincipal') }}</dd></div>
+          <div><dt class="text-[var(--color-text-muted)]">E-mail suporte</dt><dd class="text-[var(--color-text)] font-medium mt-1">{{ valorResumo('nmEmailSuporte') }}</dd></div>
+          <div><dt class="text-[var(--color-text-muted)]">Timezone (UTC)</dt><dd class="text-[var(--color-text)] font-medium mt-1">{{ valorResumo('nuTimezonePadrao') }}</dd></div>
+        </dl>
+      </section>
+    }
+
+    @case ('email-alertas') {
+      <section class="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-6">
+        <div class="flex items-center justify-between gap-4 mb-5">
+          <h2 class="text-[var(--color-text)] font-semibold">E-mail e alertas</h2>
+          <button type="button" (click)="abrirEdicao('email-alertas')" class="px-4 py-2 rounded-xl bg-[var(--color-primary)] text-[var(--color-bg-base)] text-sm font-semibold">
+            Editar
+          </button>
+        </div>
+        <dl class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+          <div><dt class="text-[var(--color-text-muted)]">E-mail alertas</dt><dd class="text-[var(--color-text)] font-medium mt-1">{{ valorResumo('nmEmailAlertas') }}</dd></div>
+          <div><dt class="text-[var(--color-text-muted)]">Host SMTP</dt><dd class="text-[var(--color-text)] font-medium mt-1">{{ valorResumo('dsSmtpHost') }}</dd></div>
+          <div><dt class="text-[var(--color-text-muted)]">Porta</dt><dd class="text-[var(--color-text)] font-medium mt-1">{{ valorResumo('nuSmtpPorta') }}</dd></div>
+          <div><dt class="text-[var(--color-text-muted)]">Usuario SMTP</dt><dd class="text-[var(--color-text)] font-medium mt-1">{{ valorResumo('nmSmtpUsuario') }}</dd></div>
+        </dl>
+      </section>
+    }
+
+    @case ('canais') {
+      <section class="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-6">
+        <div class="flex items-center justify-between gap-4 mb-5">
+          <h2 class="text-[var(--color-text)] font-semibold">Canais e recursos</h2>
+          <button type="button" (click)="abrirEdicao('canais')" class="px-4 py-2 rounded-xl bg-[var(--color-primary)] text-[var(--color-bg-base)] text-sm font-semibold">
+            Editar
+          </button>
+        </div>
+        <dl class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+          @for (item of provedores; track item.control) {
+            <div class="border border-[var(--color-border)] rounded-xl px-4 py-3">
+              <dt class="text-[var(--color-text-muted)]">{{ item.label }}</dt>
+              <dd class="text-[var(--color-text)] font-medium mt-1">{{ valorResumo(item.control) }}</dd>
+            </div>
+          }
+        </dl>
+      </section>
+    }
+  }
+}
+
+<app-side-panel
+  [open]="panel.aberto()"
+  [title]="'Editar — ' + rotuloAbaAtiva()"
+  [description]="instrucaoAtiva().resumo"
+  size="lg"
+  (closed)="fecharPainel()"
+>
+  <aside
+    class="config-global-instructions mb-6"
+    [class.config-global-instructions--collapsed]="!mostrarOrientacoes()"
+    aria-label="Como configurar"
+  >
+    <div class="config-global-instructions__header">
+      <div class="flex items-start gap-2 min-w-0 flex-1">
+        <lucide-icon [img]="helpIcon" class="w-4 h-4 mt-0.5 text-[var(--color-primary-soft)] shrink-0" />
+        <div class="min-w-0">
+          <h2 class="config-global-instructions__title">{{ instrucaoAtiva().titulo }}</h2>
           @if (mostrarOrientacoes()) {
-            <lucide-icon [img]="chevronUpIcon" class="w-4 h-4" />
-            Ocultar orientações
-          } @else {
-            <lucide-icon [img]="chevronDownIcon" class="w-4 h-4" />
-            Mostrar orientações
+            <p class="config-global-instructions__resumo">{{ instrucaoAtiva().resumo }}</p>
           }
-        </button>
+        </div>
       </div>
-
-      @if (mostrarOrientacoes()) {
-        <ol class="config-global-instructions__steps">
-          @for (passo of instrucaoAtiva().passos; track passo.titulo) {
-            <li>
-              <p class="config-global-instructions__step-title">{{ passo.titulo }}</p>
-              <p class="config-global-instructions__step-desc">{{ passo.descricao }}</p>
-              @if (passo.links?.length) {
-                <ul class="config-global-instructions__links">
-                  @for (link of passo.links; track link.url) {
-                    <li>
-                      <a [href]="link.url" target="_blank" rel="noopener noreferrer">
-                        {{ link.rotulo }}
-                        <lucide-icon [img]="externalLinkIcon" class="w-3 h-3 inline-block ml-0.5 align-text-bottom" />
-                      </a>
-                    </li>
-                  }
-                </ul>
-              }
-            </li>
-          }
-        </ol>
-
-        @if (instrucaoAtiva().dica) {
-          <p class="config-global-instructions__tip">{{ instrucaoAtiva().dica }}</p>
+      <button
+        type="button"
+        class="config-global-instructions__toggle"
+        (click)="alternarOrientacoes()"
+        [attr.aria-expanded]="mostrarOrientacoes()"
+      >
+        @if (mostrarOrientacoes()) {
+          <lucide-icon [img]="chevronUpIcon" class="w-4 h-4" />
+          Ocultar
+        } @else {
+          <lucide-icon [img]="chevronDownIcon" class="w-4 h-4" />
+          Orientacoes
         }
-      }
-    </aside>
+      </button>
+    </div>
+  </aside>
 
-    @switch (aba()) {
+  <form [formGroup]="form" class="space-y-4">
+    @switch (abaPainel()) {
       @case ('plataforma') {
-        <section class="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-6">
-          <h2 class="text-[var(--color-text)] font-semibold mb-4">Plataforma</h2>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <app-form-field label="Nome da plataforma">
-              <input formControlName="nmPlataforma" class="form-input-admin" placeholder="Notificação SaaS" />
-            </app-form-field>
-            <app-form-field label="Domínio principal" helper="Ex.: app.seudominio.com ou localhost">
-              <input formControlName="nmDominioPrincipal" class="form-input-admin" placeholder="localhost" />
-            </app-form-field>
-            <app-form-field label="E-mail de suporte">
-              <input formControlName="nmEmailSuporte" type="email" class="form-input-admin" placeholder="suporte@empresa.com" />
-            </app-form-field>
-            <app-form-field label="Timezone padrão (UTC)" helper="Ex.: -3 para Brasília/Bahia">
-              <input formControlName="nuTimezonePadrao" type="number" class="form-input-admin" placeholder="0" />
-            </app-form-field>
-          </div>
-        </section>
+        <app-form-input label="Nome da plataforma" [control]="getControl('nmPlataforma')" placeholder="Notificacao SaaS" [error]="campoErro('nmPlataforma')" />
+        <app-form-input label="Dominio principal" [control]="getControl('nmDominioPrincipal')" placeholder="localhost" helper="Ex.: app.seudominio.com" [error]="campoErro('nmDominioPrincipal')" />
+        <app-form-input label="E-mail de suporte" [control]="getControl('nmEmailSuporte')" type="email" placeholder="suporte@empresa.com" [error]="campoErro('nmEmailSuporte')" />
+        <app-form-input label="Timezone padrao (UTC)" [control]="getControl('nuTimezonePadrao')" type="number" placeholder="0" helper="Ex.: -3 para Brasilia" [error]="campoErro('nuTimezonePadrao')" />
       }
 
       @case ('email-alertas') {
-        <section class="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-6 space-y-5">
-          <div>
-            <h2 class="text-[var(--color-text)] font-semibold">Alertas operacionais</h2>
-            <p class="text-xs text-[var(--color-text-muted)] mt-1">
-              E-mail de fallback quando a organização não tiver destinatário próprio configurado.
-            </p>
-          </div>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <app-form-field
-              label="E-mail para alertas (super admin)"
-              helper="Recebe avisos de falha na fila, sessão WhatsApp pausada, etc."
-            >
-              <input
-                formControlName="nmEmailAlertas"
-                type="email"
-                class="form-input-admin"
-                placeholder="admin@empresa.com"
-              />
-            </app-form-field>
-          </div>
-
-          <div class="border-t border-[var(--color-border)] pt-5">
-            <h3 class="text-[var(--color-text)] font-semibold mb-1">SMTP global</h3>
-            <p class="text-xs text-[var(--color-text-muted)] mb-4">
-              Usado para enviar os e-mails de alerta. Gmail: smtp.gmail.com, porta 587, senha de app.
-            </p>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <app-form-field label="Host SMTP" helper="Ex.: smtp.gmail.com">
-                <input formControlName="dsSmtpHost" class="form-input-admin" placeholder="smtp.gmail.com" />
-              </app-form-field>
-              <app-form-field label="Porta" helper="587 com STARTTLS (recomendado)">
-                <input formControlName="nuSmtpPorta" type="number" class="form-input-admin" placeholder="587" />
-              </app-form-field>
-              <app-form-field label="Usuário SMTP" helper="Geralmente o e-mail completo">
-                <input formControlName="nmSmtpUsuario" class="form-input-admin" placeholder="voce@gmail.com" />
-              </app-form-field>
-              <app-form-field
-                label="Senha SMTP"
-                helper="Senha de app (Gmail) ou senha do provedor. Deixe em branco para manter a atual."
-              >
-                <input formControlName="dsSmtpSenha" type="password" class="form-input-admin" placeholder="Nova senha" />
-              </app-form-field>
-            </div>
-          </div>
-        </section>
+        <app-form-input label="E-mail para alertas" [control]="getControl('nmEmailAlertas')" type="email" placeholder="admin@empresa.com" [error]="campoErro('nmEmailAlertas')" />
+        <app-form-input label="Host SMTP" [control]="getControl('dsSmtpHost')" placeholder="smtp.gmail.com" [error]="campoErro('dsSmtpHost')" />
+        <app-form-input label="Porta SMTP" [control]="getControl('nuSmtpPorta')" type="number" placeholder="587" [error]="campoErro('nuSmtpPorta')" />
+        <app-form-input label="Usuario SMTP" [control]="getControl('nmSmtpUsuario')" placeholder="voce@gmail.com" [error]="campoErro('nmSmtpUsuario')" />
+        <app-form-input label="Senha SMTP" [control]="getControl('dsSmtpSenha')" type="password" placeholder="Deixe em branco para manter" helper="Senha de app ou do provedor." />
       }
 
       @case ('canais') {
-        <section class="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-6">
-          <h2 class="text-[var(--color-text)] font-semibold mb-1">Provedores e recursos</h2>
-          <p class="text-xs text-[var(--color-text-muted)] mb-4">
-            Define o que está disponível para todas as organizações nesta instalação.
-          </p>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            @for (item of provedores; track item.control) {
-              <label class="config-toggle">
-                <span>
-                  {{ item.label }}
-                  <span class="block text-xs text-[var(--color-text-subtle)] mt-0.5 font-normal">{{ item.helper }}</span>
-                </span>
-                <input type="checkbox" [formControlName]="item.control" />
-              </label>
-            }
-          </div>
-        </section>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          @for (item of provedores; track item.control) {
+            <label class="config-toggle">
+              <span>
+                {{ item.label }}
+                <span class="block text-xs text-[var(--color-text-subtle)] mt-0.5 font-normal">{{ item.helper }}</span>
+              </span>
+              <input type="checkbox" [formControlName]="item.control" />
+            </label>
+          }
+        </div>
       }
     }
 
-    <div class="flex flex-wrap justify-end gap-3">
-      <button
-        type="button"
-        (click)="restaurarPadrao()"
-        class="px-4 py-3 rounded-xl border border-[var(--color-border)] text-sm text-[var(--color-text)]"
-      >
-        Restaurar padrão desta aba
+    @if (erro()) {
+      <div class="bg-[var(--color-danger-bg)] border border-[var(--color-danger-border)] rounded-xl px-4 py-3">
+        <p class="text-[var(--color-danger)] text-sm">{{ erro() }}</p>
+      </div>
+    }
+
+    <div class="flex flex-wrap justify-end gap-3 pt-2">
+      <button type="button" (click)="restaurarPadrao()" class="px-4 py-3 rounded-xl border border-[var(--color-border)] text-sm text-[var(--color-text)]">
+        Restaurar padrao
       </button>
       <button
         type="button"
         (click)="salvar()"
-        [disabled]="abaAtualInvalida() || salvando()"
+        [disabled]="salvando()"
         class="px-4 py-3 rounded-xl bg-[var(--color-primary)] disabled:opacity-50 text-[var(--color-bg-base)] text-sm font-semibold flex items-center gap-2"
       >
         @if (salvando()) {
@@ -216,4 +195,4 @@
       </button>
     </div>
   </form>
-}
+</app-side-panel>
