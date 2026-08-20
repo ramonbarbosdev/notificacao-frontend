@@ -272,6 +272,168 @@
   </form>
 </app-side-panel>
 
+<app-side-panel
+  [open]="gatewayPanel.aberto()"
+  [title]="gatewayPanel.item() ? 'Gateway · org #' + gatewayPanel.item()!.idOrganizacao : 'Gateway WhatsApp'"
+  description="Cada sessao no gateway fica na pasta sessions/org-N (N = id da organizacao). Use o telefone e o status abaixo para identificar qual migrar."
+  size="lg"
+  (closed)="fecharPainelGateway()"
+>
+  @if (gatewayPanel.item(); as org) {
+    <div class="space-y-5 text-sm">
+      <div class="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] px-4 py-3">
+        <p class="m-0 font-medium text-[var(--color-text)]">{{ org.nmOrganizacao }}</p>
+        <p class="m-0 mt-1 text-[var(--color-text-muted)]">
+          Organizacao no banco: <strong>#{{ org.idOrganizacao }}</strong>
+          · pasta esperada: <strong>org-{{ org.idOrganizacao }}</strong>
+        </p>
+        @if (sessaoDaOrganizacao(org); as sessaoOrg) {
+          <p class="m-0 mt-2 text-[var(--color-text)]">
+            Sessao desta org: {{ sessaoOrg.status }}
+            @if (sessaoOrg.conectado) {
+              <span> · conectado</span>
+            }
+            @if (sessaoOrg.telefone) {
+              <span> · {{ formatarTelefoneGateway(sessaoOrg.telefone) }}</span>
+            }
+            @if (sessaoOrg.temCredenciais) {
+              <span> · credenciais salvas</span>
+            }
+          </p>
+        } @else if (!carregandoSessoesGateway()) {
+          <p class="m-0 mt-2 text-[var(--color-warning)]">
+            Nenhuma pasta org-{{ org.idOrganizacao }} encontrada no gateway ainda.
+          </p>
+        }
+      </div>
+
+      <div class="flex items-center justify-between gap-3">
+        <h3 class="m-0 font-semibold text-[var(--color-text)]">Sessoes no gateway</h3>
+        <button
+          type="button"
+          (click)="carregarSessoesGateway()"
+          [disabled]="carregandoSessoesGateway()"
+          class="text-xs text-[var(--color-text-muted)] hover:text-[var(--color-text)] flex items-center gap-1"
+        >
+          @if (carregandoSessoesGateway()) {
+            <lucide-icon [img]="loaderIcon" class="w-3.5 h-3.5 animate-spin" />
+          } @else {
+            <lucide-icon [img]="gatewayIcon" class="w-3.5 h-3.5" />
+          }
+          Atualizar lista
+        </button>
+      </div>
+
+      <p class="m-0 text-xs text-[var(--color-text-muted)]">
+        Identifique a sessao pelo <strong>telefone conectado</strong> ou pela pasta <strong>org-N</strong> (N = ID).
+        Se o WhatsApp estava em outro ID, selecione abaixo e migre.
+      </p>
+
+      @if (erroGatewayPanel()) {
+        <div class="bg-[var(--color-danger-bg)] border border-[var(--color-danger-border)] rounded-xl px-4 py-3">
+          <p class="text-[var(--color-danger)] text-sm m-0">{{ erroGatewayPanel() }}</p>
+        </div>
+      }
+
+      @if (carregandoSessoesGateway()) {
+        <div class="flex justify-center py-8">
+          <lucide-icon [img]="loaderIcon" class="w-6 h-6 animate-spin text-[var(--color-text-muted)]" />
+        </div>
+      } @else if (sessoesGateway().length === 0) {
+        <div class="rounded-xl border border-[var(--color-border)] px-4 py-6 text-center text-[var(--color-text-muted)]">
+          Nenhuma sessao encontrada no gateway.
+        </div>
+      } @else {
+        <div class="overflow-x-auto rounded-xl border border-[var(--color-border)]">
+          <table class="w-full text-sm">
+            <thead class="bg-[var(--color-surface-muted)] text-[var(--color-text-muted)]">
+              <tr>
+                <th class="text-left px-3 py-2 font-medium">ID / pasta</th>
+                <th class="text-left px-3 py-2 font-medium">Telefone</th>
+                <th class="text-left px-3 py-2 font-medium">Status</th>
+                <th class="text-left px-3 py-2 font-medium">Credenciais</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (sessao of sessoesGateway(); track sessao.idOrganizacao) {
+                <tr
+                  class="border-t border-[var(--color-border)]"
+                  [class.bg-[var(--color-accent-soft)]]="sessao.idOrganizacao === org.idOrganizacao"
+                >
+                  <td class="px-3 py-2">
+                    <div class="font-medium">#{{ sessao.idOrganizacao }}</div>
+                    <div class="text-xs text-[var(--color-text-subtle)]">{{ sessao.pasta }}</div>
+                  </td>
+                  <td class="px-3 py-2">{{ formatarTelefoneGateway(sessao.telefone) }}</td>
+                  <td class="px-3 py-2">
+                    {{ sessao.status }}
+                    @if (sessao.conectado) {
+                      <span class="text-[var(--color-success)]"> · online</span>
+                    }
+                  </td>
+                  <td class="px-3 py-2">{{ sessao.temCredenciais ? 'Sim' : 'Nao' }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+
+      <div class="grid grid-cols-1 gap-3 pt-2">
+        <button
+          type="button"
+          (click)="sincronizarGatewayAtual()"
+          [disabled]="sincronizandoGatewayId() === org.idOrganizacao"
+          class="w-full px-4 py-3 rounded-xl bg-[var(--color-primary)] text-white text-sm disabled:opacity-50"
+        >
+          Sincronizar org #{{ org.idOrganizacao }} com o gateway
+        </button>
+
+        @if (sessaoDaOrganizacao(org)?.temCredenciais) {
+          <button
+            type="button"
+            (click)="recarregarHistoricoGateway()"
+            [disabled]="sincronizandoGatewayId() === org.idOrganizacao"
+            class="w-full px-4 py-3 rounded-xl border border-[var(--color-border)] text-sm disabled:opacity-50"
+          >
+            Recarregar historico de conversas
+          </button>
+          <p class="m-0 text-[var(--color-text-faint)] text-xs">
+            Limpa o cache local e pede ao WhatsApp novos contatos/conversas. Nao exige novo QR Code.
+          </p>
+        }
+
+        @if (sessoesMigracaoDisponiveis(org).length > 0) {
+          <div class="rounded-xl border border-[var(--color-border)] p-4 space-y-3">
+            <p class="m-0 text-[var(--color-text-muted)] text-xs">
+              Migrar sessao de outro ID para esta organizacao (#{{ org.idOrganizacao }}):
+            </p>
+            <select
+              [(ngModel)]="idSessaoMigracao"
+              class="w-full rounded-xl border border-[var(--color-border-strong)] bg-[var(--color-bg-base)] px-3 py-2.5 text-sm"
+            >
+              <option [ngValue]="null">Selecione a sessao de origem</option>
+              @for (sessao of sessoesMigracaoDisponiveis(org); track sessao.idOrganizacao) {
+                <option [ngValue]="sessao.idOrganizacao">
+                  {{ rotuloSessaoMigracao(sessao) }}
+                </option>
+              }
+            </select>
+            <button
+              type="button"
+              (click)="migrarSessaoGateway()"
+              [disabled]="!idSessaoMigracao || sincronizandoGatewayId() === org.idOrganizacao"
+              class="w-full px-4 py-2.5 rounded-xl border text-sm disabled:opacity-50"
+            >
+              Migrar sessao selecionada
+            </button>
+          </div>
+        }
+      </div>
+    </div>
+  }
+</app-side-panel>
+
 @if (organizacaoSalva()) {
   <div class="fixed bottom-6 right-6 z-50 bg-[var(--color-success-bg)] border border-[var(--color-success-border)] rounded-xl px-4 py-3 flex items-center gap-2 shadow-lg">
     <lucide-icon [img]="successIcon" class="w-4 h-4 text-[var(--color-success)]" />

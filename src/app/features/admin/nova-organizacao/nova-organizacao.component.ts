@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { FormBuilder, FormControl, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, FormControl, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { Observable } from 'rxjs';
 import {
   Building2,
@@ -18,9 +18,11 @@ import { FormInputComponent } from '../../../shared/components/forms/text-input/
 import { FormSelectComponent } from '../../../shared/components/forms/select-input/form-select.component';
 import { formatCnpj, maskCnpjInput, normalizeCnpj } from '../../../shared/helper/cnpj.utils';
 import { formatCpf, maskCpfInput, normalizeCpf } from '../../../shared/helper/cpf.utils';
+import { formatDestinatario } from '../../../shared/helper/phone.utils';
 import { useSidePanel } from '../../../shared/helper/side-panel.state';
 import { getZodFieldErrors } from '../../../shared/helper/zod-form.helper';
 import {
+  GatewaySessaoResumo,
   OrganizacaoAdminResponse,
   RoleOrganizacao,
   UsuarioOrganizacaoResponse,
@@ -42,6 +44,7 @@ import {
   imports: [
     CommonModule,
     ReactiveFormsModule,
+    FormsModule,
     LucideAngularModule,
     SidePanelComponent,
     FormInputComponent,
@@ -65,12 +68,17 @@ export class NovaOrganizacaoComponent implements OnInit {
 
   readonly orgPanel = useSidePanel<OrganizacaoAdminResponse>();
   readonly usuarioPanel = useSidePanel<OrganizacaoAdminResponse>();
+  readonly gatewayPanel = useSidePanel<OrganizacaoAdminResponse>();
 
   readonly criandoOrganizacao = signal(false);
   readonly criandoUsuario = signal(false);
   readonly excluindoOrganizacaoId = signal<number | null>(null);
   readonly sincronizandoGatewayId = signal<number | null>(null);
+  readonly carregandoSessoesGateway = signal(false);
   readonly mensagemGateway = signal<string | null>(null);
+  readonly erroGatewayPanel = signal<string | null>(null);
+  readonly sessoesGateway = signal<GatewaySessaoResumo[]>([]);
+  idSessaoMigracao: number | null = null;
   readonly processandoUsuarioId = signal<number | null>(null);
   readonly erroOrganizacao = signal<string | null>(null);
   readonly erroUsuario = signal<string | null>(null);
@@ -264,45 +272,159 @@ export class NovaOrganizacaoComponent implements OnInit {
   }
 
   atualizarOrgNoGateway(org: OrganizacaoAdminResponse): void {
-    if (this.sincronizandoGatewayId()) return;
+    this.idSessaoMigracao = null;
+    this.erroGatewayPanel.set(null);
+    this.gatewayPanel.abrir(org);
+    this.carregarSessoesGateway();
+  }
 
-    const anteriorTexto = prompt(
-      `Atualizar org #${org.idOrganizacao} (${org.nmOrganizacao}) no gateway WhatsApp.\n\n` +
-        'Se a sessao WhatsApp estava em outro ID, informe o ID anterior.\n' +
-        'Deixe vazio para apenas sincronizar o status atual.',
-      ''
+  fecharPainelGateway(): void {
+    this.gatewayPanel.fechar();
+    this.erroGatewayPanel.set(null);
+    this.idSessaoMigracao = null;
+  }
+
+  carregarSessoesGateway(): void {
+    this.carregandoSessoesGateway.set(true);
+    this.erroGatewayPanel.set(null);
+
+    this.adminService.listarSessoesGateway().subscribe({
+      next: (resposta) => {
+        this.carregandoSessoesGateway.set(false);
+        if (!resposta.sucesso) {
+          this.erroGatewayPanel.set(resposta.erro ?? 'Nao foi possivel listar sessoes do gateway.');
+          this.sessoesGateway.set([]);
+          return;
+        }
+        this.sessoesGateway.set(resposta.sessoes ?? []);
+      },
+      error: (err: HttpErrorResponse) => {
+        this.carregandoSessoesGateway.set(false);
+        this.erroGatewayPanel.set(this.mensagemErro(err, 'Erro ao listar sessoes do gateway.'));
+      },
+    });
+  }
+
+  sessaoDaOrganizacao(org: OrganizacaoAdminResponse | null | undefined): GatewaySessaoResumo | null {
+    if (!org) return null;
+    return this.sessoesGateway().find((sessao) => sessao.idOrganizacao === org.idOrganizacao) ?? null;
+  }
+
+  sessoesMigracaoDisponiveis(org: OrganizacaoAdminResponse | null | undefined): GatewaySessaoResumo[] {
+    if (!org) return [];
+    return this.sessoesGateway().filter(
+      (sessao) =>
+        sessao.idOrganizacao !== org.idOrganizacao &&
+        (sessao.temCredenciais || sessao.conectado || sessao.emMemoria)
     );
+  }
 
-    if (anteriorTexto === null) return;
+  formatarTelefoneGateway(telefone: string | null | undefined): string {
+    if (!telefone) return '—';
+    return formatDestinatario('WHATSAPP', telefone);
+  }
 
-    const idAnterior = anteriorTexto.trim() ? Number(anteriorTexto.trim()) : null;
-    if (anteriorTexto.trim() && (!Number.isFinite(idAnterior) || idAnterior! <= 0)) {
-      this.erroListagem.set('ID anterior invalido.');
+  rotuloSessaoMigracao(sessao: GatewaySessaoResumo): string {
+    const telefone = sessao.telefone
+      ? ` · ${this.formatarTelefoneGateway(sessao.telefone)}`
+      : '';
+    return `org-${sessao.idOrganizacao}${telefone} · ${sessao.status}`;
+  }
+
+  sincronizarGatewayAtual(): void {
+    const org = this.gatewayPanel.item();
+    if (!org) return;
+    this.executarGateway(org.idOrganizacao, null);
+  }
+
+  recarregarHistoricoGateway(): void {
+    const org = this.gatewayPanel.item();
+    if (!org) return;
+
+    const sessao = this.sessaoDaOrganizacao(org);
+    if (!sessao?.temCredenciais) {
+      this.erroGatewayPanel.set(
+        'Esta organizacao ainda nao tem sessao pareada no gateway. Conecte o WhatsApp antes de recarregar o historico.'
+      );
       return;
     }
 
+    if (
+      !confirm(
+        `Recarregar historico de conversas da org #${org.idOrganizacao} (${org.nmOrganizacao})?\n\n` +
+          'O cache local sera limpo e o WhatsApp enviara novamente contatos e conversas. ' +
+          'Nao sera necessario escanear o QR Code novamente.'
+      )
+    ) {
+      return;
+    }
+
+    if (this.sincronizandoGatewayId()) return;
+
     this.sincronizandoGatewayId.set(org.idOrganizacao);
+    this.erroGatewayPanel.set(null);
+    this.mensagemGateway.set(null);
+
+    this.adminService.recarregarHistoricoGateway(org.idOrganizacao).subscribe({
+      next: (status) => {
+        this.sincronizandoGatewayId.set(null);
+        const conectado = status.conectado ? 'conectado' : 'desconectado';
+        const telefone = status.telefone ? ` · ${this.formatarTelefoneGateway(status.telefone)}` : '';
+        this.mensagemGateway.set(
+          `Historico recarregado para org #${org.idOrganizacao}: ${status.status} (${conectado})${telefone}.`
+        );
+        this.carregarSessoesGateway();
+      },
+      error: (err: HttpErrorResponse) => {
+        this.erroGatewayPanel.set(
+          this.mensagemErro(err, 'Erro ao recarregar historico de conversas no gateway.')
+        );
+        this.sincronizandoGatewayId.set(null);
+      },
+    });
+  }
+
+  migrarSessaoGateway(): void {
+    const org = this.gatewayPanel.item();
+    if (!org || !this.idSessaoMigracao) return;
+
+    if (
+      !confirm(
+        `Migrar a sessao org-${this.idSessaoMigracao} para a organizacao #${org.idOrganizacao} (${org.nmOrganizacao})?`
+      )
+    ) {
+      return;
+    }
+
+    this.executarGateway(org.idOrganizacao, this.idSessaoMigracao);
+  }
+
+  private executarGateway(idOrganizacao: number, idOrganizacaoAnterior: number | null): void {
+    if (this.sincronizandoGatewayId()) return;
+
+    this.sincronizandoGatewayId.set(idOrganizacao);
+    this.erroGatewayPanel.set(null);
     this.erroListagem.set(null);
     this.mensagemGateway.set(null);
 
-    this.adminService
-      .atualizarOrganizacaoGateway(org.idOrganizacao, idAnterior)
-      .subscribe({
-        next: (status) => {
-          this.sincronizandoGatewayId.set(null);
-          const conectado = status.conectado ? 'conectado' : 'desconectado';
-          const telefone = status.telefone ? ` · ${status.telefone}` : '';
-          this.mensagemGateway.set(
-            `Gateway atualizado para org #${org.idOrganizacao}: ${status.status} (${conectado})${telefone}.`
-          );
-        },
-        error: (err: HttpErrorResponse) => {
-          this.erroListagem.set(
-            this.mensagemErro(err, 'Erro ao atualizar organizacao no gateway.')
-          );
-          this.sincronizandoGatewayId.set(null);
-        },
-      });
+    this.adminService.atualizarOrganizacaoGateway(idOrganizacao, idOrganizacaoAnterior).subscribe({
+      next: (status) => {
+        this.sincronizandoGatewayId.set(null);
+        const conectado = status.conectado ? 'conectado' : 'desconectado';
+        const telefone = status.telefone ? ` · ${this.formatarTelefoneGateway(status.telefone)}` : '';
+        this.mensagemGateway.set(
+          `Gateway atualizado para org #${idOrganizacao}: ${status.status} (${conectado})${telefone}.`
+        );
+        this.carregarSessoesGateway();
+        this.idSessaoMigracao = null;
+      },
+      error: (err: HttpErrorResponse) => {
+        this.erroGatewayPanel.set(
+          this.mensagemErro(err, 'Erro ao atualizar organizacao no gateway.')
+        );
+        this.sincronizandoGatewayId.set(null);
+      },
+    });
   }
 
   excluirOrganizacaoPermanentemente(org: OrganizacaoAdminResponse): void {

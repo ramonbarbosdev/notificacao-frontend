@@ -401,9 +401,43 @@ export class WhatsappComponent implements OnInit, OnDestroy {
       case 'REATIVAR_OPERACAO':
         this.reativarOperacao();
         return;
+      case 'RECARREGAR_HISTORICO':
+        this.recarregarHistorico();
+        return;
       case 'AGUARDAR_PAUSA':
         return;
     }
+  }
+
+  recarregarHistorico(): void {
+    if (
+      !confirm(
+        'Recarregar o historico de conversas?\n\n' +
+          'O cache local sera limpo e o WhatsApp enviara novamente contatos e conversas. ' +
+          'Nao sera necessario escanear o QR Code novamente.'
+      )
+    ) {
+      return;
+    }
+
+    this.carregando.set(true);
+    this.erroConexao.set(null);
+    this.mensagemEvento.set(null);
+
+    this.whatsappService.recarregarHistorico().subscribe({
+      next: (status) => {
+        this.processarStatusRecebido(status, true);
+        this.mensagemEvento.set(
+          'Historico recarregado. Contatos e conversas do WhatsApp foram atualizados no gateway.'
+        );
+      },
+      error: (err: HttpErrorResponse) => {
+        this.carregando.set(false);
+        this.erroConexao.set(
+          extrairMensagemErro(err, 'Nao foi possivel recarregar o historico de conversas.')
+        );
+      },
+    });
   }
 
   classeAcaoOperacional(acao: AcaoSessaoWhatsapp): string {

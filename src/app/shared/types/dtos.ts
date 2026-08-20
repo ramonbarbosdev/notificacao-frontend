@@ -77,6 +77,23 @@ export interface WhatsappStatusResponse {
   operacional?: SessaoOperacionalContexto | null;
 }
 
+export interface GatewaySessaoResumo {
+  idOrganizacao: number;
+  pasta: string;
+  temCredenciais: boolean;
+  emMemoria: boolean;
+  status: string;
+  conectado: boolean;
+  telefone: string | null;
+  erro: string | null;
+}
+
+export interface GatewaySessoesListaResponse {
+  sucesso: boolean;
+  sessoes: GatewaySessaoResumo[];
+  erro: string | null;
+}
+
 export interface ProvisionarConfigWhatsappResponse {
   sucesso: boolean;
   idOrganizacao: number;
@@ -98,7 +115,8 @@ export type AcaoSessaoWhatsappCodigo =
   | 'CONECTAR'
   | 'DESCONECTAR'
   | 'REATIVAR_OPERACAO'
-  | 'AGUARDAR_PAUSA';
+  | 'AGUARDAR_PAUSA'
+  | 'RECARREGAR_HISTORICO';
 
 export interface AcaoSessaoWhatsapp {
   codigo: AcaoSessaoWhatsappCodigo;

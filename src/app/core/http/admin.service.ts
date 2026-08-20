@@ -9,6 +9,7 @@ import {
   CriarUsuarioOrganizacaoRequest,
   OrganizacaoAdminResponse,
   UsuarioOrganizacaoResponse,
+  GatewaySessoesListaResponse,
   WhatsappStatusResponse,
 } from '../../shared/types/dtos';
 
@@ -106,6 +107,17 @@ export class AdminService {
     return this.http.post<WhatsappStatusResponse>(
       `${this.base}/organizacoes/${idOrganizacao}/whatsapp/atualizar-gateway`,
       idOrganizacaoAnterior ? { idOrganizacaoAnterior } : {}
+    );
+  }
+
+  listarSessoesGateway(): Observable<GatewaySessoesListaResponse> {
+    return this.http.get<GatewaySessoesListaResponse>(`${this.base}/whatsapp/sessoes`);
+  }
+
+  recarregarHistoricoGateway(idOrganizacao: number): Observable<WhatsappStatusResponse> {
+    return this.http.post<WhatsappStatusResponse>(
+      `${this.base}/organizacoes/${idOrganizacao}/whatsapp/recarregar-historico`,
+      {}
     );
   }
 }
