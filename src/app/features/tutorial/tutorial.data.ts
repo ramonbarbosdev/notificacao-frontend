@@ -131,7 +131,8 @@ export const TUTORIAL_TOPICOS: TutorialTopico[] = [
           'Use sempre a chave completa no formato nak_prefixo.segredo, nunca só o prefixo.',
         ],
         lista: [
-          'NOTIFICACOES_ENVIAR — obrigatório para enviar mensagens',
+          'NOTIFICACOES_ENVIAR — envio unitário (uma mensagem por requisição)',
+          'NOTIFICACOES_ENVIAR_LOTE — envio em lote (scope separado, menor risco de abuso acidental)',
           'NOTIFICACOES_CONSULTAR — consultar fila e histórico (opcional)',
           'CONTATOS_GERENCIAR — registrar consentimento de contatos (quando exigido)',
         ],
@@ -159,7 +160,7 @@ export const TUTORIAL_TOPICOS: TutorialTopico[] = [
         titulo: 'Erros de autenticação',
         lista: [
           '401 — API Key ausente, inválida, expirada ou usando só o prefixo',
-          '403 — API Key sem o scope necessário (ex.: NOTIFICACOES_ENVIAR)',
+          '403 — API Key sem o scope necessário (ex.: NOTIFICACOES_ENVIAR ou NOTIFICACOES_ENVIAR_LOTE)',
         ],
         exemplos: [
           {
@@ -358,6 +359,129 @@ var data = await response.Content.ReadFromJsonAsync<JsonElement>();`,
           'Restrição 463 / sem histórico — contato pode precisar enviar a primeira mensagem',
         ],
         dica: 'Consulte o idNotificacao retornado e acompanhe o status na fila do painel ou via GET /app/notificacoes/fila (scope NOTIFICACOES_CONSULTAR).',
+      },
+    ],
+  },
+  {
+    id: 'envio-lote',
+    titulo: 'Envio em lote',
+    resumo: 'Várias mensagens WhatsApp em uma requisição, com scope dedicado e validações de segurança.',
+    secoes: [
+      {
+        titulo: 'Por que um endpoint separado',
+        paragrafos: [
+          'O envio em lote usa rota e scope próprios para reduzir risco: uma API Key com NOTIFICACOES_ENVIAR não consegue disparar lotes acidentalmente.',
+          'É necessário NOTIFICACOES_ENVIAR_LOTE (ou perfil ADMIN no painel). O envio unitário continua em POST /app/notificacoes/enviar.',
+        ],
+      },
+      {
+        titulo: 'Endpoint',
+        exemplos: [
+          {
+            label: 'HTTP',
+            language: 'http',
+            code: 'POST /app/notificacoes/enviar-lote',
+          },
+        ],
+      },
+      {
+        titulo: 'Request body',
+        paragrafos: [
+          'canal: apenas WHATSAPP.',
+          'mensagens: lista com até 50 itens (limite operacional configurável no servidor).',
+          'referenciaExterna (opcional): identificador do seu sistema para correlacionar cada item na resposta.',
+        ],
+        exemplos: [
+          {
+            label: 'JSON',
+            language: 'json',
+            code: `{
+  "canal": "WHATSAPP",
+  "mensagens": [
+    {
+      "destinatario": "5571994686855",
+      "assunto": "Pedido 1001",
+      "mensagem": "Olá! Seu pedido 1001 foi confirmado.",
+      "referenciaExterna": "pedido-1001"
+    },
+    {
+      "destinatario": "5571981180200",
+      "assunto": "Pedido 1002",
+      "mensagem": "Olá! Seu pedido 1002 foi confirmado.",
+      "referenciaExterna": "pedido-1002"
+    }
+  ]
+}`,
+          },
+        ],
+      },
+      {
+        titulo: 'Response',
+        paragrafos: [
+          'HTTP 200 quando a estrutura do lote é válida — mesmo com falhas parciais por item.',
+          'sucesso: true apenas se todos os itens foram aceitos.',
+          'aceitas / rejeitadas: totais agregados; detalhe por item em itens[].resultado.',
+        ],
+        exemplos: [
+          {
+            label: 'JSON — sucesso parcial',
+            language: 'json',
+            code: `{
+  "sucesso": false,
+  "total": 2,
+  "aceitas": 1,
+  "rejeitadas": 1,
+  "itens": [
+    {
+      "indice": 0,
+      "referenciaExterna": "pedido-1001",
+      "destinatario": "5571994686855",
+      "resultado": {
+        "sucesso": true,
+        "idNotificacao": 42,
+        "canal": "WHATSAPP",
+        "status": "PENDENTE"
+      }
+    },
+    {
+      "indice": 1,
+      "referenciaExterna": "pedido-1002",
+      "destinatario": "5571981180200",
+      "resultado": {
+        "sucesso": false,
+        "erro": "Contato sem consentimento para WhatsApp"
+      }
+    }
+  ]
+}`,
+          },
+        ],
+      },
+      {
+        titulo: 'Regras de segurança',
+        lista: [
+          'Scope NOTIFICACOES_ENVIAR_LOTE obrigatório (403 sem ele)',
+          'Limite de tamanho do lote (padrão: 50 mensagens)',
+          'Sem duplicatas no mesmo lote (mesmo destinatário + mesma mensagem)',
+          'referenciaExterna única dentro do lote, quando informada',
+          'Validação de limite mensal do plano antes de processar o lote',
+          'Sessão WhatsApp deve estar conectada antes do processamento',
+          'Cada item enfileirado em transação isolada (falha de um não desfaz os demais)',
+        ],
+        dica: 'Para campanhas grandes, divida em vários lotes respeitando o limite e monitore aceitas/rejeitadas em cada resposta.',
+      },
+      {
+        titulo: 'Exemplo cURL',
+        exemplos: [
+          {
+            label: 'cURL',
+            language: 'bash',
+            code: `curl -X POST "{API_URL}/app/notificacoes/enviar-lote" \\
+  -H "Content-Type: application/json" \\
+  -H "X-API-KEY: nak_prefixo.segredo" \\
+  -d '{"canal":"WHATSAPP","mensagens":[{"destinatario":"5571994686855","mensagem":"Olá!"}]}'`,
+          },
+        ],
       },
     ],
   },

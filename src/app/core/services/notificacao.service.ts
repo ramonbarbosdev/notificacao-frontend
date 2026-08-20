@@ -4,6 +4,8 @@ import { map, Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
   ApiResponseDTO,
+  EnviarNotificacaoLoteRequest,
+  EnviarNotificacaoLoteResponse,
   EnviarNotificacaoRequest,
   EnviarNotificacaoResponse,
   FilaNotificacaoResponseDTO,
@@ -20,6 +22,10 @@ export class NotificacaoService {
 
   enviar(dados: EnviarNotificacaoRequest): Observable<EnviarNotificacaoResponse> {
     return this.http.post<EnviarNotificacaoResponse>(`${this.base}/enviar`, dados);
+  }
+
+  enviarLote(dados: EnviarNotificacaoLoteRequest): Observable<EnviarNotificacaoLoteResponse> {
+    return this.http.post<EnviarNotificacaoLoteResponse>(`${this.base}/enviar-lote`, dados);
   }
 
   listar(params: {

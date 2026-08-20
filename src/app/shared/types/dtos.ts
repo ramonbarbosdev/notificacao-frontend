@@ -170,6 +170,33 @@ export interface EnviarNotificacaoResponse {
 
 export type EnviarMensagemResponse = EnviarNotificacaoResponse;
 
+export interface EnviarNotificacaoLoteItemRequest {
+  destinatario: string;
+  assunto?: string | null;
+  mensagem: string;
+  referenciaExterna?: string | null;
+}
+
+export interface EnviarNotificacaoLoteRequest {
+  canal: CanalNotificacao;
+  mensagens: EnviarNotificacaoLoteItemRequest[];
+}
+
+export interface EnviarNotificacaoLoteItemResponse {
+  indice: number;
+  referenciaExterna: string | null;
+  destinatario: string;
+  resultado: EnviarNotificacaoResponse;
+}
+
+export interface EnviarNotificacaoLoteResponse {
+  sucesso: boolean;
+  total: number;
+  aceitas: number;
+  rejeitadas: number;
+  itens: EnviarNotificacaoLoteItemResponse[];
+}
+
 export interface FilaNotificacaoItemDTO {
   idNotificacao: number;
   canal: CanalNotificacao;
@@ -445,6 +472,7 @@ export type RecursoFeature =
 
 export type ApiKeyScope =
   | 'NOTIFICACOES_ENVIAR'
+  | 'NOTIFICACOES_ENVIAR_LOTE'
   | 'NOTIFICACOES_CONSULTAR'
   | 'TEMPLATES_CONSULTAR'
   | 'TEMPLATES_GERENCIAR'

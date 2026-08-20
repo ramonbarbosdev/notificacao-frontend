@@ -15,6 +15,7 @@ import { WhatsappService } from '../../core/services/whatsapp.service';
 
 import {
   EnviarMensagemResponse,
+  EnviarNotificacaoLoteResponse,
   NotificacaoFilaEvento,
   StatusNotificacao,
   WhatsappEvento,
@@ -35,6 +36,16 @@ import {
   AcaoSessaoWhatsapp,
 } from '../../shared/types/dtos';
 import { criarFormularioMensagem } from './whatsapp.form';
+import {
+  criarFormularioLote,
+  criarItemLoteFormulario,
+  itensLoteFormulario,
+} from './whatsapp-lote.form';
+import {
+  aplicarLinhasNoFormularioLote,
+  LIMITE_LOTE_MENSAGENS,
+  parseLinhasImportacaoLote,
+} from './whatsapp-lote.helpers';
 import { formatPhone, maskPhoneInput, normalizeBrazilWhatsappMobile } from '../../shared/helper/phone.utils';
 import {
   ehErroConsentimento,
@@ -47,6 +58,7 @@ import {
 import { WHATSAPP_ICONS } from './whatsapp.icons';
 
 type WhatsappConnectionStatus = WhatsappStatusResponse['status'];
+type ModoEnvioWhatsapp = 'unitario' | 'lote';
 
 @Component({
   selector: 'app-whatsapp',
@@ -81,12 +93,21 @@ export class WhatsappComponent implements OnInit, OnDestroy {
   protected readonly xIcon = WHATSAPP_ICONS.x;
   protected readonly plugZapIcon = WHATSAPP_ICONS.plugZap;
   protected readonly qrCodeIcon = WHATSAPP_ICONS.qrCode;
+  protected readonly plusIcon = WHATSAPP_ICONS.plus;
+  protected readonly trashIcon = WHATSAPP_ICONS.trash;
+  protected readonly layersIcon = WHATSAPP_ICONS.layers;
+
+  readonly limiteLoteMensagens = LIMITE_LOTE_MENSAGENS;
+  readonly modoEnvio = signal<ModoEnvioWhatsapp>('unitario');
 
   readonly status = signal<WhatsappStatusResponse | null>(null);
   readonly carregando = signal(false);
   readonly enviando = signal(false);
+  readonly enviandoLote = signal(false);
   readonly respostaMensagem = signal<EnviarMensagemResponse | null>(null);
+  readonly respostaLote = signal<EnviarNotificacaoLoteResponse | null>(null);
   readonly erroEnvio = signal<string | null>(null);
+  readonly erroEnvioLote = signal<string | null>(null);
   readonly erroConexao = signal<string | null>(null);
   readonly mensagemEvento = signal<string | null>(null);
   readonly podeConectar = signal(true);
@@ -117,6 +138,9 @@ export class WhatsappComponent implements OnInit, OnDestroy {
   );
 
   readonly formMensagem = criarFormularioMensagem(this.fb);
+  readonly formLote = criarFormularioLote(this.fb);
+
+  readonly itensLote = itensLoteFormulario(this.formLote);
 
   readonly formatarTelefone = formatPhone;
 
@@ -127,6 +151,59 @@ export class WhatsappComponent implements OnInit, OnDestroy {
     this.formMensagem.controls.telefone.setValue(valorFormatado, { emitEvent: false });
     this.formMensagem.controls.telefone.updateValueAndValidity({ emitEvent: false });
     input.value = valorFormatado;
+  }
+
+  atualizarTelefoneLote(indice: number, event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const valorFormatado = maskPhoneInput(input.value);
+    const controle = this.itensLote.at(indice).get('telefone');
+
+    controle?.setValue(valorFormatado, { emitEvent: false });
+    controle?.updateValueAndValidity({ emitEvent: false });
+    input.value = valorFormatado;
+  }
+
+  alternarModoEnvio(modo: ModoEnvioWhatsapp): void {
+    this.modoEnvio.set(modo);
+    this.erroEnvio.set(null);
+    this.erroEnvioLote.set(null);
+  }
+
+  adicionarLinhaLote(): void {
+    if (this.itensLote.length >= this.limiteLoteMensagens) {
+      return;
+    }
+
+    this.itensLote.push(criarItemLoteFormulario(this.fb));
+  }
+
+  removerLinhaLote(indice: number): void {
+    if (this.itensLote.length <= 1) {
+      this.itensLote.at(0).reset({
+        telefone: '',
+        mensagem: '',
+        referenciaExterna: '',
+      });
+      return;
+    }
+
+    this.itensLote.removeAt(indice);
+  }
+
+  importarLinhasLote(): void {
+    const texto = String(this.formLote.get('importacaoRapida')?.value ?? '');
+    const linhas = parseLinhasImportacaoLote(texto);
+
+    if (linhas.length === 0) {
+      this.erroEnvioLote.set(
+        'Nenhuma linha válida encontrada. Use o formato telefone;mensagem ou telefone;mensagem;referencia.',
+      );
+      return;
+    }
+
+    aplicarLinhasNoFormularioLote(this.fb, this.itensLote, linhas);
+    this.erroEnvioLote.set(null);
+    this.formLote.patchValue({ importacaoRapida: '' });
   }
 
   ngOnInit(): void {
@@ -206,6 +283,74 @@ export class WhatsappComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (resposta) => this.tratarRespostaEnvio(resposta),
         error: (err: HttpErrorResponse) => this.tratarErroEnvio(err),
+      });
+  }
+
+  enviarLote(): void {
+    const mensagens = this.itensLote.controls
+      .map((grupo) => grupo.getRawValue())
+      .filter((item) => String(item.telefone ?? '').trim() || String(item.mensagem ?? '').trim())
+      .map((item) => ({
+        telefone: String(item.telefone ?? ''),
+        mensagem: String(item.mensagem ?? ''),
+        referenciaExterna: String(item.referenciaExterna ?? ''),
+      }));
+
+    if (mensagens.length === 0) {
+      this.erroEnvioLote.set('Informe ao menos uma mensagem no lote.');
+      this.formLote.markAllAsTouched();
+      return;
+    }
+
+    const invalida = mensagens.find((item) => {
+      const digits = normalizeBrazilWhatsappMobile(item.telefone);
+      return digits.length < 12 || digits.length > 13 || !item.mensagem.trim();
+    });
+
+    if (invalida) {
+      this.erroEnvioLote.set('Revise telefone e mensagem em todas as linhas preenchidas.');
+      this.formLote.markAllAsTouched();
+      return;
+    }
+
+    if (mensagens.length > this.limiteLoteMensagens) {
+      this.erroEnvioLote.set(`O lote aceita no máximo ${this.limiteLoteMensagens} mensagens.`);
+      return;
+    }
+
+    this.enviandoLote.set(true);
+    this.respostaLote.set(null);
+    this.erroEnvioLote.set(null);
+
+    this.notificacaoService
+      .enviarLote({
+        canal: 'WHATSAPP',
+        mensagens: mensagens.map((item) => ({
+          destinatario: normalizeBrazilWhatsappMobile(item.telefone),
+          assunto: item.referenciaExterna || null,
+          mensagem: item.mensagem,
+          referenciaExterna: item.referenciaExterna || null,
+        })),
+      })
+      .subscribe({
+        next: (resposta) => {
+          this.respostaLote.set(resposta);
+          this.enviandoLote.set(false);
+
+          if (resposta.sucesso) {
+            this.formLote.reset();
+            this.itensLote.clear();
+            this.itensLote.push(criarItemLoteFormulario(this.fb));
+            this.itensLote.push(criarItemLoteFormulario(this.fb));
+            this.itensLote.push(criarItemLoteFormulario(this.fb));
+          }
+        },
+        error: (err: HttpErrorResponse) => {
+          this.erroEnvioLote.set(
+            extrairMensagemErro(err, 'Erro ao enviar lote de mensagens.'),
+          );
+          this.enviandoLote.set(false);
+        },
       });
   }
 

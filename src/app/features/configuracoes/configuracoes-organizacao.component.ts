@@ -99,6 +99,7 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
 
   readonly scopes: { value: ApiKeyScope; label: string }[] = [
     { value: 'NOTIFICACOES_ENVIAR', label: 'Enviar notificacoes' },
+    { value: 'NOTIFICACOES_ENVIAR_LOTE', label: 'Enviar notificacoes em lote' },
     { value: 'NOTIFICACOES_CONSULTAR', label: 'Consultar notificacoes' },
     { value: 'TEMPLATES_CONSULTAR', label: 'Consultar templates' },
     { value: 'TEMPLATES_GERENCIAR', label: 'Gerenciar templates' },
