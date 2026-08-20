@@ -115,8 +115,7 @@ export type AcaoSessaoWhatsappCodigo =
   | 'CONECTAR'
   | 'DESCONECTAR'
   | 'REATIVAR_OPERACAO'
-  | 'AGUARDAR_PAUSA'
-  | 'RECARREGAR_HISTORICO';
+  | 'AGUARDAR_PAUSA';
 
 export interface AcaoSessaoWhatsapp {
   codigo: AcaoSessaoWhatsappCodigo;

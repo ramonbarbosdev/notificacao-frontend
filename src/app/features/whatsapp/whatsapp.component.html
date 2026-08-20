@@ -225,29 +225,6 @@
 
       } @else {
 
-      <button type="button" (click)="recarregarHistorico()" [disabled]="carregando()" class="w-full
-                       bg-[var(--color-surface-muted)]
-                       hover:bg-[var(--color-accent-soft)]
-                       border border-[var(--color-border)]
-                       disabled:opacity-50
-                       disabled:cursor-not-allowed
-                       text-[var(--color-text)]
-                       font-semibold py-2.5 rounded-xl
-                       transition-all duration-200 text-sm
-                       flex items-center justify-center gap-2">
-
-        @if (carregando()) {
-        <lucide-icon [img]="loaderIcon" class="animate-spin h-4 w-4" />
-        } @else {
-        <lucide-icon [img]="refreshIcon" class="h-4 w-4" />
-        }
-
-        Recarregar historico
-      </button>
-      <p class="text-xs text-[var(--color-text-faint)] mt-2 mb-0 text-center">
-        Atualiza conversas e contatos no gateway. Nao exige novo QR Code.
-      </p>
-
       <button type="button" (click)="desconectar()" [disabled]="carregando()" class="w-full
                        bg-[var(--color-surface-muted)]
                        hover:bg-[var(--color-danger-bg)]

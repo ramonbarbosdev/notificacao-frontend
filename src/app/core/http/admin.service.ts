@@ -113,11 +113,4 @@ export class AdminService {
   listarSessoesGateway(): Observable<GatewaySessoesListaResponse> {
     return this.http.get<GatewaySessoesListaResponse>(`${this.base}/whatsapp/sessoes`);
   }
-
-  recarregarHistoricoGateway(idOrganizacao: number): Observable<WhatsappStatusResponse> {
-    return this.http.post<WhatsappStatusResponse>(
-      `${this.base}/organizacoes/${idOrganizacao}/whatsapp/recarregar-historico`,
-      {}
-    );
-  }
 }

@@ -404,20 +404,6 @@
           Sincronizar org #{{ org.idOrganizacao }} com o gateway
         </button>
 
-        @if (sessaoDaOrganizacao(org)?.temCredenciais) {
-          <button
-            type="button"
-            (click)="recarregarHistoricoGateway()"
-            [disabled]="sincronizandoGatewayId() === org.idOrganizacao"
-            class="w-full px-4 py-3 rounded-xl border border-[var(--color-border)] text-sm disabled:opacity-50"
-          >
-            Recarregar historico de conversas
-          </button>
-          <p class="m-0 text-[var(--color-text-faint)] text-xs">
-            Limpa o cache local e pede ao WhatsApp novos contatos/conversas. Nao exige novo QR Code.
-          </p>
-        }
-
         @if (sessoesMigracaoDisponiveis(org).length > 0) {
           <div class="rounded-xl border border-[var(--color-border)] p-4 space-y-3">
             <p class="m-0 text-[var(--color-text-muted)] text-xs">
