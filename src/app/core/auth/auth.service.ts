@@ -7,6 +7,7 @@ import { firstValueFrom, Observable, of } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
 import { TokenService } from './token.service';
+import { FeatureFlagStore } from '../services/feature-flag.store';
 import {
   LoginRequest,
   LoginResponse,
@@ -26,6 +27,7 @@ export class AuthService {
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
   private readonly tokenService = inject(TokenService);
+  private readonly featureFlagStore = inject(FeatureFlagStore);
 
   private readonly _usuario = signal<UsuarioAtual | null>(null);
   private readonly _organizacoes = signal<Organizacao[]>([]);
@@ -78,7 +80,11 @@ export class AuthService {
               this.tokenService.salvar(res.token);
               this.limparOrganizacoesCache();
               this.limparOrganizacaoAtualCache();
-              this.carregarUsuarioAtual().subscribe();
+              this.carregarUsuarioAtual().subscribe(() => {
+                if (!this.isSuperAdmin()) {
+                  this.featureFlagStore.carregar().subscribe();
+                }
+              });
             } else {
               if (res.token) {
                 this.salvarTokenTemporario(res.token);
@@ -121,7 +127,11 @@ export class AuthService {
               this.salvarOrganizacaoAtualCache(organizacaoSelecionada);
               this._organizacoes.set([organizacaoSelecionada]);
             }
-            this.carregarUsuarioAtual().subscribe();
+            this.carregarUsuarioAtual().subscribe(() => {
+              if (!this.isSuperAdmin()) {
+                this.featureFlagStore.carregar().subscribe();
+              }
+            });
           },
         }),
         finalize(() => this._carregando.set(false))
@@ -151,6 +161,7 @@ export class AuthService {
     this.tokenService.remover();
     this.limparTokenTemporario();
     this.limparCaches();
+    this.featureFlagStore.limpar();
     this._usuario.set(null);
     this._organizacoes.set([]);
     this.router.navigate(['/login']);
@@ -177,6 +188,11 @@ export class AuthService {
 
     return firstValueFrom(
       this.carregarUsuarioAtual().pipe(
+        tap(() => {
+          if (!this.isSuperAdmin()) {
+            this.featureFlagStore.carregar().subscribe();
+          }
+        }),
         mapTo(void 0),
         catchError(() => {
           this.tokenService.remover();

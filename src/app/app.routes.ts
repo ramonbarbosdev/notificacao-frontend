@@ -173,10 +173,8 @@ export const routes: Routes = [
       },
       {
         path: 'definir-admin',
-        loadComponent: () =>
-          import('./features/admin/usuarios-organizacao/usuarios-organizacao.component').then(
-            (m) => m.UsuariosOrganizacaoComponent
-          ),
+        redirectTo: 'usuarios',
+        pathMatch: 'full',
       },
       {
         path: 'roles',

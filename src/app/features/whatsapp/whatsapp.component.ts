@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, FormControl, ReactiveFormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { Observable, Subscription, timer } from 'rxjs';
 
@@ -46,7 +46,8 @@ import {
   LIMITE_LOTE_MENSAGENS,
   parseLinhasImportacaoLote,
 } from './whatsapp-lote.helpers';
-import { formatPhone, maskPhoneInput, normalizeBrazilWhatsappMobile } from '../../shared/helper/phone.utils';
+import { formatPhone, normalizeBrazilWhatsappMobile } from '../../shared/helper/phone.utils';
+import { ContatoTelefoneSugestoesComponent } from '../../shared/components/contato-telefone-sugestoes/contato-telefone-sugestoes.component';
 import {
   ehErroConsentimento,
   ehStatusDeTentativa,
@@ -68,6 +69,7 @@ type ModoEnvioWhatsapp = 'unitario' | 'lote';
     ReactiveFormsModule,
     RouterModule,
     LucideAngularModule,
+    ContatoTelefoneSugestoesComponent,
   ],
   templateUrl: './whatsapp.component.html',
 })
@@ -145,23 +147,8 @@ export class WhatsappComponent implements OnInit, OnDestroy {
 
   readonly formatarTelefone = formatPhone;
 
-  atualizarTelefone(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    const valorFormatado = maskPhoneInput(input.value);
-
-    this.formMensagem.controls.telefone.setValue(valorFormatado, { emitEvent: false });
-    this.formMensagem.controls.telefone.updateValueAndValidity({ emitEvent: false });
-    input.value = valorFormatado;
-  }
-
-  atualizarTelefoneLote(indice: number, event: Event): void {
-    const input = event.target as HTMLInputElement;
-    const valorFormatado = maskPhoneInput(input.value);
-    const controle = this.itensLote.at(indice).get('telefone');
-
-    controle?.setValue(valorFormatado, { emitEvent: false });
-    controle?.updateValueAndValidity({ emitEvent: false });
-    input.value = valorFormatado;
+  telefoneLoteControl(indice: number) {
+    return this.itensLote.at(indice).get('telefone') as FormControl<string | null>;
   }
 
   alternarModoEnvio(modo: ModoEnvioWhatsapp): void {

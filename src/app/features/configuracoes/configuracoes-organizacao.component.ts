@@ -1,12 +1,14 @@
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { z } from 'zod';
 import { RouterModule } from '@angular/router';
 import { Check, KeyRound, LoaderCircle, LucideAngularModule, Settings, Webhook } from 'lucide-angular';
 
 import { AuthService } from '../../core/auth/auth.service';
 import { ApiKeyService } from '../../core/services/api-key.service';
+import { FeatureFlagStore } from '../../core/services/feature-flag.store';
 import { OrganizacaoConfiguracaoService } from '../../core/services/organizacao-configuracao.service';
 import { AlertaOperacionalService } from '../../core/services/alerta-operacional.service';
 import { WebhookService } from '../../core/services/webhook.service';
@@ -18,6 +20,7 @@ import {
   ApiKeyScope,
   OrganizacaoConfiguracao,
   AlertaOperacional,
+  RecursoFeature,
   Webhook as WebhookDTO,
   WebhookEvento,
   WhatsappStatusResponse,
@@ -34,13 +37,22 @@ import {
 } from '../../shared/labels/whatsapp-operacional.labels';
 
 import { FOCO_WHATSAPP } from '../../shared/config/product.config';
+import { getZodFieldErrors } from '../../shared/helper/zod-form.helper';
+import {
+  AbaConfiguracaoOrganizacao,
+  CAMPOS_POR_ABA_ORG,
+  OrganizacaoConfiguracaoFormData,
+  OrganizacaoConfiguracaoFormErrors,
+  schemaOrganizacaoConfigPorAba,
+} from './schemas/organizacao-configuracao-form.schema';
+import {
+  apiKeyFormSchema,
+  ApiKeyFormData,
+  ApiKeyFormErrors,
+} from './schemas/api-key-form.schema';
 
 type AbaConfiguracao =
-  | 'geral'
-  | 'whatsapp'
-  | 'consentimento'
-  | 'templates'
-  | 'notificacoes'
+  | AbaConfiguracaoOrganizacao
   | 'apiKeys'
   | 'webhooks'
   | 'usuarios'
@@ -55,6 +67,7 @@ type AbaConfiguracao =
 export class ConfiguracoesOrganizacaoComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly configService = inject(OrganizacaoConfiguracaoService);
+  private readonly featureFlags = inject(FeatureFlagStore);
   private readonly alertaService = inject(AlertaOperacionalService);
   private readonly apiKeyService = inject(ApiKeyService);
   private readonly webhookService = inject(WebhookService);
@@ -68,20 +81,34 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
   protected readonly keyIcon = KeyRound;
   protected readonly webhookIcon = Webhook;
 
-  readonly abas: { id: AbaConfiguracao; label: string; adminOnly?: boolean; ocultoModoWhatsapp?: boolean }[] = [
+  readonly abas: {
+    id: AbaConfiguracao;
+    label: string;
+    adminOnly?: boolean;
+    ocultoModoWhatsapp?: boolean;
+    recurso?: RecursoFeature;
+  }[] = [
     { id: 'geral', label: 'Geral' },
-    { id: 'whatsapp', label: 'WhatsApp' },
+    { id: 'whatsapp', label: 'WhatsApp', recurso: 'WHATSAPP' },
     { id: 'consentimento', label: 'Consentimento' },
-    { id: 'templates', label: 'Templates' },
+    { id: 'templates', label: 'Templates', recurso: 'TEMPLATES' },
     { id: 'notificacoes', label: 'Notificacoes', ocultoModoWhatsapp: true },
-    { id: 'apiKeys', label: 'API Keys', adminOnly: true },
-    { id: 'webhooks', label: 'Webhooks', adminOnly: true, ocultoModoWhatsapp: true },
+    { id: 'apiKeys', label: 'API Keys', adminOnly: true, recurso: 'API_PUBLICA' },
+    { id: 'webhooks', label: 'Webhooks', adminOnly: true, ocultoModoWhatsapp: true, recurso: 'WEBHOOK' },
     { id: 'usuarios', label: 'Usuarios', adminOnly: true },
     { id: 'auditoria', label: 'Auditoria', adminOnly: true },
   ];
 
-  readonly abasVisiveis = this.abas.filter(
-    (aba) => !FOCO_WHATSAPP || !aba.ocultoModoWhatsapp
+  readonly abasVisiveis = computed(() =>
+    this.abas.filter((aba) => {
+      if (FOCO_WHATSAPP && aba.ocultoModoWhatsapp) {
+        return false;
+      }
+      if (aba.recurso && !this.featureFlags.habilitado(aba.recurso)) {
+        return false;
+      }
+      return true;
+    }),
   );
 
   readonly aba = signal<AbaConfiguracao>('geral');
@@ -89,6 +116,8 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
   readonly salvando = signal(false);
   readonly erro = signal<string | null>(null);
   readonly sucesso = signal<string | null>(null);
+  readonly errosFormulario = signal<OrganizacaoConfiguracaoFormErrors>({});
+  readonly errosApiKeyFormulario = signal<ApiKeyFormErrors>({});
   readonly apiKeys = signal<ApiKey[]>([]);
   readonly apiKeyCriada = signal<ApiKeyCreatedResponse | null>(null);
   readonly webhooks = signal<WebhookDTO[]>([]);
@@ -119,13 +148,13 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
   ];
 
   readonly form = this.fb.group({
-    nmExibicao: ['', [Validators.required]],
+    nmExibicao: [''],
     dsLogoUrl: [''],
     dsIdioma: ['pt-BR'],
     timezone: ['America/Bahia'],
     nuTelefoneOperacional: [''],
-    dsEmailOperacional: ['', [Validators.email]],
-    dsEmailAlertas: ['', [Validators.email]],
+    dsEmailOperacional: [''],
+    dsEmailAlertas: [''],
     whatsappReconexaoAutomatica: [true],
     whatsappDelayMinSegundos: [2],
     whatsappDelayMaxSegundos: [8],
@@ -150,9 +179,9 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
   });
 
   readonly apiKeyForm = this.fb.group({
-    nome: ['', [Validators.required]],
+    nome: [''],
     expiraEm: [''],
-    scopes: [[] as ApiKeyScope[], [Validators.required]],
+    scopes: [[] as ApiKeyScope[]],
   });
 
   readonly webhookForm = this.fb.group({
@@ -164,6 +193,14 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
   });
 
   readonly isAdmin = () => this.authService.role() === 'ADMIN';
+
+  campoErro(campo: keyof OrganizacaoConfiguracaoFormData): string | null {
+    return this.errosFormulario()[campo] ?? null;
+  }
+
+  campoErroApiKey(campo: keyof ApiKeyFormData): string | null {
+    return this.errosApiKeyFormulario()[campo] ?? null;
+  }
 
   readonly formatarData = formatDateTimePtBr;
   readonly mascararPrefixo = maskApiKeyPrefix;
@@ -235,8 +272,30 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
       this.erro.set('Voce nao tem permissao para executar esta acao.');
       return;
     }
-    if (this.form.invalid) return;
 
+    const abaAtual = this.aba();
+    if (!['geral', 'whatsapp', 'consentimento', 'templates', 'notificacoes'].includes(abaAtual)) {
+      return;
+    }
+
+    this.form.markAllAsTouched();
+    const schema = schemaOrganizacaoConfigPorAba(abaAtual as AbaConfiguracaoOrganizacao);
+    const campos = CAMPOS_POR_ABA_ORG[abaAtual as AbaConfiguracaoOrganizacao];
+    const valoresParciais = campos.reduce((acc, campo) => {
+      acc[campo] = this.form.get(campo)?.value;
+      return acc;
+    }, {} as Record<string, unknown>);
+
+    const resultado = schema.safeParse(valoresParciais);
+    if (!resultado.success) {
+      this.errosFormulario.set(
+        getZodFieldErrors(resultado.error as z.ZodError<OrganizacaoConfiguracaoFormData>),
+      );
+      this.erro.set('Corrija os campos destacados antes de salvar.');
+      return;
+    }
+
+    this.errosFormulario.set({});
     const dados = this.form.getRawValue() as OrganizacaoConfiguracao;
 
     if (dados.nuTelefoneOperacional) {
@@ -292,20 +351,33 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
 
   toggleScope(scope: ApiKeyScope): void {
     const scopes = this.apiKeyForm.controls.scopes.value ?? [];
-    this.apiKeyForm.controls.scopes.setValue(scopes.includes(scope) ? scopes.filter((item) => item !== scope) : [...scopes, scope]);
+    this.apiKeyForm.controls.scopes.setValue(
+      scopes.includes(scope) ? scopes.filter((item) => item !== scope) : [...scopes, scope],
+    );
+    this.errosApiKeyFormulario.update((erros) => ({ ...erros, scopes: undefined }));
   }
 
   criarApiKey(): void {
-    if (this.apiKeyForm.invalid) return;
-    const dados = this.apiKeyForm.getRawValue();
+    this.apiKeyForm.markAllAsTouched();
+    const resultado = apiKeyFormSchema.safeParse(this.apiKeyForm.getRawValue());
+
+    if (!resultado.success) {
+      this.errosApiKeyFormulario.set(getZodFieldErrors(resultado.error as z.ZodError<ApiKeyFormData>));
+      return;
+    }
+
+    this.errosApiKeyFormulario.set({});
+    const dados = resultado.data;
+
     this.apiKeyService.criar({
-      nome: dados.nome!,
+      nome: dados.nome,
       expiraEm: dados.expiraEm || null,
-      scopes: dados.scopes ?? [],
+      scopes: dados.scopes,
     }).subscribe({
       next: (res) => {
         this.apiKeyCriada.set(res);
         this.apiKeyForm.reset({ nome: '', expiraEm: '', scopes: [] });
+        this.errosApiKeyFormulario.set({});
         this.carregarApiKeys();
         this.toast.success('API Key gerada', 'Copie a chave completa agora — ela não será exibida novamente.');
       },

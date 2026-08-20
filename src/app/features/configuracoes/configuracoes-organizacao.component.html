@@ -29,7 +29,7 @@
       }
 
       <div class="flex flex-wrap gap-2 mb-6">
-        @for (item of abasVisiveis; track item.id) {
+        @for (item of abasVisiveis(); track item.id) {
           @if (!item.adminOnly || isAdmin()) {
             <button type="button" (click)="selecionarAba(item.id)" class="px-4 py-2 rounded-xl border text-sm"
               [class.bg-[var(--color-primary)]]="aba() === item.id"
@@ -49,25 +49,25 @@
             <section class="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-6">
               <h2 class="text-[var(--color-text)] font-semibold mb-4">Geral</h2>
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <app-form-field label="Nome de exibição">
+                <app-form-field label="Nome de exibição" [error]="campoErro('nmExibicao')">
                   <input formControlName="nmExibicao" class="form-input-admin" placeholder="Minha organização" />
                 </app-form-field>
-                <app-form-field label="URL da logo" helper="Link público da imagem">
+                <app-form-field label="URL da logo" helper="Link público da imagem" [error]="campoErro('dsLogoUrl')">
                   <input formControlName="dsLogoUrl" class="form-input-admin" placeholder="https://..." />
                 </app-form-field>
-                <app-form-field label="Idioma">
+                <app-form-field label="Idioma" [error]="campoErro('dsIdioma')">
                   <input formControlName="dsIdioma" class="form-input-admin" placeholder="pt-BR" />
                 </app-form-field>
-                <app-form-field label="Fuso horário">
+                <app-form-field label="Fuso horário" [error]="campoErro('timezone')">
                   <input formControlName="timezone" class="form-input-admin" placeholder="America/Bahia" />
                 </app-form-field>
-                <app-form-field label="Telefone operacional">
+                <app-form-field label="Telefone operacional" [error]="campoErro('nuTelefoneOperacional')">
                   <input formControlName="nuTelefoneOperacional" type="tel" inputmode="tel" class="form-input-admin" placeholder="+55 (99) 99999-9999" (input)="atualizarTelefoneOperacional($event)" />
                 </app-form-field>
-                <app-form-field label="E-mail operacional">
+                <app-form-field label="E-mail operacional" [error]="campoErro('dsEmailOperacional')">
                   <input formControlName="dsEmailOperacional" type="email" class="form-input-admin" placeholder="contato@empresa.com" />
                 </app-form-field>
-                <app-form-field label="E-mail para alertas" helper="Recebe avisos quando notificações falharem">
+                <app-form-field label="E-mail para alertas" helper="Recebe avisos quando notificações falharem" [error]="campoErro('dsEmailAlertas')">
                   <input formControlName="dsEmailAlertas" type="email" class="form-input-admin" placeholder="admin@empresa.com" />
                 </app-form-field>
               </div>
@@ -105,19 +105,19 @@
               }
 
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <app-form-field label="Delay mínimo (segundos)" helper="Pausa mínima entre envios">
+                <app-form-field label="Delay mínimo (segundos)" helper="Pausa mínima entre envios" [error]="campoErro('whatsappDelayMinSegundos')">
                   <input formControlName="whatsappDelayMinSegundos" type="number" class="form-input-admin" placeholder="2" />
                 </app-form-field>
-                <app-form-field label="Delay máximo (segundos)" helper="Pausa máxima entre envios">
+                <app-form-field label="Delay máximo (segundos)" helper="Pausa máxima entre envios" [error]="campoErro('whatsappDelayMaxSegundos')">
                   <input formControlName="whatsappDelayMaxSegundos" type="number" class="form-input-admin" placeholder="8" />
                 </app-form-field>
-                <app-form-field label="Limite por minuto">
+                <app-form-field label="Limite por minuto" [error]="campoErro('whatsappLimitePorMinuto')">
                   <input formControlName="whatsappLimitePorMinuto" type="number" class="form-input-admin" placeholder="30" />
                 </app-form-field>
-                <app-form-field label="Limite por dia">
+                <app-form-field label="Limite por dia" [error]="campoErro('whatsappLimitePorDia')">
                   <input formControlName="whatsappLimitePorDia" type="number" class="form-input-admin" placeholder="1000" />
                 </app-form-field>
-                <app-form-field label="Modo de envio">
+                <app-form-field label="Modo de envio" [error]="campoErro('whatsappModoEnvio')">
                   <select formControlName="whatsappModoEnvio" class="form-input-admin">
                     <option value="SEGURO">Seguro</option>
                     <option value="BALANCEADO">Balanceado</option>
@@ -143,10 +143,10 @@
                 <label class="config-toggle">Exigir consentimento <input type="checkbox" formControlName="exigirConsentimento" /></label>
                 <label class="config-toggle">Consentimento expira <input type="checkbox" formControlName="consentimentoExpira" /></label>
                 <label class="config-toggle">Bloqueio automático <input type="checkbox" formControlName="bloqueioAutomatico" /></label>
-                <app-form-field label="Dias para expiração do consentimento">
+                <app-form-field label="Dias para expiração do consentimento" [error]="campoErro('diasExpiracaoConsentimento')">
                   <input formControlName="diasExpiracaoConsentimento" type="number" class="form-input-admin" placeholder="365" />
                 </app-form-field>
-                <app-form-field label="Limite de falhas para bloqueio">
+                <app-form-field label="Limite de falhas para bloqueio" [error]="campoErro('limiteFalhasParaBloqueio')">
                   <input formControlName="limiteFalhasParaBloqueio" type="number" class="form-input-admin" placeholder="3" />
                 </app-form-field>
               </div>
@@ -175,20 +175,20 @@
               </p>
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <label class="config-toggle md:col-span-2">Retry automático <input type="checkbox" formControlName="retryAutomatico" /></label>
-                <app-form-field label="Tentativas de retry" helper="Quantas vezes reenviar após falha">
+                <app-form-field label="Tentativas de retry" helper="Quantas vezes reenviar após falha" [error]="campoErro('retryTentativas')">
                   <input formControlName="retryTentativas" type="number" class="form-input-admin" placeholder="3" />
                 </app-form-field>
-                <app-form-field label="Intervalo entre tentativas (segundos)">
+                <app-form-field label="Intervalo entre tentativas (segundos)" [error]="campoErro('retryIntervaloSegundos')">
                   <input formControlName="retryIntervaloSegundos" type="number" class="form-input-admin" placeholder="60" />
                 </app-form-field>
-                <app-form-field label="Prioridade padrão">
+                <app-form-field label="Prioridade padrão" [error]="campoErro('prioridadePadrao')">
                   <select formControlName="prioridadePadrao" class="form-input-admin">
                     <option value="BAIXA">Baixa</option>
                     <option value="NORMAL">Normal</option>
                     <option value="ALTA">Alta</option>
                   </select>
                 </app-form-field>
-                <app-form-field label="Expiração da fila (horas)" helper="Tempo máximo na fila antes de cancelar">
+                <app-form-field label="Expiração da fila (horas)" helper="Tempo máximo na fila antes de cancelar" [error]="campoErro('expiracaoFilaHoras')">
                   <input formControlName="expiracaoFilaHoras" type="number" class="form-input-admin" placeholder="24" />
                 </app-form-field>
               </div>
@@ -250,10 +250,10 @@
             </div>
           }
           <div [formGroup]="apiKeyForm" class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-            <app-form-field label="Nome da chave">
+            <app-form-field label="Nome da chave" [error]="campoErroApiKey('nome')">
               <input formControlName="nome" class="form-input-admin" placeholder="Integração OrcaFacil" />
             </app-form-field>
-            <app-form-field label="Expira em" helper="Opcional">
+            <app-form-field label="Expira em"  [error]="campoErroApiKey('expiraEm')">
               <input formControlName="expiraEm" type="datetime-local" class="form-input-admin" />
             </app-form-field>
             <button type="button" (click)="criarApiKey()" class="px-4 py-3 rounded-xl bg-[var(--color-primary)] text-[var(--color-bg-base)] text-sm font-semibold h-[46px]">Gerar API Key</button>
@@ -266,6 +266,9 @@
               </label>
             }
           </div>
+          @if (campoErroApiKey('scopes')) {
+            <p class="text-[var(--color-danger)] text-xs m-0">{{ campoErroApiKey('scopes') }}</p>
+          }
           <div class="overflow-x-auto">
             <table class="w-full text-sm">
               <thead>

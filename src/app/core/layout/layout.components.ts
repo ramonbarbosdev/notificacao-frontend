@@ -22,9 +22,11 @@ import {
   X,
 } from 'lucide-angular';
 import { AuthService } from '../auth/auth.service';
+import { FeatureFlagStore } from '../services/feature-flag.store';
 import { LayoutService } from './layout.service';
 import { APP_NOME } from '../../shared/config/product.config';
 import { FOCO_WHATSAPP } from '../../shared/config/product.config';
+import { RecursoFeature } from '../../shared/types/dtos';
 
 interface NavItem {
   label: string;
@@ -33,6 +35,7 @@ interface NavItem {
   scope: 'ADMIN_GLOBAL' | 'ORG';
   roles?: string[];
   ocultoModoWhatsapp?: boolean;
+  recurso?: RecursoFeature;
 }
 
 @Component({
@@ -44,6 +47,7 @@ interface NavItem {
 export class SidebarComponent {
   readonly authService = inject(AuthService);
   readonly layout = inject(LayoutService);
+  readonly featureFlags = inject(FeatureFlagStore);
   readonly brandIcon = MessageCircle;
   readonly appNome = APP_NOME;
   readonly logoutIcon = LogOut;
@@ -105,12 +109,6 @@ export class SidebarComponent {
       scope: 'ADMIN_GLOBAL',
     },
     {
-      label: 'Definir Admin',
-      rota: '/admin/definir-admin',
-      icon: Shield,
-      scope: 'ADMIN_GLOBAL',
-    },
-    {
       label: 'Dashboard',
       rota: '/app/dashboard',
       icon: LayoutDashboard,
@@ -123,6 +121,7 @@ export class SidebarComponent {
       icon: MessageCircle,
       scope: 'ORG',
       roles: ['ADMIN', 'USER'],
+      recurso: 'WHATSAPP',
     },
     {
       label: 'Notificações',
@@ -145,6 +144,7 @@ export class SidebarComponent {
     //   icon: MessageSquareText,
     //   scope: 'ORG',
     //   roles: ['ADMIN', 'USER'],
+    //   recurso: 'TEMPLATES',
     // },
     {
       label: 'Documentação',
@@ -186,6 +186,10 @@ export class SidebarComponent {
     }
 
     if (item.scope === 'ORG' && this.authService.isSuperAdmin()) {
+      return false;
+    }
+
+    if (item.recurso && !this.featureFlags.habilitado(item.recurso)) {
       return false;
     }
 

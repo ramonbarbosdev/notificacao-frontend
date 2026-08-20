@@ -6,7 +6,7 @@
     <div>
       <h1 class="text-2xl font-bold text-[var(--color-text)]">Usuarios por Organizacao</h1>
       <p class="text-[var(--color-text-muted)] text-sm">
-        Cadastre ADMIN ou USER informando a organizacao de destino.
+        Cadastre usuarios, altere perfil ADMIN/USER e gerencie o acesso por organizacao.
       </p>
     </div>
   </div>
@@ -68,6 +68,12 @@
     </button>
   </div>
 
+  @if (erro()) {
+    <div class="bg-[var(--color-danger-bg)] border border-[var(--color-danger-border)] rounded-xl px-4 py-3 mb-6">
+      <p class="text-[var(--color-danger)] text-sm m-0">{{ erro() }}</p>
+    </div>
+  }
+
   @if (erroUsuarios()) {
     <div class="bg-[var(--color-danger-bg)] border border-[var(--color-danger-border)] rounded-xl px-4 py-3 mb-4">
       <p class="text-[var(--color-danger)] text-sm">{{ erroUsuarios() }}</p>
@@ -84,7 +90,7 @@
       <table class="w-full text-sm">
         <thead>
           <tr class="border-b border-[var(--color-border)] text-left text-[var(--color-text-muted)]">
-            <th class="py-3 pr-4 font-medium">ID</th>
+            <!-- <th class="py-3 pr-4 font-medium">ID</th> -->
             <th class="py-3 pr-4 font-medium">CPF</th>
             <th class="py-3 pr-4 font-medium">Nome</th>
             <th class="py-3 pr-4 font-medium">E-mail</th>
@@ -96,14 +102,21 @@
         <tbody>
           @for (usuario of usuarios(); track usuario.idUsuario) {
             <tr class="border-b border-[var(--color-border)] text-[var(--color-text)]">
-              <td class="py-3 pr-4">#{{ usuario.idUsuario }}</td>
+              <!-- <td class="py-3 pr-4">#{{ usuario.idUsuario }}</td> -->
               <td class="py-3 pr-4">{{ formatarCpf(usuario.nuCpf) }}</td>
               <td class="py-3 pr-4">{{ usuario.nmUsuario }}</td>
               <td class="py-3 pr-4">{{ usuario.nmEmail }}</td>
               <td class="py-3 pr-4">
-                <span class="px-2 py-0.5 rounded-full text-xs border border-[var(--color-primary)] text-[var(--color-primary-soft)] bg-[var(--color-accent-soft)]">
-                  {{ usuario.role }}
-                </span>
+                <select
+                  class="form-input-admin py-1.5 text-xs min-w-[7rem]"
+                  [value]="usuario.role"
+                  [disabled]="!usuario.flAtivo || alterandoRoleUsuarioId() === usuario.idUsuario"
+                  (change)="alterarRole(usuario, $any($event.target).value)"
+                >
+                  @for (role of roles; track role) {
+                    <option [value]="role">{{ role }}</option>
+                  }
+                </select>
               </td>
               <td class="py-3 pr-4">
                 <span

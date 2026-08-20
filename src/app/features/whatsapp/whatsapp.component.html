@@ -284,18 +284,7 @@
           Telefone
         </label>
 
-        <input formControlName="telefone" type="tel" inputmode="tel" placeholder="+55 (71) 98118-0200"
-          (input)="atualizarTelefone($event)" class="w-full
-                       bg-[var(--color-surface-muted)]
-                       border border-[var(--color-border-strong)]
-                       rounded-xl px-4 py-3
-                       text-[var(--color-text)]
-                       placeholder:text-[var(--color-text-subtle)]
-                       text-sm
-                       focus:outline-none
-                       focus:ring-2 focus:ring-[var(--color-primary)]
-                       focus:border-transparent
-                       transition-all duration-200" />
+        <app-contato-telefone-sugestoes [control]="formMensagem.controls.telefone" />
 
         @if (formMensagem.get('telefone')?.invalid &&
         formMensagem.get('telefone')?.touched) {
@@ -306,7 +295,7 @@
         }
 
         <p class="text-[var(--color-text-faint)] text-xs mt-1">
-          Formato: 71981180200
+          Digite para sugerir contatos cadastrados · formato: 71981180200
         </p>
       </div>
 
@@ -508,9 +497,11 @@
             </button>
           </div>
 
-          <input formControlName="telefone" type="tel" inputmode="tel" placeholder="Telefone"
-            (input)="atualizarTelefoneLote($index, $event)"
-            class="w-full bg-[var(--color-bg-base)] border border-[var(--color-border-strong)] rounded-xl px-3 py-2 text-[var(--color-text)] placeholder:text-[var(--color-text-subtle)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]" />
+          <app-contato-telefone-sugestoes
+            [control]="telefoneLoteControl($index)"
+            placeholder="Telefone"
+            [compacto]="true"
+          />
 
           @if (item.get('telefone')?.invalid && item.get('telefone')?.touched) {
           <p class="text-[var(--color-danger)] text-xs m-0">Telefone inválido</p>

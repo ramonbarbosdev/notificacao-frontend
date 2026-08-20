@@ -1,9 +1,11 @@
-import { Component, inject } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { SidebarComponent } from './layout.components';
 import { HeaderComponent } from './header/header.component';
 import { LayoutService } from './layout.service';
 import { StatusEnvioBannerComponent } from '../../shared/components/status-envio-banner/status-envio-banner.component';
+import { AuthService } from '../auth/auth.service';
+import { FeatureFlagStore } from '../services/feature-flag.store';
 
 @Component({
   selector: 'app-shell',
@@ -33,6 +35,14 @@ import { StatusEnvioBannerComponent } from '../../shared/components/status-envio
     </div>
   `,
 })
-export class AppShellComponent {
+export class AppShellComponent implements OnInit {
   readonly layout = inject(LayoutService);
+  private readonly auth = inject(AuthService);
+  private readonly featureFlags = inject(FeatureFlagStore);
+
+  ngOnInit(): void {
+    if (this.auth.autenticado() && !this.auth.isSuperAdmin()) {
+      this.featureFlags.carregar().subscribe();
+    }
+  }
 }

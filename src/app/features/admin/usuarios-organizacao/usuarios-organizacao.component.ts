@@ -49,6 +49,7 @@ export class UsuariosOrganizacaoComponent implements OnInit {
   readonly carregandoOrganizacoes = signal(false);
   readonly carregandoUsuarios = signal(false);
   readonly excluindoUsuarioId = signal<number | null>(null);
+  readonly alterandoRoleUsuarioId = signal<number | null>(null);
   readonly erro = signal<string | null>(null);
   readonly erroOrganizacoes = signal<string | null>(null);
   readonly erroUsuarios = signal<string | null>(null);
@@ -243,6 +244,36 @@ export class UsuariosOrganizacaoComponent implements OnInit {
         this.excluindoUsuarioId.set(null);
       },
     });
+  }
+
+  alterarRole(usuario: UsuarioOrganizacaoResponse, role: RoleOrganizacao): void {
+    const idOrganizacao = this.idOrganizacaoSelecionada();
+    if (!idOrganizacao || !usuario.flAtivo || usuario.role === role) return;
+    if (this.alterandoRoleUsuarioId() === usuario.idUsuario) return;
+
+    this.alterandoRoleUsuarioId.set(usuario.idUsuario);
+    this.erro.set(null);
+
+    this.adminService
+      .atualizarUsuarioOrganizacao(idOrganizacao, usuario.idUsuario, {
+        nuCpf: usuario.nuCpf,
+        nmUsuario: usuario.nmUsuario,
+        nmEmail: usuario.nmEmail,
+        senha: null,
+        role,
+      })
+      .subscribe({
+        next: (res) => {
+          this.usuarios.update((lista) =>
+            lista.map((item) => (item.idUsuario === usuario.idUsuario ? res : item))
+          );
+          this.alterandoRoleUsuarioId.set(null);
+        },
+        error: (err: HttpErrorResponse) => {
+          this.erro.set(this.mensagemErro(err, 'Erro ao alterar perfil do usuario.'));
+          this.alterandoRoleUsuarioId.set(null);
+        },
+      });
   }
 
   ativarUsuario(usuario: UsuarioOrganizacaoResponse): void {

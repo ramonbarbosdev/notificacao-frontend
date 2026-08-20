@@ -1,0 +1,59 @@
+<div class="relative">
+  <input
+    type="tel"
+    inputmode="tel"
+    [formControl]="control()"
+    [placeholder]="placeholder()"
+    (input)="onInput($event)"
+    (focus)="onFocus()"
+    (blur)="onBlur()"
+    class="w-full border border-[var(--color-border-strong)] rounded-xl text-[var(--color-text)] placeholder:text-[var(--color-text-subtle)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent transition-all duration-200"
+    [class.bg-[var(--color-surface-muted)]]="!compacto()"
+    [class.bg-[var(--color-bg-base)]]="compacto()"
+    [class.px-4]="!compacto()"
+    [class.py-3]="!compacto()"
+    [class.px-3]="compacto()"
+    [class.py-2]="compacto()"
+  />
+
+  @if (aberto()) {
+    <ul
+      class="absolute z-30 mt-1 w-full max-h-56 overflow-y-auto rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-lg"
+    >
+      @if (carregando() && sugestoes().length === 0) {
+        <li class="px-3 py-2 text-xs text-[var(--color-text-muted)]">Buscando contatos...</li>
+      }
+
+      @for (contato of sugestoes(); track contato.idContato) {
+        <li>
+          <button
+            type="button"
+            (mousedown)="selecionar(contato); $event.preventDefault()"
+            class="w-full text-left px-3 py-2.5 hover:bg-[var(--color-surface-muted)] transition-colors border-b border-[var(--color-border)] last:border-b-0"
+          >
+            <div class="flex items-center justify-between gap-2">
+              <span class="text-sm text-[var(--color-text)] truncate">
+                {{ contato.nmContato || 'Sem nome' }}
+              </span>
+              <span class="text-xs font-mono text-[var(--color-text-muted)] shrink-0">
+                {{ formatarTelefone(contato.destinatario) }}
+              </span>
+            </div>
+            <div class="flex flex-wrap gap-1 mt-1">
+              @if (contato.consentimento) {
+                <span class="text-[10px] px-1.5 py-0.5 rounded border border-[var(--color-success-border)] text-[var(--color-success)]">
+                  consentido
+                </span>
+              }
+              @if (contato.bloqueado) {
+                <span class="text-[10px] px-1.5 py-0.5 rounded border border-[var(--color-danger-border)] text-[var(--color-danger)]">
+                  bloqueado
+                </span>
+              }
+            </div>
+          </button>
+        </li>
+      }
+    </ul>
+  }
+</div>
