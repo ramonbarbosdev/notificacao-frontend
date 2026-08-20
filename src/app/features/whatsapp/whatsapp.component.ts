@@ -173,7 +173,13 @@ export class WhatsappComponent implements OnInit, OnDestroy {
 
   desconectar(): void {
     this.executarAcaoDeConexao(() => this.whatsappService.desconectar(), {
-      onSuccess: () => this.liberarConectar(),
+      onSuccess: () => {
+        this.removerQrDaTela();
+        this.liberarConectar();
+        this.mensagemEvento.set(
+          'Sessão desconectada. Tokens e arquivos locais foram removidos. Conecte novamente para escanear o QR Code.'
+        );
+      },
       fallbackErro: 'Erro ao desconectar o WhatsApp.',
     });
   }

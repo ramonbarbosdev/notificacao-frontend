@@ -20,6 +20,12 @@ const FILA_ERRO_EXPLICACOES: Record<string, { titulo: string; explicacao: string
     explicacao: 'Houve falhas ao enviar e a proteção pausou temporariamente os envios.',
     acao: 'Aguarde o fim da pausa ou reative em WhatsApp após corrigir o problema.',
   },
+  'WhatsApp nao confirmou a entrega da mensagem': {
+    titulo: 'Entrega não confirmada',
+    explicacao:
+      'O WhatsApp aceitou o pacote mas não devolveu recibo (timeout/USync). Isso indica restrição 463 ou contato sem histórico na sessão.',
+    acao: 'Peça para o destinatário enviar a primeira mensagem pelo celular e tente novamente.',
+  },
   'Fora da janela de envio configurada.': {
     titulo: 'Fora do horário',
     explicacao: 'Os envios só são permitidos no horário configurado (ex.: 08h–18h).',
@@ -104,10 +110,15 @@ export function explicarErroFila(erro?: string | null): {
     };
   }
 
-  if (
-    normalizado.includes('nao conseguiu preparar o envio') ||
-    normalizado.includes('não conseguiu preparar o envio') ||
-    normalizado.includes('lid indisponivel') ||
+    if (
+        normalizado.includes('nao conseguiu preparar o envio') ||
+        normalizado.includes('não conseguiu preparar o envio') ||
+        normalizado.includes('nao confirmou a entrega') ||
+        normalizado.includes('nao devolveu recibo') ||
+        normalizado.includes('timed out waiting for message') ||
+        normalizado.includes('usync fetch yielded no results') ||
+        normalizado.includes('tokens de privacidade') ||
+        normalizado.includes('lid indisponivel') ||
     normalizado.includes('lid indisponível') ||
     normalizado.includes('463') ||
     normalizado.includes('tctoken') ||
