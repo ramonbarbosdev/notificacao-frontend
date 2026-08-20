@@ -114,6 +114,7 @@ export class WhatsappComponent implements OnInit, OnDestroy {
   readonly segundosRestantes = signal(0);
   readonly acaoOperacionalCarregando = signal(false);
   readonly acompanhandoEnvio = signal(false);
+  readonly avisoProvisionamento = signal<string | null>(null);
 
   readonly operacional = computed(() => this.status()?.operacional ?? null);
 
@@ -209,7 +210,21 @@ export class WhatsappComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.conectarEventosDaOrganizacao();
     this.conectarEventosFila();
-    this.atualizarStatus();
+    this.provisionarCanalWhatsapp();
+  }
+
+  private provisionarCanalWhatsapp(): void {
+    this.whatsappService.provisionarConfig().subscribe({
+      next: (resposta) => {
+        if (resposta.criada) {
+          this.avisoProvisionamento.set('Canal WhatsApp ativado para esta organização.');
+        } else if (resposta.reativada) {
+          this.avisoProvisionamento.set('Canal WhatsApp reativado para esta organização.');
+        }
+        this.atualizarStatus();
+      },
+      error: () => this.atualizarStatus(),
+    });
   }
 
   ngOnDestroy(): void {

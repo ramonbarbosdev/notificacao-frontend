@@ -6,6 +6,7 @@ import {
   WhatsappStatusResponse,
   EnviarMensagemRequest,
   EnviarMensagemResponse,
+  ProvisionarConfigWhatsappResponse,
 } from '../../shared/types/dtos';
 
 @Injectable({ providedIn: 'root' })
@@ -15,6 +16,10 @@ export class WhatsappService {
 
   status(): Observable<WhatsappStatusResponse> {
     return this.http.get<WhatsappStatusResponse>(`${this.base}/status`);
+  }
+
+  provisionarConfig(): Observable<ProvisionarConfigWhatsappResponse> {
+    return this.http.post<ProvisionarConfigWhatsappResponse>(`${this.base}/provisionar-config`, {});
   }
 
   conectar(): Observable<WhatsappStatusResponse> {

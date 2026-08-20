@@ -77,6 +77,15 @@ export interface WhatsappStatusResponse {
   operacional?: SessaoOperacionalContexto | null;
 }
 
+export interface ProvisionarConfigWhatsappResponse {
+  sucesso: boolean;
+  idOrganizacao: number;
+  canal: string;
+  provedor: string;
+  criada: boolean;
+  reativada: boolean;
+}
+
 export type StatusOperacionalSessao =
   | 'ATIVA'
   | 'PAUSADA'

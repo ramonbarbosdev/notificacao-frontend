@@ -51,6 +51,13 @@ const FILA_ERRO_EXPLICACOES: Record<string, { titulo: string; explicacao: string
     explicacao: 'Há um intervalo mínimo entre mensagens para parecer uso humano.',
     acao: 'A fila enviará automaticamente quando o intervalo terminar.',
   },
+  'Configuracao ativa nao encontrada para o canal WHATSAPP': {
+    titulo: 'Canal WhatsApp não provisionado',
+    explicacao:
+      'Esta organização ainda não tinha a configuração interna do canal WhatsApp necessária para enviar mensagens.',
+    acao:
+      'Abra a página WhatsApp para ativar o canal automaticamente. Se o erro persistir, peça ao administrador para revisar a organização.',
+  },
 };
 
 export function labelStatusOperacional(status?: StatusOperacionalSessao | string | null): string {
@@ -107,6 +114,20 @@ export function explicarErroFila(erro?: string | null): {
       acao:
         'Confira DDI + DDD + número completo, teste abrir o contato no celular ' +
         'e corrija o destinatário antes de tentar novamente.',
+    };
+  }
+
+  if (
+    normalizado.includes('configuracao ativa nao encontrada') ||
+    normalizado.includes('configuração ativa não encontrada')
+  ) {
+    return {
+      mensagem: 'Canal WhatsApp não provisionado',
+      titulo: 'Canal WhatsApp não provisionado',
+      explicacao:
+        'Esta organização ainda não tinha a configuração interna do canal WhatsApp necessária para enviar mensagens.',
+      acao:
+        'Abra a página WhatsApp para ativar o canal automaticamente. Se o erro persistir, peça ao administrador para revisar a organização.',
     };
   }
 
