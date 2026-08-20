@@ -388,53 +388,6 @@ export class NovaOrganizacaoComponent implements OnInit {
     this.executarGateway(org.idOrganizacao, null);
   }
 
-  recarregarHistoricoGateway(): void {
-    const org = this.gatewayPanel.item();
-    if (!org) return;
-
-    const sessao = this.sessaoDaOrganizacao(org);
-    if (!sessao?.temCredenciais) {
-      this.erroGatewayPanel.set(
-        'Esta organizacao ainda nao tem sessao pareada no gateway. Conecte o WhatsApp antes de recarregar o historico.'
-      );
-      return;
-    }
-
-    if (
-      !confirm(
-        `Recarregar historico de conversas da org #${org.idOrganizacao} (${org.nmOrganizacao})?\n\n` +
-          'O cache local sera limpo e o WhatsApp enviara novamente contatos e conversas. ' +
-          'Nao sera necessario escanear o QR Code novamente.'
-      )
-    ) {
-      return;
-    }
-
-    if (this.sincronizandoGatewayId()) return;
-
-    this.sincronizandoGatewayId.set(org.idOrganizacao);
-    this.erroGatewayPanel.set(null);
-    this.mensagemGateway.set(null);
-
-    this.adminService.recarregarHistoricoGateway(org.idOrganizacao).subscribe({
-      next: (status) => {
-        this.sincronizandoGatewayId.set(null);
-        const conectado = status.conectado ? 'conectado' : 'desconectado';
-        const telefone = status.telefone ? ` · ${this.formatarTelefoneGateway(status.telefone)}` : '';
-        this.mensagemGateway.set(
-          `Historico recarregado para org #${org.idOrganizacao}: ${status.status} (${conectado})${telefone}.`
-        );
-        this.carregarSessoesGateway();
-      },
-      error: (err: HttpErrorResponse) => {
-        this.erroGatewayPanel.set(
-          this.mensagemErro(err, 'Erro ao recarregar historico de conversas no gateway.')
-        );
-        this.sincronizandoGatewayId.set(null);
-      },
-    });
-  }
-
   migrarSessaoGateway(): void {
     const org = this.gatewayPanel.item();
     if (!org || !this.idSessaoMigracao) return;
