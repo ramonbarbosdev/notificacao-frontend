@@ -8,6 +8,7 @@ import {
   CheckCircle2,
   LoaderCircle,
   LucideAngularModule,
+  RefreshCw,
   Trash2,
   UserPlus,
 } from 'lucide-angular';
@@ -57,6 +58,7 @@ export class NovaOrganizacaoComponent implements OnInit {
   protected readonly loaderIcon = LoaderCircle;
   protected readonly successIcon = CheckCircle2;
   protected readonly trashIcon = Trash2;
+  protected readonly gatewayIcon = RefreshCw;
 
   readonly roles: RoleOrganizacao[] = ['ADMIN', 'USER'];
   readonly roleOptions = this.roles.map((role) => ({ label: role, value: role }));
@@ -67,6 +69,8 @@ export class NovaOrganizacaoComponent implements OnInit {
   readonly criandoOrganizacao = signal(false);
   readonly criandoUsuario = signal(false);
   readonly excluindoOrganizacaoId = signal<number | null>(null);
+  readonly sincronizandoGatewayId = signal<number | null>(null);
+  readonly mensagemGateway = signal<string | null>(null);
   readonly processandoUsuarioId = signal<number | null>(null);
   readonly erroOrganizacao = signal<string | null>(null);
   readonly erroUsuario = signal<string | null>(null);
@@ -257,6 +261,48 @@ export class NovaOrganizacaoComponent implements OnInit {
     this.executarAcaoOrganizacao(org.idOrganizacao, () =>
       this.adminService.ativarOrganizacao(org.idOrganizacao)
     );
+  }
+
+  atualizarOrgNoGateway(org: OrganizacaoAdminResponse): void {
+    if (this.sincronizandoGatewayId()) return;
+
+    const anteriorTexto = prompt(
+      `Atualizar org #${org.idOrganizacao} (${org.nmOrganizacao}) no gateway WhatsApp.\n\n` +
+        'Se a sessao WhatsApp estava em outro ID, informe o ID anterior.\n' +
+        'Deixe vazio para apenas sincronizar o status atual.',
+      ''
+    );
+
+    if (anteriorTexto === null) return;
+
+    const idAnterior = anteriorTexto.trim() ? Number(anteriorTexto.trim()) : null;
+    if (anteriorTexto.trim() && (!Number.isFinite(idAnterior) || idAnterior! <= 0)) {
+      this.erroListagem.set('ID anterior invalido.');
+      return;
+    }
+
+    this.sincronizandoGatewayId.set(org.idOrganizacao);
+    this.erroListagem.set(null);
+    this.mensagemGateway.set(null);
+
+    this.adminService
+      .atualizarOrganizacaoGateway(org.idOrganizacao, idAnterior)
+      .subscribe({
+        next: (status) => {
+          this.sincronizandoGatewayId.set(null);
+          const conectado = status.conectado ? 'conectado' : 'desconectado';
+          const telefone = status.telefone ? ` · ${status.telefone}` : '';
+          this.mensagemGateway.set(
+            `Gateway atualizado para org #${org.idOrganizacao}: ${status.status} (${conectado})${telefone}.`
+          );
+        },
+        error: (err: HttpErrorResponse) => {
+          this.erroListagem.set(
+            this.mensagemErro(err, 'Erro ao atualizar organizacao no gateway.')
+          );
+          this.sincronizandoGatewayId.set(null);
+        },
+      });
   }
 
   excluirOrganizacaoPermanentemente(org: OrganizacaoAdminResponse): void {

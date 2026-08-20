@@ -14,7 +14,7 @@ import { ContatoListComponent } from './components/contato-list/contato-list.com
 import { ContatoSummaryCardsComponent } from './components/contato-summary-cards/contato-summary-cards.component';
 import { FormPanelComponent } from './components/form-panel/form-panel.component';
 
-type AcaoContato = 'consentimento' | 'bloqueio' | 'sync' | 'import' | 'export' | null;
+type AcaoContato = 'consentimento' | 'bloqueio' | 'sync' | 'import' | 'export' | 'excluir' | null;
 
 import {
   contatoBloqueioFormSchema,
@@ -173,6 +173,11 @@ export class ContatosComponent implements OnInit {
           label: 'Selecionar',
           action: (row) => this.preencherFormulario(row),
         },
+        {
+          label: 'Excluir',
+          color: 'danger',
+          action: (row) => this.excluirContato(row),
+        },
       ],
     },
     );
@@ -268,6 +273,36 @@ export class ContatosComponent implements OnInit {
     this.executar('bloqueio', dados);
   }
 
+  excluirContato(contato: ContatoResponseDTO): void {
+    if (this.acaoAtual()) return;
+
+    const nome = contato.nmContato?.trim() || contato.destinatario;
+    if (!confirm(`Excluir o contato "${nome}"? Esta acao nao pode ser desfeita.`)) {
+      return;
+    }
+
+    this.acaoAtual.set('excluir');
+    this.erro.set(null);
+    this.mensagemImportacao.set(null);
+
+    this.contatoService.excluir(contato.idContato).subscribe({
+      next: () => {
+        this.acaoAtual.set(null);
+        if (this.contatoPanel.item()?.idContato === contato.idContato) {
+          this.contatoPanel.fechar();
+        }
+        this.mensagemImportacao.set('Contato excluido com sucesso.');
+        this.listarContatos();
+      },
+      error: (err) => {
+        this.erro.set(
+          err.error?.mensagem ?? err.error?.erro ?? 'Nao foi possivel excluir o contato.'
+        );
+        this.acaoAtual.set(null);
+      },
+    });
+  }
+
   preencherFormulario(contato: ContatoResponseDTO): void {
     this.form.patchValue({
       canal: contato.canal,
@@ -349,8 +384,12 @@ export class ContatosComponent implements OnInit {
     this.resposta.set(null);
 
     this.contatoService.sincronizarWhatsapp().subscribe({
-      next: () => {
+      next: (resultado) => {
         this.acaoAtual.set(null);
+        this.mensagemImportacao.set(
+          `${resultado.importados} importados, ${resultado.atualizados} atualizados`
+            + ` (${resultado.totalGateway} no WhatsApp).`
+        );
         this.listarContatos();
       },
       error: (err) => {

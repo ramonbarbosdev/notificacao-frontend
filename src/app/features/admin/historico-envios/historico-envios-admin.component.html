@@ -2,13 +2,13 @@
   <div>
     <h1 class="text-2xl font-bold text-[var(--color-text)]">Histórico global de envios</h1>
     <p class="text-[var(--color-text-muted)] text-sm mt-1">
-      Visualize todas as notificações por organização. Reenvie, cancele ou reative a sessão WhatsApp quando necessário.
+      Veja o que fazer em cada envio, cancele em lote e reative sessões WhatsApp sem abrir o detalhe.
     </p>
   </div>
 
   <button
     type="button"
-    (click)="carregar()"
+    (click)="carregar(); carregarResumo()"
     [disabled]="table.loading()"
     class="px-4 py-3 rounded-xl border border-[var(--color-border)] text-[var(--color-text-muted)]
            hover:text-[var(--color-text)] hover:bg-[var(--color-surface)] disabled:opacity-50 transition-colors text-sm flex items-center gap-2">
@@ -25,6 +25,81 @@
     <p class="text-[var(--color-danger)] text-sm m-0">{{ erro() }}</p>
   </div>
 }
+
+@if (resumoOperacional().length > 0) {
+  <div class="mb-6 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-5 space-y-4">
+    <div>
+      <h2 class="text-sm font-semibold text-[var(--color-text)] m-0">Organizações que precisam de atenção</h2>
+      <p class="text-xs text-[var(--color-text-muted)] mt-1 mb-0">
+        Reative a sessão WhatsApp quando indicado — cancelar envios não remove pausa já aplicada.
+      </p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
+      @for (org of resumoOperacional(); track org.idOrganizacao) {
+        <div class="rounded-xl border border-[var(--color-border)] p-4 flex flex-col sm:flex-row sm:items-center gap-3">
+          <div class="flex-1 min-w-0">
+            <p class="m-0 font-medium text-[var(--color-text)] truncate">{{ org.nmOrganizacao }}</p>
+            <p class="m-0 mt-1 text-xs text-[var(--color-text-muted)]">
+              {{ labelStatusOperacional(org.statusOperacionalWhatsapp) }}
+              @if (org.pausadoAteTexto) {
+                · retoma em {{ org.pausadoAteTexto }}
+              }
+            </p>
+            <p class="m-0 mt-1 text-xs text-[var(--color-text-subtle)]">
+              {{ org.pendentes }} pendente(s) · {{ org.processando }} processando
+              @if (org.falhasContatoWhatsapp > 0) {
+                · {{ org.falhasContatoWhatsapp }} falha(s) contato novo
+              }
+            </p>
+          </div>
+
+          @if (org.precisaReativar) {
+            <button
+              type="button"
+              (click)="reativarWhatsapp(org)"
+              [disabled]="acaoLoading()"
+              class="shrink-0 px-3 py-2 rounded-lg bg-[var(--color-primary)] text-white text-xs disabled:opacity-50">
+              Reativar WhatsApp
+            </button>
+          }
+        </div>
+      }
+    </div>
+  </div>
+}
+
+<div class="mb-4 flex flex-wrap gap-2">
+  <button
+    type="button"
+    (click)="aplicarFiltroRapido('PENDENTE')"
+    class="px-3 py-1.5 rounded-full border text-xs"
+    [class.bg-[var(--color-primary)]]="filtroStatus === 'PENDENTE' && !filtroRapido()"
+    [class.text-white]="filtroStatus === 'PENDENTE' && !filtroRapido()">
+    Pendentes
+  </button>
+  <button
+    type="button"
+    (click)="aplicarFiltroRapido('REATIVAR')"
+    class="px-3 py-1.5 rounded-full border text-xs"
+    [class.bg-[var(--color-primary)]]="filtroRapido() === 'REATIVAR'"
+    [class.text-white]="filtroRapido() === 'REATIVAR'">
+    Precisam reativar sessão
+  </button>
+  <button
+    type="button"
+    (click)="aplicarFiltroRapido('CONTATO_463')"
+    class="px-3 py-1.5 rounded-full border text-xs"
+    [class.bg-[var(--color-primary)]]="filtroRapido() === 'CONTATO_463'"
+    [class.text-white]="filtroRapido() === 'CONTATO_463'">
+    Falha contato novo (463)
+  </button>
+  @if (filtroRapido()) {
+    <button type="button" (click)="limparFiltroRapido()" class="px-3 py-1.5 rounded-full border text-xs text-[var(--color-text-muted)]">
+      Limpar filtro rápido
+    </button>
+  }
+</div>
 
 <div class="mb-6 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-5 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-3">
   <div>
@@ -82,11 +157,40 @@
   </div>
 </div>
 
+@if (selecionados().size > 0 || filtroOrganizacao) {
+  <div class="mb-4 flex flex-wrap items-center gap-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] px-4 py-3">
+    @if (selecionados().size > 0) {
+      <span class="text-xs text-[var(--color-text-muted)]">{{ selecionados().size }} selecionado(s)</span>
+      <button
+        type="button"
+        (click)="cancelarSelecionados()"
+        [disabled]="acaoLoading()"
+        class="px-3 py-1.5 rounded-lg border border-[var(--color-danger-border)] text-[var(--color-danger)] text-xs disabled:opacity-50">
+        Cancelar selecionados
+      </button>
+    }
+    @if (filtroOrganizacao) {
+      <button
+        type="button"
+        (click)="cancelarTodosCancelaveisOrganizacao()"
+        [disabled]="acaoLoading()"
+        class="px-3 py-1.5 rounded-lg border text-xs disabled:opacity-50">
+        Cancelar todos canceláveis da org
+      </button>
+    }
+    <input
+      type="text"
+      [(ngModel)]="motivoCancelamento"
+      placeholder="Motivo do cancelamento (opcional)"
+      class="flex-1 min-w-[220px] rounded-lg border px-3 py-1.5 text-xs bg-[var(--color-bg-base)]" />
+  </div>
+}
+
 @if (table.loading() && itens().length === 0) {
   <div class="flex justify-center py-16">
     <lucide-icon [img]="loaderIcon" class="w-8 h-8 animate-spin text-[var(--color-text-muted)]" />
   </div>
-} @else if (itens().length === 0) {
+} @else if (itensVisiveis().length === 0) {
   <app-empty-state titulo="Nenhum envio encontrado" descricao="Ajuste os filtros ou aguarde novas notificações." />
 } @else {
   <div class="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl overflow-hidden">
@@ -94,18 +198,34 @@
       <table class="w-full text-sm">
         <thead class="bg-[var(--color-surface-muted)] text-[var(--color-text-muted)]">
           <tr>
+            <th class="px-3 py-3 w-10">
+              <input
+                type="checkbox"
+                [checked]="todosCancelaveisSelecionados()"
+                (change)="toggleSelecionarTodosCancelaveis($event)"
+                title="Selecionar canceláveis da página" />
+            </th>
             <th class="text-left px-4 py-3 font-medium">Data</th>
             <th class="text-left px-4 py-3 font-medium">Organização</th>
             <th class="text-left px-4 py-3 font-medium">Canal</th>
             <th class="text-left px-4 py-3 font-medium">Destinatário</th>
             <th class="text-left px-4 py-3 font-medium">Status</th>
+            <th class="text-left px-4 py-3 font-medium min-w-[180px]">Ação sugerida</th>
             <th class="text-left px-4 py-3 font-medium">Retomada</th>
             <th class="text-right px-4 py-3 font-medium">Ações</th>
           </tr>
         </thead>
         <tbody>
-          @for (item of itens(); track item.idNotificacao) {
+          @for (item of itensVisiveis(); track item.idNotificacao) {
             <tr class="border-t border-[var(--color-border)] hover:bg-[var(--color-surface-muted)]/40">
+              <td class="px-3 py-3">
+                @if (podeCancelar(item.status)) {
+                  <input
+                    type="checkbox"
+                    [checked]="estaSelecionado(item.idNotificacao)"
+                    (change)="toggleSelecao(item.idNotificacao, $any($event.target).checked)" />
+                }
+              </td>
               <td class="px-4 py-3 whitespace-nowrap">{{ formatarData(item.criadoEm) }}</td>
               <td class="px-4 py-3">
                 <div class="font-medium text-[var(--color-text)]">{{ item.nmOrganizacao }}</div>
@@ -118,11 +238,39 @@
                   {{ statusBadge(item.status).label }}
                 </span>
               </td>
+              <td class="px-4 py-3">
+                <div class="space-y-1">
+                  <span class="inline-flex px-2 py-0.5 rounded-full border text-xs font-medium" [ngClass]="acaoSugeridaClass(item)">
+                    {{ item.acaoSugeridaTitulo ?? '—' }}
+                  </span>
+                  @if (item.acaoSugeridaDetalhe) {
+                    <p class="m-0 text-xs text-[var(--color-text-muted)] line-clamp-2">{{ item.acaoSugeridaDetalhe }}</p>
+                  }
+                </div>
+              </td>
               <td class="px-4 py-3 text-[var(--color-text-muted)]">
                 {{ item.retomadaPrevistaTexto ?? '—' }}
               </td>
               <td class="px-4 py-3">
-                <div class="flex justify-end gap-2">
+                <div class="flex justify-end flex-wrap gap-2">
+                  @if (item.acaoSugeridaCodigo === 'REATIVAR_SESSAO_WHATSAPP' && item.canal === 'WHATSAPP') {
+                    <button
+                      type="button"
+                      (click)="reativarWhatsapp(item)"
+                      [disabled]="acaoLoading()"
+                      class="px-3 py-1.5 rounded-lg bg-[var(--color-primary)] text-white text-xs disabled:opacity-50">
+                      Reativar
+                    </button>
+                  }
+                  @if (podeCancelar(item.status)) {
+                    <button
+                      type="button"
+                      (click)="cancelarItem(item)"
+                      [disabled]="acaoLoading()"
+                      class="px-3 py-1.5 rounded-lg border border-[var(--color-danger-border)] text-[var(--color-danger)] text-xs disabled:opacity-50">
+                      Cancelar
+                    </button>
+                  }
                   <button type="button" (click)="abrirDetalhe(item)" class="px-3 py-1.5 rounded-lg border border-[var(--color-border)] text-xs">
                     Detalhes
                   </button>
@@ -142,6 +290,9 @@
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 py-3 border-t border-[var(--color-border)]">
       <p class="text-xs text-[var(--color-text-muted)] m-0">
         Página {{ table.paginaAtual() + 1 }} de {{ table.totalPaginas() }} · {{ table.totalElementos() }} registros
+        @if (filtroRapido()) {
+          · {{ itensVisiveis().length }} visível(is) nesta página com filtro rápido
+        }
       </p>
       <div class="flex items-center gap-2">
         <select [value]="table.tamanhoPagina()" (change)="alterarTamanhoPagina($event)" class="rounded-lg border border-[var(--color-border)] px-2 py-1 text-xs">
@@ -163,6 +314,15 @@
   (closed)="panel.fechar()">
   @if (panel.item(); as detalhe) {
     <div class="space-y-4 text-sm">
+      @if (detalhe.acaoSugeridaTitulo && detalhe.acaoSugeridaTitulo !== '—') {
+        <div class="rounded-xl border app-alert-warning px-4 py-3">
+          <p class="m-0 font-medium app-text-warning">{{ detalhe.acaoSugeridaTitulo }}</p>
+          @if (detalhe.acaoSugeridaDetalhe) {
+            <p class="m-0 mt-1 text-[var(--color-text-muted)]">{{ detalhe.acaoSugeridaDetalhe }}</p>
+          }
+        </div>
+      }
+
       <div class="grid grid-cols-2 gap-3">
         <div><span class="text-[var(--color-text-muted)]">Organização</span><p class="m-0 font-medium">{{ detalhe.nmOrganizacao }}</p></div>
         <div><span class="text-[var(--color-text-muted)]">Status</span><p class="m-0 font-medium">{{ statusLabels[detalhe.status] }}</p></div>
@@ -172,6 +332,13 @@
         <div><span class="text-[var(--color-text-muted)]">Criado em</span><p class="m-0">{{ formatarData(detalhe.criadoEm) }}</p></div>
       </div>
 
+      @if (detalhe.motivoAguardando) {
+        <div class="rounded-xl border border-[var(--color-border)] px-4 py-3">
+          <p class="m-0 text-[var(--color-text-muted)] text-xs uppercase tracking-wide">Motivo na fila</p>
+          <p class="m-0 mt-1">{{ detalhe.motivoAguardando }}</p>
+        </div>
+      }
+
       @if (detalhe.retomadaPrevistaTexto) {
         <div class="rounded-xl border app-alert-warning px-4 py-3">
           <p class="m-0 app-text-warning font-medium">Retomada prevista: {{ detalhe.retomadaPrevistaTexto }}</p>
@@ -180,8 +347,11 @@
 
       @if (detalhe.erro) {
         <div class="rounded-xl border border-[var(--color-danger-border)] bg-[var(--color-danger-bg)] px-4 py-3">
-          <p class="m-0 font-medium text-[var(--color-danger)]">{{ detalheErro(detalhe.erro).titulo ?? 'Erro' }}</p>
+          <p class="m-0 font-medium text-[var(--color-danger)]">{{ detalheErro(detalhe.erro, detalhe.codigoErro).titulo ?? 'Erro' }}</p>
           <p class="m-0 mt-1 text-[var(--color-text-muted)]">{{ detalhe.erro }}</p>
+          @if (detalheErro(detalhe.erro, detalhe.codigoErro).acao) {
+            <p class="m-0 mt-2 text-xs text-[var(--color-text)]">{{ detalheErro(detalhe.erro, detalhe.codigoErro).acao }}</p>
+          }
         </div>
       }
 
@@ -191,6 +361,11 @@
       </div>
 
       <div class="flex flex-wrap gap-2 pt-2">
+        @if (detalhe.acaoSugeridaCodigo === 'REATIVAR_SESSAO_WHATSAPP' && detalhe.canal === 'WHATSAPP') {
+          <button type="button" (click)="reativarWhatsapp(detalhe)" [disabled]="acaoLoading()" class="px-4 py-2 rounded-xl bg-[var(--color-primary)] text-white text-sm disabled:opacity-50">
+            Reativar envios da org
+          </button>
+        }
         @if (podeReenviar(detalhe.status)) {
           <button type="button" (click)="reenviar(detalhe)" [disabled]="acaoLoading()" class="px-4 py-2 rounded-xl bg-[var(--color-primary)] text-white text-sm disabled:opacity-50">
             Reenviar
@@ -200,11 +375,6 @@
           <input type="text" [(ngModel)]="motivoCancelamento" placeholder="Motivo do cancelamento (opcional)" class="flex-1 min-w-[200px] rounded-xl border px-3 py-2 text-sm" />
           <button type="button" (click)="cancelar(detalhe)" [disabled]="acaoLoading()" class="px-4 py-2 rounded-xl border border-[var(--color-danger-border)] text-[var(--color-danger)] text-sm">
             Cancelar envio
-          </button>
-        }
-        @if (detalhe.canal === 'WHATSAPP') {
-          <button type="button" (click)="reativarWhatsapp(detalhe)" [disabled]="acaoLoading()" class="px-4 py-2 rounded-xl border text-sm">
-            Reativar envios da org
           </button>
         }
       </div>

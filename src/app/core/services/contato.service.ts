@@ -9,6 +9,7 @@ import {
   ContatoRequestDTO,
   ContatoResponseDTO,
   PageResult,
+  SincronizarContatosWhatsappResponseDTO,
 } from '../../shared/types/dtos';
 
 @Injectable({ providedIn: 'root' })
@@ -76,8 +77,11 @@ export class ContatoService {
     );
   }
 
-  sincronizarWhatsapp(): Observable<void> {
-    return this.http.post<void>(`${this.base}/sincronizar-whatsapp`, {});
+  sincronizarWhatsapp(): Observable<SincronizarContatosWhatsappResponseDTO> {
+    return this.http.post<SincronizarContatosWhatsappResponseDTO>(
+      `${this.base}/sincronizar-whatsapp`,
+      {}
+    );
   }
 
   removerBloqueio(idContato: number): Observable<ContatoResponseDTO> {
@@ -92,5 +96,9 @@ export class ContatoService {
       `${this.base}/${idContato}/revogar-consentimento`,
       {}
     );
+  }
+
+  excluir(idContato: number): Observable<void> {
+    return this.http.delete<void>(`${this.base}/${idContato}`);
   }
 }

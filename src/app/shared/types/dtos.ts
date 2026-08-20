@@ -305,10 +305,36 @@ export interface AdminNotificacaoFilaItem {
   codigoErro?: string | null;
   criadoEm: string;
   atualizadoEm: string;
+  acaoSugeridaCodigo?: string | null;
+  acaoSugeridaTitulo?: string | null;
+  acaoSugeridaDetalhe?: string | null;
+  acaoSugeridaDestaque?: boolean;
 }
 
 export interface AdminNotificacaoDetalhe extends AdminNotificacaoFilaItem {
   mensagem: string;
+}
+
+export interface AdminOrganizacaoOperacionalResumo {
+  idOrganizacao: number;
+  nmOrganizacao: string;
+  statusOperacionalWhatsapp: StatusOperacionalSessao;
+  precisaReativar: boolean;
+  pausadoAte: string | null;
+  pausadoAteTexto: string | null;
+  pendentes: number;
+  processando: number;
+  falhasContatoWhatsapp: number;
+}
+
+export interface AdminResumoOperacional {
+  organizacoes: AdminOrganizacaoOperacionalResumo[];
+}
+
+export interface CancelarNotificacaoLoteResponse {
+  cancelados: number;
+  ignorados: number;
+  totalSolicitados: number;
 }
 
 // TEMPLATES
@@ -418,6 +444,13 @@ export interface ContatoResponseDTO {
   motivoBloqueio: string | null;
   dtConsentimento: string | null;
   dtBloqueio: string | null;
+}
+
+export interface SincronizarContatosWhatsappResponseDTO {
+  importados: number;
+  atualizados: number;
+  removidos: number;
+  totalGateway: number;
 }
 
 // ADMIN

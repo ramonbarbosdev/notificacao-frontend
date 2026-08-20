@@ -36,8 +36,11 @@ export function extrairMensagemErro(
   return extrairMensagemErroHttp(err, fallback);
 }
 
-export function detalheErroEnvio(mensagem: string | null | undefined) {
-  return explicarErroFila(mensagem);
+export function detalheErroEnvio(
+  mensagem: string | null | undefined,
+  codigoErro?: string | null,
+) {
+  return explicarErroFila(mensagem, codigoErro);
 }
 
 /** Gateway pode retornar CONNECTED; API interna usa CONECTADO. */

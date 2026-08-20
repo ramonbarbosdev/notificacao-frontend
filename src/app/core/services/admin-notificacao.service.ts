@@ -5,7 +5,9 @@ import { environment } from '../../../environments/environment';
 import {
   AdminNotificacaoDetalhe,
   AdminNotificacaoFilaItem,
+  AdminResumoOperacional,
   ApiResponseDTO,
+  CancelarNotificacaoLoteResponse,
   PageResult,
   WhatsappStatusResponse,
 } from '../../shared/types/dtos';
@@ -69,5 +71,18 @@ export class AdminNotificacaoService {
       `${this.base}/organizacoes/${idOrganizacao}/whatsapp/reativar-operacao`,
       {}
     );
+  }
+
+  resumoOperacional(): Observable<AdminResumoOperacional> {
+    return this.http.get<AdminResumoOperacional>(`${this.base}/resumo-operacional`);
+  }
+
+  cancelarLote(payload: {
+    ids?: number[];
+    idOrganizacao?: number;
+    somenteCancelaveis?: boolean;
+    motivo?: string;
+  }): Observable<CancelarNotificacaoLoteResponse> {
+    return this.http.post<CancelarNotificacaoLoteResponse>(`${this.base}/cancelar-lote`, payload);
   }
 }

@@ -9,6 +9,7 @@ import {
   CriarUsuarioOrganizacaoRequest,
   OrganizacaoAdminResponse,
   UsuarioOrganizacaoResponse,
+  WhatsappStatusResponse,
 } from '../../shared/types/dtos';
 
 @Injectable({ providedIn: 'root' })
@@ -95,6 +96,16 @@ export class AdminService {
   excluirUsuarioPermanentemente(idOrganizacao: number, idUsuario: number): Observable<void> {
     return this.http.delete<void>(
       `${this.base}/organizacoes/${idOrganizacao}/usuarios/${idUsuario}/permanente`
+    );
+  }
+
+  atualizarOrganizacaoGateway(
+    idOrganizacao: number,
+    idOrganizacaoAnterior?: number | null
+  ): Observable<WhatsappStatusResponse> {
+    return this.http.post<WhatsappStatusResponse>(
+      `${this.base}/organizacoes/${idOrganizacao}/whatsapp/atualizar-gateway`,
+      idOrganizacaoAnterior ? { idOrganizacaoAnterior } : {}
     );
   }
 }

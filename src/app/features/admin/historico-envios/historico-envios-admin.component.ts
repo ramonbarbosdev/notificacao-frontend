@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
   LoaderCircle,
@@ -21,14 +21,20 @@ import { useSidePanel } from '../../../shared/helper/side-panel.state';
 import { formatCanal } from '../../../shared/helper/channel.utils';
 import { formatDateTimePtBr } from '../../../shared/helper/date.utils';
 import { formatDestinatario } from '../../../shared/helper/phone.utils';
-import { explicarErroFila } from '../../../shared/labels/whatsapp-operacional.labels';
+import {
+  explicarErroFila,
+  labelStatusOperacional,
+} from '../../../shared/labels/whatsapp-operacional.labels';
 import {
   AdminNotificacaoDetalhe,
   AdminNotificacaoFilaItem,
+  AdminOrganizacaoOperacionalResumo,
   CanalNotificacao,
   OrganizacaoAdminResponse,
   StatusNotificacao,
 } from '../../../shared/types/dtos';
+
+type FiltroRapido = '' | 'REATIVAR' | 'CONTATO_463';
 
 @Component({
   selector: 'app-historico-envios-admin',
@@ -57,6 +63,9 @@ export class HistoricoEnviosAdminComponent implements OnInit {
   readonly panel = useSidePanel<AdminNotificacaoDetalhe>();
   readonly itens = signal<AdminNotificacaoFilaItem[]>([]);
   readonly organizacoes = signal<OrganizacaoAdminResponse[]>([]);
+  readonly resumoOperacional = signal<AdminOrganizacaoOperacionalResumo[]>([]);
+  readonly selecionados = signal<Set<number>>(new Set());
+  readonly filtroRapido = signal<FiltroRapido>('');
   readonly erro = signal<string | null>(null);
   readonly acaoLoading = signal(false);
   motivoCancelamento = '';
@@ -65,6 +74,32 @@ export class HistoricoEnviosAdminComponent implements OnInit {
   filtroDestinatario = '';
   filtroCanal: CanalNotificacao | '' = '';
   filtroStatus: StatusNotificacao | '' = '';
+
+  readonly itensVisiveis = computed(() => {
+    const filtro = this.filtroRapido();
+    const lista = this.itens();
+
+    if (filtro === 'REATIVAR') {
+      return lista.filter((item) => item.acaoSugeridaCodigo === 'REATIVAR_SESSAO_WHATSAPP');
+    }
+
+    if (filtro === 'CONTATO_463') {
+      return lista.filter((item) => item.acaoSugeridaCodigo === 'CONTATO_INICIAR_CONVERSA');
+    }
+
+    return lista;
+  });
+
+  readonly itensCancelaveisVisiveis = computed(() =>
+    this.itensVisiveis().filter((item) => this.podeCancelar(item.status))
+  );
+
+  readonly todosCancelaveisSelecionados = computed(() => {
+    const cancelaveis = this.itensCancelaveisVisiveis();
+    if (cancelaveis.length === 0) return false;
+    const selecionados = this.selecionados();
+    return cancelaveis.every((item) => selecionados.has(item.idNotificacao));
+  });
 
   readonly statusLabels: Record<StatusNotificacao, string> = {
     PENDENTE: 'Pendente',
@@ -81,12 +116,14 @@ export class HistoricoEnviosAdminComponent implements OnInit {
     this.adminService.listarOrganizacoes().subscribe({
       next: (orgs) => this.organizacoes.set(orgs),
     });
+    this.carregarResumo();
     this.carregar();
   }
 
   carregar(): void {
     this.table.loading.set(true);
     this.erro.set(null);
+    this.selecionados.set(new Set());
 
     this.adminNotificacaoService
       .listarFila({
@@ -110,7 +147,14 @@ export class HistoricoEnviosAdminComponent implements OnInit {
       });
   }
 
+  carregarResumo(): void {
+    this.adminNotificacaoService.resumoOperacional().subscribe({
+      next: (resumo) => this.resumoOperacional.set(resumo.organizacoes ?? []),
+    });
+  }
+
   aplicarFiltros(): void {
+    this.filtroRapido.set('');
     this.table.paginaAtual.set(0);
     this.carregar();
   }
@@ -120,8 +164,24 @@ export class HistoricoEnviosAdminComponent implements OnInit {
     this.filtroDestinatario = '';
     this.filtroCanal = '';
     this.filtroStatus = '';
+    this.filtroRapido.set('');
     this.table.paginaAtual.set(0);
     this.carregar();
+  }
+
+  aplicarFiltroRapido(tipo: FiltroRapido | 'PENDENTE'): void {
+    if (tipo === 'PENDENTE') {
+      this.filtroStatus = 'PENDENTE';
+      this.filtroRapido.set('');
+      this.aplicarFiltros();
+      return;
+    }
+
+    this.filtroRapido.set(tipo);
+  }
+
+  limparFiltroRapido(): void {
+    this.filtroRapido.set('');
   }
 
   proximaPagina(): void {
@@ -159,19 +219,116 @@ export class HistoricoEnviosAdminComponent implements OnInit {
     );
   }
 
-  reativarWhatsapp(detalhe: AdminNotificacaoDetalhe): void {
-    if (!confirm(`Reativar operação WhatsApp da organização ${detalhe.nmOrganizacao}?`)) return;
+  cancelarItem(item: AdminNotificacaoFilaItem): void {
+    if (!confirm(`Cancelar notificação #${item.idNotificacao}?`)) return;
     this.acaoLoading.set(true);
-    this.adminNotificacaoService.reativarWhatsappOrganizacao(detalhe.idOrganizacao).subscribe({
+    this.adminNotificacaoService.cancelar(item.idNotificacao, this.motivoCancelamento).subscribe({
       next: () => {
         this.acaoLoading.set(false);
         this.carregar();
+        this.carregarResumo();
+      },
+      error: (err: HttpErrorResponse) => {
+        this.erro.set(err.error?.mensagem ?? err.error?.erro ?? 'Erro ao cancelar.');
+        this.acaoLoading.set(false);
+      },
+    });
+  }
+
+  cancelarSelecionados(): void {
+    const ids = [...this.selecionados()];
+    if (ids.length === 0) return;
+    if (!confirm(`Cancelar ${ids.length} notificação(ões) selecionada(s)?`)) return;
+
+    this.acaoLoading.set(true);
+    this.adminNotificacaoService
+      .cancelarLote({ ids, motivo: this.motivoCancelamento || undefined })
+      .subscribe({
+        next: (resultado) => {
+          this.acaoLoading.set(false);
+          this.selecionados.set(new Set());
+          this.carregar();
+          this.carregarResumo();
+          if (resultado.ignorados > 0) {
+            this.erro.set(
+              `${resultado.cancelados} cancelada(s). ${resultado.ignorados} ignorada(s) (já enviadas ou indisponíveis).`
+            );
+          }
+        },
+        error: (err: HttpErrorResponse) => {
+          this.erro.set(err.error?.mensagem ?? err.error?.erro ?? 'Erro ao cancelar em lote.');
+          this.acaoLoading.set(false);
+        },
+      });
+  }
+
+  cancelarTodosCancelaveisOrganizacao(): void {
+    if (!this.filtroOrganizacao) return;
+    const org = this.organizacoes().find((o) => o.idOrganizacao === this.filtroOrganizacao);
+    const nome = org?.nmOrganizacao ?? `org #${this.filtroOrganizacao}`;
+    if (!confirm(`Cancelar todos os envios canceláveis de ${nome}?`)) return;
+
+    this.acaoLoading.set(true);
+    this.adminNotificacaoService
+      .cancelarLote({
+        idOrganizacao: this.filtroOrganizacao,
+        somenteCancelaveis: true,
+        motivo: this.motivoCancelamento || undefined,
+      })
+      .subscribe({
+        next: (resultado) => {
+          this.acaoLoading.set(false);
+          this.selecionados.set(new Set());
+          this.carregar();
+          this.carregarResumo();
+          if (resultado.ignorados > 0) {
+            this.erro.set(
+              `${resultado.cancelados} cancelada(s). ${resultado.ignorados} ignorada(s).`
+            );
+          }
+        },
+        error: (err: HttpErrorResponse) => {
+          this.erro.set(err.error?.mensagem ?? err.error?.erro ?? 'Erro ao cancelar em lote.');
+          this.acaoLoading.set(false);
+        },
+      });
+  }
+
+  reativarWhatsapp(org: AdminOrganizacaoOperacionalResumo | AdminNotificacaoDetalhe | AdminNotificacaoFilaItem): void {
+    if (!confirm(`Reativar operação WhatsApp da organização ${org.nmOrganizacao}?`)) return;
+    this.acaoLoading.set(true);
+    this.adminNotificacaoService.reativarWhatsappOrganizacao(org.idOrganizacao).subscribe({
+      next: () => {
+        this.acaoLoading.set(false);
+        this.carregar();
+        this.carregarResumo();
       },
       error: (err: HttpErrorResponse) => {
         this.erro.set(err.error?.mensagem ?? 'Erro ao reativar WhatsApp.');
         this.acaoLoading.set(false);
       },
     });
+  }
+
+  toggleSelecao(idNotificacao: number, checked: boolean): void {
+    const next = new Set(this.selecionados());
+    if (checked) next.add(idNotificacao);
+    else next.delete(idNotificacao);
+    this.selecionados.set(next);
+  }
+
+  toggleSelecionarTodosCancelaveis(event: Event): void {
+    const checked = (event.target as HTMLInputElement).checked;
+    const next = new Set(this.selecionados());
+    for (const item of this.itensCancelaveisVisiveis()) {
+      if (checked) next.add(item.idNotificacao);
+      else next.delete(item.idNotificacao);
+    }
+    this.selecionados.set(next);
+  }
+
+  estaSelecionado(idNotificacao: number): boolean {
+    return this.selecionados().has(idNotificacao);
   }
 
   podeReenviar(status: StatusNotificacao): boolean {
@@ -192,8 +349,17 @@ export class HistoricoEnviosAdminComponent implements OnInit {
     return formatDateTimePtBr(valor);
   }
 
-  detalheErro(erro: string | null | undefined) {
-    return explicarErroFila(erro);
+  labelStatusOperacional = labelStatusOperacional;
+
+  detalheErro(erro: string | null | undefined, codigoErro?: string | null) {
+    return explicarErroFila(erro, codigoErro);
+  }
+
+  acaoSugeridaClass(item: AdminNotificacaoFilaItem): string {
+    if (item.acaoSugeridaDestaque) {
+      return 'app-badge-warning';
+    }
+    return 'bg-[var(--color-surface-muted)] text-[var(--color-text-muted)] border-[var(--color-border)]';
   }
 
   statusBadge(status: StatusNotificacao): { label: string; className: string } {
@@ -224,6 +390,7 @@ export class HistoricoEnviosAdminComponent implements OnInit {
         this.panel.abrir(detalhe);
         this.acaoLoading.set(false);
         this.carregar();
+        this.carregarResumo();
       },
       error: (err: HttpErrorResponse) => {
         this.erro.set(err.error?.mensagem ?? err.error?.erro ?? 'Erro ao executar ação.');

@@ -12,7 +12,7 @@ import { DataTableComponent } from '../../../../shared/components/data-table/dat
 import { DataTableColumn } from '../../../../shared/components/data-table/data-table.types';
 import { ContatoResponseDTO } from '../../../../shared/types/dtos';
 
-type AcaoContato = 'consentimento' | 'bloqueio' | 'sync' | 'import' | 'export' | null;
+type AcaoContato = 'consentimento' | 'bloqueio' | 'sync' | 'import' | 'export' | 'excluir' | null;
 
 @Component({
   selector: 'app-contato-list',

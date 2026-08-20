@@ -1,5 +1,18 @@
 import { StatusOperacionalSessao } from '../types/dtos';
 
+export const CODIGO_ERRO_RESTRICAO_CONTATO_WHATSAPP = 'WHATSAPP_RESTRICAO_463';
+
+export const EXPLICACAO_RESTRICAO_CONTATO_WHATSAPP = {
+  titulo: 'Contato precisa iniciar a conversa',
+  mensagem: 'Restrição do WhatsApp para novo contato',
+  explicacao:
+    'Esta falha é só deste destinatário. A sessão WhatsApp continua ativa para os demais contatos. ' +
+    'O WhatsApp exige histórico ou que o contato envie a primeira mensagem antes de receber mensagens outbound.',
+  acao:
+    'Peça para o destinatário enviar uma mensagem para o seu número conectado. ' +
+    'Depois tente reenviar esta notificação — não é necessário reativar a sessão.',
+};
+
 export const STATUS_OPERACIONAL_LABELS: Record<StatusOperacionalSessao, string> = {
   ATIVA: 'Operação normal',
   PAUSADA: 'Envios pausados',
@@ -81,13 +94,66 @@ export function ehErroNumeroInexistente(mensagem?: string | null): boolean {
   );
 }
 
-export function explicarErroFila(erro?: string | null): {
+export function ehErroRestricaoContatoWhatsapp(
+  mensagem?: string | null,
+  codigoErro?: string | null,
+): boolean {
+  if (codigoErro === CODIGO_ERRO_RESTRICAO_CONTATO_WHATSAPP) {
+    return true;
+  }
+
+  if (!mensagem?.trim()) return false;
+
+  const normalizado = mensagem.toLowerCase();
+
+  return (
+    normalizado.includes('nao conseguiu preparar o envio') ||
+    normalizado.includes('não conseguiu preparar o envio') ||
+    normalizado.includes('nao confirmou a entrega') ||
+    normalizado.includes('nao devolveu recibo') ||
+    normalizado.includes('timed out waiting for message') ||
+    normalizado.includes('usync fetch yielded no results') ||
+    normalizado.includes('tokens de privacidade') ||
+    normalizado.includes('lid indisponivel') ||
+    normalizado.includes('lid indisponível') ||
+    normalizado.includes('463') ||
+    normalizado.includes('tctoken') ||
+    normalizado.includes('restricao 463') ||
+    normalizado.includes('restrição 463') ||
+    normalizado.includes('account restricted')
+  );
+}
+
+export function ehErroPausaSessaoWhatsapp(mensagem?: string | null): boolean {
+  if (!mensagem?.trim()) return false;
+
+  const normalizado = mensagem.toLowerCase();
+
+  return (
+    normalizado.includes('risco operacional') ||
+    normalizado.includes('pausada automaticamente') ||
+    normalizado.includes('bloqueada por protecao operacional')
+  );
+}
+
+export function explicarErroFila(
+  erro?: string | null,
+  codigoErro?: string | null,
+): {
   mensagem: string;
   titulo?: string;
   explicacao?: string;
   acao?: string;
 } {
   const texto = erro?.trim();
+  if (!texto && !ehErroRestricaoContatoWhatsapp(null, codigoErro)) {
+    return { mensagem: '—' };
+  }
+
+  if (ehErroRestricaoContatoWhatsapp(texto, codigoErro)) {
+    return { ...EXPLICACAO_RESTRICAO_CONTATO_WHATSAPP };
+  }
+
   if (!texto) {
     return { mensagem: '—' };
   }
@@ -147,16 +213,7 @@ export function explicarErroFila(erro?: string | null): {
     normalizado.includes('restrição 463') ||
     normalizado.includes('account restricted')
   ) {
-    return {
-      mensagem: 'WhatsApp bloqueou o envio (463)',
-      titulo: 'Restrição do WhatsApp para novo contato',
-      explicacao:
-        'O WhatsApp recusou a mensagem porque este número ainda não tem histórico de conversa com você, ' +
-        'ou a conta está com limite temporário de novas conversas.',
-      acao:
-        'Peça para o destinatário enviar uma mensagem para o seu número primeiro. ' +
-        'Use o WhatsApp no celular normalmente e evite disparos em massa por algumas horas.',
-    };
+    return { ...EXPLICACAO_RESTRICAO_CONTATO_WHATSAPP };
   }
 
   return { mensagem: texto, explicacao: texto };

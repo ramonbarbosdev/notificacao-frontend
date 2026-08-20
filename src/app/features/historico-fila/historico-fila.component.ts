@@ -26,7 +26,11 @@ import {
   maskPhoneInput,
   normalizeBrazilWhatsappMobile,
 } from '../../shared/helper/phone.utils';
-import { explicarErroFila } from '../../shared/labels/whatsapp-operacional.labels';
+import {
+  ehErroPausaSessaoWhatsapp,
+  ehErroRestricaoContatoWhatsapp,
+  explicarErroFila,
+} from '../../shared/labels/whatsapp-operacional.labels';
 import { CanalNotificacao, FilaNotificacaoItemDTO, FilaResumoResponseDTO, StatusNotificacao } from '../../shared/types/dtos';
 
 @Component({
@@ -338,7 +342,7 @@ export class HistoricoFilaComponent implements OnInit, OnDestroy {
       return item.motivoAguardando;
     }
     if (!item.erro?.trim()) return null;
-    const info = explicarErroFila(item.erro);
+    const info = explicarErroFila(item.erro, item.codigoErro);
     return info.titulo ?? info.mensagem;
   }
 
@@ -350,14 +354,15 @@ export class HistoricoFilaComponent implements OnInit, OnDestroy {
         explicacao: item.motivoAguardando,
       };
     }
-    return explicarErroFila(item.erro);
+    return explicarErroFila(item.erro, item.codigoErro);
   }
 
   linkWhatsappOperacional(item: FilaNotificacaoItemDTO): boolean {
     const texto = item.erro ?? item.motivoAguardando ?? '';
-    return (
-      texto.includes('risco operacional') || texto.includes('pausada automaticamente')
-    );
+    if (ehErroRestricaoContatoWhatsapp(texto, item.codigoErro)) {
+      return false;
+    }
+    return ehErroPausaSessaoWhatsapp(texto);
   }
 
   isAdminOrganizacao(): boolean {
