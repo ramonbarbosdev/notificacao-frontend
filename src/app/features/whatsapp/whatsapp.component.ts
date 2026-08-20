@@ -398,9 +398,6 @@ export class WhatsappComponent implements OnInit, OnDestroy {
       case 'DESCONECTAR':
         this.desconectar();
         return;
-      case 'REATIVAR_OPERACAO':
-        this.reativarOperacao();
-        return;
       case 'RECARREGAR_HISTORICO':
         this.recarregarHistorico();
         return;
@@ -450,23 +447,6 @@ export class WhatsappComponent implements OnInit, OnDestroy {
       return `${base} bg-[var(--color-primary)] hover:brightness-110 text-[var(--color-bg-base)] border-transparent`;
     }
     return `${base} bg-[var(--color-surface-muted)] hover:bg-[var(--color-surface)] border-[var(--color-border)] text-[var(--color-text)]`;
-  }
-
-  private reativarOperacao(): void {
-    this.acaoOperacionalCarregando.set(true);
-    this.erroConexao.set(null);
-
-    this.whatsappService.reativarOperacao().subscribe({
-      next: (status) => {
-        this.processarStatusRecebido(status, true);
-        this.acaoOperacionalCarregando.set(false);
-        this.mensagemEvento.set('Sessão reativada. A fila de envios pode retomar.');
-      },
-      error: (err: HttpErrorResponse) => {
-        this.acaoOperacionalCarregando.set(false);
-        this.erroConexao.set(extrairMensagemErro(err, 'Não foi possível reativar a sessão.'));
-      },
-    });
   }
 
   labelStatusAtual(): string {

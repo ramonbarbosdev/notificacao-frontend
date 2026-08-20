@@ -338,6 +338,7 @@ export interface AdminOrganizacaoOperacionalResumo {
   nmOrganizacao: string;
   statusOperacionalWhatsapp: StatusOperacionalSessao;
   precisaReativar: boolean;
+  podeCancelarPausa: boolean;
   pausadoAte: string | null;
   pausadoAteTexto: string | null;
   pendentes: number;

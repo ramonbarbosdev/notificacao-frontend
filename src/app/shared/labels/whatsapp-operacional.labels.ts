@@ -31,7 +31,7 @@ const FILA_ERRO_EXPLICACOES: Record<string, { titulo: string; explicacao: string
   'Sessao WhatsApp pausada automaticamente.': {
     titulo: 'Sessão pausada',
     explicacao: 'Houve falhas ao enviar e a proteção pausou temporariamente os envios.',
-    acao: 'Aguarde o fim da pausa ou reative em WhatsApp após corrigir o problema.',
+    acao: 'Aguarde o fim da pausa automática ou contate o suporte.',
   },
   'WhatsApp nao confirmou a entrega da mensagem': {
     titulo: 'Entrega não confirmada',

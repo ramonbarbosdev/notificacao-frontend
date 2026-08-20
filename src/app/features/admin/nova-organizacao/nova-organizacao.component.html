@@ -112,6 +112,21 @@
                     }
                     Gateway
                   </button>
+                  @if (podeCancelarPausa(org)) {
+                    <button
+                      type="button"
+                      (click)="cancelarPausaOrganizacao(org)"
+                      [disabled]="cancelandoPausaId() === org.idOrganizacao"
+                      class="px-3 py-1.5 rounded-lg border border-[var(--color-warning-border)] text-[var(--color-warning)] hover:bg-[var(--color-warning-bg)] disabled:opacity-50 transition-colors"
+                      title="Cancela a pausa operacional desta organizacao"
+                    >
+                      @if (cancelandoPausaId() === org.idOrganizacao) {
+                        <lucide-icon [img]="loaderIcon" class="w-3.5 h-3.5 animate-spin" />
+                      } @else {
+                        Cancelar pausa
+                      }
+                    </button>
+                  }
                   @if (org.flAtivo) {
                     <button
                       type="button"

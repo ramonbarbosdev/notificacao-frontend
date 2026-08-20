@@ -13,6 +13,7 @@ import {
   UserPlus,
 } from 'lucide-angular';
 import { AdminService } from '../../../core/http/admin.service';
+import { AdminNotificacaoService } from '../../../core/services/admin-notificacao.service';
 import { SidePanelComponent } from '../../../shared/components/side-panel/side-panel.component';
 import { FormInputComponent } from '../../../shared/components/forms/text-input/app-text-input';
 import { FormSelectComponent } from '../../../shared/components/forms/select-input/form-select.component';
@@ -23,6 +24,7 @@ import { useSidePanel } from '../../../shared/helper/side-panel.state';
 import { getZodFieldErrors } from '../../../shared/helper/zod-form.helper';
 import {
   GatewaySessaoResumo,
+  AdminOrganizacaoOperacionalResumo,
   OrganizacaoAdminResponse,
   RoleOrganizacao,
   UsuarioOrganizacaoResponse,
@@ -55,6 +57,7 @@ import {
 export class NovaOrganizacaoComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly adminService = inject(AdminService);
+  private readonly adminNotificacaoService = inject(AdminNotificacaoService);
 
   protected readonly buildingIcon = Building2;
   protected readonly userPlusIcon = UserPlus;
@@ -74,6 +77,8 @@ export class NovaOrganizacaoComponent implements OnInit {
   readonly criandoUsuario = signal(false);
   readonly excluindoOrganizacaoId = signal<number | null>(null);
   readonly sincronizandoGatewayId = signal<number | null>(null);
+  readonly cancelandoPausaId = signal<number | null>(null);
+  readonly resumoOperacionalPorOrg = signal<Record<number, AdminOrganizacaoOperacionalResumo>>({});
   readonly carregandoSessoesGateway = signal(false);
   readonly mensagemGateway = signal<string | null>(null);
   readonly erroGatewayPanel = signal<string | null>(null);
@@ -108,6 +113,52 @@ export class NovaOrganizacaoComponent implements OnInit {
 
   ngOnInit(): void {
     this.carregarOrganizacoes();
+    this.carregarResumoOperacional();
+  }
+
+  carregarResumoOperacional(): void {
+    this.adminNotificacaoService.resumoOperacional().subscribe({
+      next: (resumo) => {
+        const mapa: Record<number, AdminOrganizacaoOperacionalResumo> = {};
+        for (const org of resumo.organizacoes ?? []) {
+          mapa[org.idOrganizacao] = org;
+        }
+        this.resumoOperacionalPorOrg.set(mapa);
+      },
+    });
+  }
+
+  podeCancelarPausa(org: OrganizacaoAdminResponse): boolean {
+    return this.resumoOperacionalPorOrg()[org.idOrganizacao]?.podeCancelarPausa ?? false;
+  }
+
+  cancelarPausaOrganizacao(org: OrganizacaoAdminResponse): void {
+    if (!this.podeCancelarPausa(org) || this.cancelandoPausaId()) return;
+
+    if (
+      !confirm(
+        `Cancelar a pausa da organizacao ${org.nmOrganizacao} (#${org.idOrganizacao})?\n\n` +
+          'Os envios WhatsApp desta org poderao retomar imediatamente.'
+      )
+    ) {
+      return;
+    }
+
+    this.cancelandoPausaId.set(org.idOrganizacao);
+    this.erroListagem.set(null);
+    this.mensagemGateway.set(null);
+
+    this.adminNotificacaoService.reativarWhatsappOrganizacao(org.idOrganizacao).subscribe({
+      next: () => {
+        this.cancelandoPausaId.set(null);
+        this.mensagemGateway.set(`Pausa cancelada para org #${org.idOrganizacao} (${org.nmOrganizacao}).`);
+        this.carregarResumoOperacional();
+      },
+      error: (err: HttpErrorResponse) => {
+        this.erroListagem.set(this.mensagemErro(err, 'Erro ao cancelar pausa da organizacao.'));
+        this.cancelandoPausaId.set(null);
+      },
+    });
   }
 
   getOrgControl(name: keyof OrganizacaoFormData): FormControl {

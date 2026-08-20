@@ -31,7 +31,7 @@
     <div>
       <h2 class="text-sm font-semibold text-[var(--color-text)] m-0">Organizações que precisam de atenção</h2>
       <p class="text-xs text-[var(--color-text-muted)] mt-1 mb-0">
-        Reative a sessão WhatsApp quando indicado — cancelar envios não remove pausa já aplicada.
+        Reative a sessão WhatsApp quando indicado — somente super admin pode cancelar a pausa.
       </p>
     </div>
 
@@ -54,13 +54,13 @@
             </p>
           </div>
 
-          @if (org.precisaReativar) {
+          @if (org.podeCancelarPausa) {
             <button
               type="button"
               (click)="reativarWhatsapp(org)"
               [disabled]="acaoLoading()"
               class="shrink-0 px-3 py-2 rounded-lg bg-[var(--color-primary)] text-white text-xs disabled:opacity-50">
-              Reativar WhatsApp
+              Cancelar pausa
             </button>
           }
         </div>
@@ -259,7 +259,7 @@
                       (click)="reativarWhatsapp(item)"
                       [disabled]="acaoLoading()"
                       class="px-3 py-1.5 rounded-lg bg-[var(--color-primary)] text-white text-xs disabled:opacity-50">
-                      Reativar
+                      Cancelar pausa
                     </button>
                   }
                   @if (podeCancelar(item.status)) {
@@ -363,7 +363,7 @@
       <div class="flex flex-wrap gap-2 pt-2">
         @if (detalhe.acaoSugeridaCodigo === 'REATIVAR_SESSAO_WHATSAPP' && detalhe.canal === 'WHATSAPP') {
           <button type="button" (click)="reativarWhatsapp(detalhe)" [disabled]="acaoLoading()" class="px-4 py-2 rounded-xl bg-[var(--color-primary)] text-white text-sm disabled:opacity-50">
-            Reativar envios da org
+            Cancelar pausa da org
           </button>
         }
         @if (podeReenviar(detalhe.status)) {

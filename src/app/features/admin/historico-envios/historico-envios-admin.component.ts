@@ -295,7 +295,7 @@ export class HistoricoEnviosAdminComponent implements OnInit {
   }
 
   reativarWhatsapp(org: AdminOrganizacaoOperacionalResumo | AdminNotificacaoDetalhe | AdminNotificacaoFilaItem): void {
-    if (!confirm(`Reativar operação WhatsApp da organização ${org.nmOrganizacao}?`)) return;
+    if (!confirm(`Cancelar a pausa e retomar os envios da organização ${org.nmOrganizacao}?`)) return;
     this.acaoLoading.set(true);
     this.adminNotificacaoService.reativarWhatsappOrganizacao(org.idOrganizacao).subscribe({
       next: () => {
