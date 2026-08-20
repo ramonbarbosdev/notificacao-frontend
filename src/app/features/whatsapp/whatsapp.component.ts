@@ -71,6 +71,7 @@ export class WhatsappComponent implements OnInit, OnDestroy {
   private eventosSubscription: Subscription | null = null;
   private filaEventsSubscription: Subscription | null = null;
   private acompanhamentoPollSub: Subscription | null = null;
+  private statusPollSub: Subscription | null = null;
 
   protected readonly whatsappIcon = WHATSAPP_ICONS.whatsapp;
   protected readonly refreshIcon = WHATSAPP_ICONS.refresh;
@@ -136,6 +137,7 @@ export class WhatsappComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.pararContador();
+    this.pararPollingStatus();
     this.eventosSubscription?.unsubscribe();
     this.filaEventsSubscription?.unsubscribe();
     this.acompanhamentoPollSub?.unsubscribe();
@@ -324,6 +326,49 @@ export class WhatsappComponent implements OnInit, OnDestroy {
     if (!status.qrImagem && ehStatusDeTentativa(status.status)) {
       this.buscarStatusSemLoading();
     }
+
+    this.gerenciarPollingStatus();
+  }
+
+  private deveContinuarPollingStatus(status: WhatsappStatusResponse | null): boolean {
+    if (!status) {
+      return false;
+    }
+
+    if (ehWhatsappConectado(status.status, status.conectado)) {
+      return false;
+    }
+
+    return ehStatusDeTentativa(status.status) || !!status.qrImagem;
+  }
+
+  private gerenciarPollingStatus(): void {
+    if (this.deveContinuarPollingStatus(this.status())) {
+      this.iniciarPollingStatus();
+      return;
+    }
+
+    this.pararPollingStatus();
+  }
+
+  private iniciarPollingStatus(): void {
+    if (this.statusPollSub) {
+      return;
+    }
+
+    this.statusPollSub = timer(3000, 3000).subscribe(() => {
+      if (!this.deveContinuarPollingStatus(this.status())) {
+        this.pararPollingStatus();
+        return;
+      }
+
+      this.buscarStatusSemLoading();
+    });
+  }
+
+  private pararPollingStatus(): void {
+    this.statusPollSub?.unsubscribe();
+    this.statusPollSub = null;
   }
 
   private prepararTentativaConexao(): void {
@@ -572,13 +617,10 @@ export class WhatsappComponent implements OnInit, OnDestroy {
   }
 
   private deveBuscarStatusAposEvento(evento: WhatsappEvento): boolean {
-    const eventoAtualizaTentativa =
-      evento.tipo === 'TENTATIVA_INICIADA' || evento.tipo === 'STATUS_ATUALIZADO';
-
     return (
-      eventoAtualizaTentativa &&
-      !!evento.status &&
-      ehStatusDeTentativa(evento.status)
+      evento.tipo === 'TENTATIVA_INICIADA'
+      || evento.tipo === 'STATUS_ATUALIZADO'
+      || evento.tipo === 'CONEXAO_LIBERADA'
     );
   }
 
