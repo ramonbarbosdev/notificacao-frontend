@@ -2,16 +2,20 @@ import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
-import { Observable, Subscription } from 'rxjs';
+import { RouterModule } from '@angular/router';
+import { Observable, Subscription, timer } from 'rxjs';
 
 import { LucideAngularModule } from 'lucide-angular';
 
 import { AuthService } from '../../core/auth/auth.service';
+import { NotificacaoFilaEventsService } from '../../core/http/notificacao-fila-events.service';
+import { NotificacaoService } from '../../core/services/notificacao.service';
 import { WhatsappEventsService } from '../../core/http/whatsapp-events.service';
 import { WhatsappService } from '../../core/services/whatsapp.service';
 
 import {
   EnviarMensagemResponse,
+  NotificacaoFilaEvento,
   StatusNotificacao,
   WhatsappEvento,
   WhatsappStatus,
@@ -38,6 +42,7 @@ import {
   extrairMensagemErro,
   detalheErroEnvio,
   montarQrImagemSrc,
+  ehWhatsappConectado,
 } from './whatsapp.helpers';
 import { WHATSAPP_ICONS } from './whatsapp.icons';
 
@@ -49,6 +54,7 @@ type WhatsappConnectionStatus = WhatsappStatusResponse['status'];
   imports: [
     CommonModule,
     ReactiveFormsModule,
+    RouterModule,
     LucideAngularModule,
   ],
   templateUrl: './whatsapp.component.html',
@@ -56,11 +62,15 @@ type WhatsappConnectionStatus = WhatsappStatusResponse['status'];
 export class WhatsappComponent implements OnInit, OnDestroy {
   private readonly whatsappService = inject(WhatsappService);
   private readonly whatsappEventsService = inject(WhatsappEventsService);
+  private readonly notificacaoService = inject(NotificacaoService);
+  private readonly filaEventsService = inject(NotificacaoFilaEventsService);
   private readonly authService = inject(AuthService);
   private readonly fb = inject(FormBuilder);
 
   private countdownId: ReturnType<typeof setInterval> | null = null;
   private eventosSubscription: Subscription | null = null;
+  private filaEventsSubscription: Subscription | null = null;
+  private acompanhamentoPollSub: Subscription | null = null;
 
   protected readonly whatsappIcon = WHATSAPP_ICONS.whatsapp;
   protected readonly refreshIcon = WHATSAPP_ICONS.refresh;
@@ -81,6 +91,7 @@ export class WhatsappComponent implements OnInit, OnDestroy {
   readonly podeConectar = signal(true);
   readonly segundosRestantes = signal(0);
   readonly acaoOperacionalCarregando = signal(false);
+  readonly acompanhandoEnvio = signal(false);
 
   readonly operacional = computed(() => this.status()?.operacional ?? null);
 
@@ -100,6 +111,10 @@ export class WhatsappComponent implements OnInit, OnDestroy {
     montarQrImagemSrc(this.status()?.qrImagem)
   );
 
+  readonly sessaoConectada = computed(() =>
+    ehWhatsappConectado(this.status()?.status, this.status()?.conectado)
+  );
+
   readonly formMensagem = criarFormularioMensagem(this.fb);
 
   readonly formatarTelefone = formatPhone;
@@ -109,17 +124,21 @@ export class WhatsappComponent implements OnInit, OnDestroy {
     const valorFormatado = maskPhoneInput(input.value);
 
     this.formMensagem.controls.telefone.setValue(valorFormatado, { emitEvent: false });
+    this.formMensagem.controls.telefone.updateValueAndValidity({ emitEvent: false });
     input.value = valorFormatado;
   }
 
   ngOnInit(): void {
     this.conectarEventosDaOrganizacao();
+    this.conectarEventosFila();
     this.atualizarStatus();
   }
 
   ngOnDestroy(): void {
     this.pararContador();
     this.eventosSubscription?.unsubscribe();
+    this.filaEventsSubscription?.unsubscribe();
+    this.acompanhamentoPollSub?.unsubscribe();
   }
 
   atualizarStatus(): void {
@@ -184,6 +203,18 @@ export class WhatsappComponent implements OnInit, OnDestroy {
 
   labelStatus(status: StatusNotificacao): string {
     return labelStatusNotificacao(status);
+  }
+
+  statusEnvioSucesso(status: StatusNotificacao | null | undefined): boolean {
+    return !!status && ['ENVIADA', 'ENTREGUE', 'LIDA'].includes(status);
+  }
+
+  statusEnvioPendente(status: StatusNotificacao | null | undefined): boolean {
+    return status === 'PENDENTE' || status === 'PROCESSANDO';
+  }
+
+  envioFalhou(status: StatusNotificacao | null | undefined): boolean {
+    return status === 'FALHOU' || status === 'BLOQUEADA' || status === 'CANCELADA';
   }
 
   labelTentativaStatus(status: WhatsappStatus | null | undefined): string {
@@ -340,7 +371,7 @@ export class WhatsappComponent implements OnInit, OnDestroy {
   }
 
   private sincronizarBotaoComStatus(status: WhatsappStatusResponse): void {
-    if (status.conectado === true) {
+    if (ehWhatsappConectado(status.status, status.conectado)) {
       this.liberarConectar();
       return;
     }
@@ -361,9 +392,103 @@ export class WhatsappComponent implements OnInit, OnDestroy {
 
   private tratarRespostaEnvio(resposta: EnviarMensagemResponse): void {
     this.respostaMensagem.set(resposta);
-    this.enviando.set(false);
 
-    if (resposta.sucesso) {
+    if (!resposta.sucesso) {
+      this.enviando.set(false);
+      return;
+    }
+
+    this.acompanharStatusEnvio(resposta.idNotificacao);
+  }
+
+  private conectarEventosFila(): void {
+    const idOrganizacao = this.authService.idOrganizacaoAtual();
+    if (!idOrganizacao) return;
+
+    this.filaEventsSubscription = this.filaEventsService.conectar(idOrganizacao).subscribe({
+      next: (evento) => this.processarEventoFila(evento),
+    });
+  }
+
+  private processarEventoFila(evento: NotificacaoFilaEvento): void {
+    const resposta = this.respostaMensagem();
+    if (!resposta?.idNotificacao || evento.idNotificacao !== resposta.idNotificacao) {
+      return;
+    }
+
+    if (!evento.status) return;
+
+    this.atualizarStatusResposta(
+      evento.status,
+      evento.erro ?? null,
+      evento.motivoAguardando ?? null,
+    );
+  }
+
+  private acompanharStatusEnvio(idNotificacao: number): void {
+    this.acompanhandoEnvio.set(true);
+    this.acompanhamentoPollSub?.unsubscribe();
+
+    let tentativas = 0;
+    this.acompanhamentoPollSub = timer(0, 3000).subscribe(() => {
+      const atual = this.respostaMensagem();
+      if (atual && this.statusEnvioConcluido(atual.status)) {
+        this.finalizarAcompanhamento();
+        return;
+      }
+
+      if (tentativas++ > 20) {
+        this.finalizarAcompanhamento();
+        return;
+      }
+
+      this.notificacaoService.listar({ page: 0, size: 30 }).subscribe({
+        next: (pagina) => {
+          const item = pagina.data.find((linha) => linha.idNotificacao === idNotificacao);
+          if (!item) return;
+
+          this.atualizarStatusResposta(
+            item.status,
+            item.erro,
+            item.motivoAguardando ?? null,
+          );
+
+          if (this.statusEnvioConcluido(item.status)) {
+            this.finalizarAcompanhamento();
+          }
+        },
+      });
+    });
+  }
+
+  private atualizarStatusResposta(
+    status: StatusNotificacao,
+    erro: string | null,
+    motivoAguardando: string | null,
+  ): void {
+    const atual = this.respostaMensagem();
+    if (!atual) return;
+
+    this.respostaMensagem.set({
+      ...atual,
+      status,
+      erro,
+      motivoAguardando,
+      sucesso: !this.envioFalhou(status),
+    });
+  }
+
+  private statusEnvioConcluido(status: StatusNotificacao): boolean {
+    return this.statusEnvioSucesso(status) || this.envioFalhou(status);
+  }
+
+  private finalizarAcompanhamento(): void {
+    this.acompanhandoEnvio.set(false);
+    this.enviando.set(false);
+    this.acompanhamentoPollSub?.unsubscribe();
+    this.acompanhamentoPollSub = null;
+
+    if (this.statusEnvioSucesso(this.respostaMensagem()?.status)) {
       this.formMensagem.reset();
     }
   }
@@ -427,7 +552,7 @@ export class WhatsappComponent implements OnInit, OnDestroy {
     this.status.set({
       ...statusAtual,
       status,
-      conectado: status === 'CONECTADO',
+      conectado: ehWhatsappConectado(status, statusAtual.conectado),
     });
   }
 

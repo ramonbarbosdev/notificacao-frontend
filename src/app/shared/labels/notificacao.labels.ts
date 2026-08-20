@@ -27,7 +27,9 @@ export const STATUS_TENTATIVA_LABELS: Record<WhatsappStatus, string> = {
   CONECTANDO: 'Conectando',
   CONNECTING: 'Conectando',
   CONECTADO: 'Conectado',
+  CONNECTED: 'Conectado',
   DESCONECTADO: 'Desconectado',
+  DISCONNECTED: 'Desconectado',
   DESLOGADO: 'Deslogado',
   ERRO: 'Erro',
 };

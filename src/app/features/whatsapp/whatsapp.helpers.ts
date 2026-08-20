@@ -39,3 +39,26 @@ export function extrairMensagemErro(
 export function detalheErroEnvio(mensagem: string | null | undefined) {
   return explicarErroFila(mensagem);
 }
+
+/** Gateway pode retornar CONNECTED; API interna usa CONECTADO. */
+export function ehWhatsappConectado(
+  status: string | null | undefined,
+  conectado?: boolean | null,
+): boolean {
+  const normalized = status?.trim().toUpperCase();
+
+  if (normalized === 'CONECTADO' || normalized === 'CONNECTED') {
+    return true;
+  }
+
+  if (
+    normalized === 'DESCONECTADO'
+    || normalized === 'DISCONNECTED'
+    || normalized === 'DESLOGADO'
+    || normalized === 'LOGGED_OUT'
+  ) {
+    return false;
+  }
+
+  return conectado === true;
+}

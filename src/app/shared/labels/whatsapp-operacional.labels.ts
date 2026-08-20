@@ -105,6 +105,10 @@ export function explicarErroFila(erro?: string | null): {
   }
 
   if (
+    normalizado.includes('nao conseguiu preparar o envio') ||
+    normalizado.includes('não conseguiu preparar o envio') ||
+    normalizado.includes('lid indisponivel') ||
+    normalizado.includes('lid indisponível') ||
     normalizado.includes('463') ||
     normalizado.includes('tctoken') ||
     normalizado.includes('restricao 463') ||

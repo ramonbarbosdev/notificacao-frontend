@@ -139,13 +139,13 @@ export class SidebarComponent {
       scope: 'ORG',
       roles: ['ADMIN', 'USER'],
     },
-    {
-      label: 'Templates',
-      rota: '/app/templates',
-      icon: MessageSquareText,
-      scope: 'ORG',
-      roles: ['ADMIN', 'USER'],
-    },
+    // {
+    //   label: 'Templates',
+    //   rota: '/app/templates',
+    //   icon: MessageSquareText,
+    //   scope: 'ORG',
+    //   roles: ['ADMIN', 'USER'],
+    // },
     {
       label: 'Tutorial',
       rota: '/app/tutorial',

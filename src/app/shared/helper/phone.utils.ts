@@ -9,19 +9,54 @@ export function stripWhatsappJid(value: string): string {
   return value.split('@')[0].split(':')[0];
 }
 
-/**
- * Normaliza celular BR para E.164 sem + (ex: 5571981180200).
- * Aceita: 10/11 digitos nacionais ou 12/13 com DDI 55.
- */
-export function normalizeBrazilWhatsappMobile(value: string): string {
+function prepararDigitosBrutos(value: string): string {
   let digits = normalizePhone(stripWhatsappJid(value));
+
+  if (digits.startsWith('0')) {
+    digits = digits.slice(1);
+  }
+
+  return digits;
+}
+
+/**
+ * Digitos usados apenas para mascara de input (sem corrigir dados ja gravados errados).
+ */
+function digitsParaMascaraWhatsapp(value: string): string {
+  let digits = prepararDigitosBrutos(value);
 
   if (!digits) {
     return digits;
   }
 
-  if (digits.startsWith('0')) {
-    digits = digits.slice(1);
+  if (digits.startsWith('55')) {
+    return digits.slice(0, 13);
+  }
+
+  digits = digits.slice(0, 11);
+
+  // Nacional com 9 apos DDD (ex: 71981180200)
+  if (digits.length >= 3 && digits.charAt(2) === '9') {
+    return ('55' + digits).slice(0, 13);
+  }
+
+  // Antigo sem 9 apos DDD (ex: 7181180200)
+  if (digits.length === 10 && ['7', '8'].includes(digits.charAt(2))) {
+    return ('55' + digits.slice(0, 2) + '9' + digits.slice(2)).slice(0, 13);
+  }
+
+  return digits;
+}
+
+/**
+ * Normaliza celular BR para E.164 sem + (ex: 5571981180200).
+ * Aceita: 10/11 digitos nacionais ou 12/13 com DDI 55.
+ */
+export function normalizeBrazilWhatsappMobile(value: string): string {
+  let digits = prepararDigitosBrutos(value);
+
+  if (!digits) {
+    return digits;
   }
 
   // 11 digitos: DDD + celular com 9 (ex: 71981180200)
@@ -30,8 +65,13 @@ export function normalizeBrazilWhatsappMobile(value: string): string {
   }
 
   // 10 digitos: DDD + celular antigo sem 9 (ex: 7181180200)
-  if (digits.length === 10 && ['7', '8', '9'].includes(digits.charAt(2))) {
+  if (digits.length === 10 && ['7', '8'].includes(digits.charAt(2))) {
     return '55' + digits.slice(0, 2) + '9' + digits.slice(2);
+  }
+
+  // 10 digitos com 9 apos DDD: digitacao incompleta, apenas adiciona DDI
+  if (digits.length === 10 && digits.charAt(2) === '9') {
+    return '55' + digits;
   }
 
   // 13 digitos com DDI: ja completo
@@ -61,13 +101,13 @@ export function normalizeBrazilWhatsappMobile(value: string): string {
   return digits;
 }
 
-/** Máscara progressiva para WhatsApp: +55 (99) 99999-9999 */
+/** Mascara progressiva para WhatsApp: +55 (71) 98118-0200 */
 export function maskPhoneInput(value: string): string {
-  const digits = normalizeBrazilWhatsappMobile(value).slice(0, 13);
+  const digits = digitsParaMascaraWhatsapp(value);
 
   if (!digits) return '';
 
-  if (digits.startsWith('55') && digits.length >= 12) {
+  if (digits.startsWith('55') && digits.length >= 4) {
     const ddi = digits.slice(0, 2);
     const ddd = digits.slice(2, 4);
     const prefixo = digits.slice(4, 9);
@@ -111,7 +151,7 @@ export function formatPhone(value: string | null | undefined): string {
     return digits.replace(/^(\d{2})(\d{4})(\d{4})$/, '($1) $2-$3');
   }
 
-  return maskPhoneInput(digits) || value;
+  return maskPhoneInput(value) || value;
 }
 
 /** Formata destinatario conforme o canal (WhatsApp com mascara BR). */

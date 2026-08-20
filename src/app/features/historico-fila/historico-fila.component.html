@@ -194,18 +194,18 @@
             <div class="px-4 sm:px-5 pb-4 pt-0">
               <div class="ml-7 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-base)]/50 p-4 space-y-4">
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-sm">
-                  <div>
+                  <!-- <div>
                     <p class="text-[var(--color-text-faint)] text-xs m-0 mb-1">ID notificação</p>
                     <p class="text-[var(--color-text)] font-medium m-0">#{{ item.idNotificacao }}</p>
-                  </div>
+                  </div> -->
                   <div>
                     <p class="text-[var(--color-text-faint)] text-xs m-0 mb-1">Tentativas</p>
                     <p class="text-[var(--color-text)] font-medium m-0">{{ item.tentativas }}</p>
                   </div>
-                  <div>
+                  <!-- <div>
                     <p class="text-[var(--color-text-faint)] text-xs m-0 mb-1">Provider</p>
                     <p class="text-[var(--color-text)] font-medium m-0">{{ item.provider || '—' }}</p>
-                  </div>
+                  </div> -->
                   <div>
                     <p class="text-[var(--color-text-faint)] text-xs m-0 mb-1">Próxima tentativa</p>
                     <p class="text-[var(--color-text)] font-medium m-0">{{ formatarData(item.proximaTentativa) }}</p>

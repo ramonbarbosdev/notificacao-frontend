@@ -33,13 +33,13 @@
     <div class="flex items-center gap-4 mb-6">
 
       <div class="w-14 h-14 rounded-2xl flex items-center justify-center border"
-        [class.bg-[var(--color-success-bg)]]="status()?.conectado"
-        [class.border-[var(--color-success-border)]]="status()?.conectado"
-        [class.bg-[var(--color-surface-muted)]]="!status()?.conectado"
-        [class.border-[var(--color-border)]]="!status()?.conectado">
+        [class.bg-[var(--color-success-bg)]]="sessaoConectada()"
+        [class.border-[var(--color-success-border)]]="sessaoConectada()"
+        [class.bg-[var(--color-surface-muted)]]="!sessaoConectada()"
+        [class.border-[var(--color-border)]]="!sessaoConectada()">
 
-        <lucide-icon [img]="whatsappIcon" class="w-7 h-7" [class.text-[var(--color-success)]]="status()?.conectado"
-          [class.text-[var(--color-text-subtle)]]="!status()?.conectado" />
+        <lucide-icon [img]="whatsappIcon" class="w-7 h-7" [class.text-[var(--color-success)]]="sessaoConectada()"
+          [class.text-[var(--color-text-subtle)]]="!sessaoConectada()" />
       </div>
 
       <div>
@@ -256,7 +256,7 @@
           Telefone
         </label>
 
-        <input formControlName="telefone" type="tel" inputmode="tel" placeholder="+55 (99) 99999-9999"
+        <input formControlName="telefone" type="tel" inputmode="tel" placeholder="+55 (71) 98118-0200"
           (input)="atualizarTelefone($event)" class="w-full
                        bg-[var(--color-surface-muted)]
                        border border-[var(--color-border-strong)]
@@ -278,7 +278,7 @@
         }
 
         <p class="text-[var(--color-text-faint)] text-xs mt-1">
-          Formato: +55 (DDD) 9XXXX-XXXX
+          Formato: 71981180200
         </p>
       </div>
 
@@ -311,27 +311,74 @@
         }
       </div>
 
-      @if (respostaMensagem()?.sucesso === true) {
-      <div class="bg-[var(--color-success-bg)]
-                          border border-[var(--color-success-border)]
-                          rounded-xl px-4 py-3
-                          flex items-start gap-3">
-
+      @if (respostaMensagem(); as resposta) {
+      @if (statusEnvioSucesso(resposta.status)) {
+      <div class="bg-[var(--color-success-bg)] border border-[var(--color-success-border)] rounded-xl px-4 py-3 flex items-start gap-3">
         <lucide-icon [img]="checkIcon" class="w-4 h-4 text-[var(--color-success)] flex-shrink-0 mt-0.5" />
-
         <div>
-          <p class="text-[var(--color-success)] text-sm font-medium">
-            Mensagem enfileirada com sucesso.
+          <p class="text-[var(--color-success)] text-sm font-medium m-0">
+            Mensagem aceita pelo WhatsApp.
           </p>
-          <p class="text-[var(--color-text-muted)] text-xs mt-1">
-            ID #{{ respostaMensagem()!.idNotificacao }} - Status:
-            {{ labelStatus(respostaMensagem()!.status) }}
+          <p class="text-[var(--color-text-muted)] text-xs mt-1 m-0">
+       {{ labelStatus(resposta.status) }}
+            · Se o contato nunca falou com este WhatsApp, peça para ele enviar a primeira mensagem.
+          </p>
+        </div>
+      </div>
+      } @else if (envioFalhou(resposta.status)) {
+      @let erroDetalhe = detalheErro(resposta.erro);
+      <div class="bg-[var(--color-danger-bg)] border border-[var(--color-danger-border)] rounded-xl px-4 py-3">
+        <p class="text-[var(--color-danger)] text-sm font-semibold m-0">
+          {{ erroDetalhe.titulo ?? labelMensagemErro(resposta.erro, 'Falha ao enviar no WhatsApp.') }}
+        </p>
+        @if (erroDetalhe.explicacao) {
+        <p class="text-[var(--color-text-muted)] text-xs mt-2 m-0">{{ erroDetalhe.explicacao }}</p>
+        } @else if (resposta.erro) {
+        <p class="text-[var(--color-text-muted)] text-xs mt-2 m-0">{{ resposta.erro }}</p>
+        }
+        @if (erroDetalhe.acao) {
+        <p class="text-[var(--color-text)] text-xs mt-2 m-0">
+          <strong>O que fazer:</strong> {{ erroDetalhe.acao }}
+        </p>
+        }
+        <a routerLink="/app/fila" class="inline-block text-xs text-[var(--color-primary)] mt-2">
+          Ver detalhes no histórico da fila
+        </a>
+      </div>
+      } @else if (acompanhandoEnvio() || statusEnvioPendente(resposta.status)) {
+      <div class="bg-amber-500/10 border border-amber-500/30 rounded-xl px-4 py-3 flex items-start gap-3">
+        <lucide-icon [img]="loaderIcon" class="w-4 h-4 text-amber-300 flex-shrink-0 mt-0.5 animate-spin" />
+        <div>
+          <p class="text-amber-200 text-sm font-medium m-0">
+            Na fila — aguardando envio pelo WhatsApp...
+          </p>
+          <p class="text-[var(--color-text-muted)] text-xs mt-1 m-0">
+           {{ labelStatus(resposta.status) }}
+            @if (resposta.tempoEstimadoEnvioTexto) {
+              · previsto {{ resposta.tempoEstimadoEnvioTexto }}
+            }
+          </p>
+          @if (resposta.motivoAguardando) {
+          <p class="text-[var(--color-text-muted)] text-xs mt-1 m-0">{{ resposta.motivoAguardando }}</p>
+          }
+        </div>
+      </div>
+      } @else if (resposta.sucesso) {
+      <div class="bg-[var(--color-success-bg)] border border-[var(--color-success-border)] rounded-xl px-4 py-3 flex items-start gap-3">
+        <lucide-icon [img]="checkIcon" class="w-4 h-4 text-[var(--color-success)] flex-shrink-0 mt-0.5" />
+        <div>
+          <p class="text-[var(--color-success)] text-sm font-medium m-0">
+            Mensagem enfileirada.
+          </p>
+          <p class="text-[var(--color-text-muted)] text-xs mt-1 m-0">
+            Acompanhe o status em Histórico / Fila.
           </p>
         </div>
       </div>
       }
+      }
 
-      @if (respostaMensagem()?.sucesso === false) {
+      @if (respostaMensagem()?.sucesso === false && !respostaMensagem()?.status) {
       @let erroDetalhe = detalheErro(respostaMensagem()?.erro);
       <div class="bg-[var(--color-danger-bg)]
                           border border-[var(--color-danger-border)]
@@ -379,7 +426,7 @@
       </div>
       }
 
-      <button type="submit" [disabled]="formMensagem.invalid || enviando() || !status()?.conectado" class="w-full
+      <button type="submit" [disabled]="formMensagem.invalid || enviando() || acompanhandoEnvio() || !sessaoConectada()" class="w-full
                      bg-[var(--color-primary)]
                      hover:bg-[var(--color-primary-hover)]
                      disabled:opacity-50
@@ -389,10 +436,10 @@
                      transition-all duration-200 text-sm
                      flex items-center justify-center gap-2">
 
-        @if (enviando()) {
+        @if (enviando() || acompanhandoEnvio()) {
         <lucide-icon [img]="loaderIcon" class="animate-spin h-4 w-4" />
 
-        Enfileirando...
+        {{ acompanhandoEnvio() ? 'Enviando no WhatsApp...' : 'Enfileirando...' }}
         } @else {
         <lucide-icon [img]="sendIcon" class="w-4 h-4" />
 
@@ -400,7 +447,7 @@
         }
       </button>
 
-      @if (!status()?.conectado) {
+      @if (!sessaoConectada()) {
       <p class="text-center text-[var(--color-text-faint)] text-xs">
         Conecte o WhatsApp antes de enviar mensagens
       </p>

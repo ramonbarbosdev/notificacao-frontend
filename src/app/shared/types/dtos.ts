@@ -59,7 +59,9 @@ export type WhatsappStatus =
   | 'PENDING_QR'
   | 'AGUARDANDO_QR'
   | 'CONECTADO'
+  | 'CONNECTED'
   | 'DESCONECTADO'
+  | 'DISCONNECTED'
   | 'DESLOGADO'
   | 'ERRO';
 
