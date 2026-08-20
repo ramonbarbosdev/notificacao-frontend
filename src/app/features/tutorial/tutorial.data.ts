@@ -1,6 +1,16 @@
+export type TutorialCodeLanguage =
+  | 'http'
+  | 'json'
+  | 'bash'
+  | 'javascript'
+  | 'typescript'
+  | 'java'
+  | 'php'
+  | 'csharp';
+
 export interface TutorialCodeExample {
   label: string;
-  language: 'http' | 'json' | 'bash' | 'javascript' | 'java';
+  language: TutorialCodeLanguage;
   code: string;
 }
 
@@ -9,6 +19,8 @@ export interface TutorialSection {
   paragrafos?: string[];
   lista?: string[];
   exemplos?: TutorialCodeExample[];
+  /** Quando 'abas', cada exemplo vira uma aba (ex.: linguagens). */
+  modoExemplos?: 'lista' | 'abas';
   dica?: string;
 }
 
@@ -19,24 +31,46 @@ export interface TutorialTopico {
   secoes: TutorialSection[];
 }
 
+const WHATSAPP_REQUEST_JSON = `{
+  "canal": "WHATSAPP",
+  "destinatario": "5571994686855",
+  "assunto": "Pedido confirmado",
+  "mensagem": "Olá! Seu pedido foi confirmado e será enviado em breve."
+}`;
+
+const WHATSAPP_RESPONSE_JSON = `{
+  "sucesso": true,
+  "idNotificacao": 42,
+  "canal": "WHATSAPP",
+  "status": "PENDENTE",
+  "erro": null,
+  "codigoErro": null,
+  "motivoAguardando": null,
+  "tentativas": 0,
+  "tentativasMaximas": 3,
+  "tempoEstimadoEnvioSegundos": 45,
+  "posicaoFila": 2,
+  "tempoEstimadoEnvioTexto": "cerca de 45 segundos"
+}`;
+
 export const TUTORIAL_TOPICOS: TutorialTopico[] = [
   {
     id: 'visao-geral',
     titulo: 'Visão geral',
-    resumo: 'Como integrar outra API ou sistema externo com a Notificação API.',
+    resumo: 'Integração M2M para envio de mensagens WhatsApp pela API.',
     secoes: [
       {
-        titulo: 'O que é a integração M2M',
+        titulo: 'O que é a integração',
         paragrafos: [
-          'A Notificação API permite que sistemas externos (ERP, CRM, OrcaFacil, scripts, etc.) enviem mensagens sem login de usuário no painel.',
-          'O fluxo típico é: criar uma API Key na organização → configurar a chave no sistema externo → chamar os endpoints com o header X-API-KEY.',
-          'As mensagens entram na fila da organização e são processadas conforme as políticas de WhatsApp, e-mail e demais canais habilitados.',
+          'A Notificação API permite que sistemas externos (ERP, CRM, e-commerce, scripts) enviem mensagens WhatsApp sem login de usuário no painel.',
+          'Fluxo típico: criar uma API Key na organização → configurar a chave no sistema externo → chamar os endpoints com o header X-API-KEY.',
+          'As mensagens entram na fila da organização e são entregues pela sessão WhatsApp conectada no painel.',
         ],
       },
       {
-        titulo: 'Base URL',
+        titulo: 'Base URL e prefixo',
         paragrafos: [
-          'Todos os exemplos usam a URL base configurada no ambiente. Em desenvolvimento costuma ser http://localhost:8086/api.',
+          'Todos os exemplos usam a URL base do ambiente. Em desenvolvimento: http://localhost:8086/api.',
           'Os endpoints de integração ficam sob o prefixo /app/.',
         ],
         exemplos: [
@@ -48,61 +82,103 @@ export const TUTORIAL_TOPICOS: TutorialTopico[] = [
         ],
       },
       {
-        titulo: 'Canais disponíveis',
+        titulo: 'Pré-requisitos',
         lista: [
-          'WHATSAPP — mensagens de texto via sessão conectada no painel',
-          'EMAIL — envio por e-mail (quando habilitado no plano e nas configurações)',
-          'TELEGRAM — canal Telegram (quando habilitado globalmente)',
-          'WEBHOOK — encaminhamento para URL externa configurada',
+          'API Key ativa com scope NOTIFICACOES_ENVIAR',
+          'Sessão WhatsApp da organização conectada (painel → WhatsApp)',
+          'Destinatário em E.164 sem + (ex.: 5571994686855 — DDI 55 + DDD + celular com 9º dígito)',
+          'Consentimento do contato registrado, quando a organização exige opt-in',
         ],
-        dica: 'O campo canal no request deve ser exatamente um desses valores em maiúsculas.',
+      },
+      {
+        titulo: 'Health check (opcional)',
+        paragrafos: [
+          'Antes de enviar em produção, consulte o status da integração e da sessão WhatsApp.',
+        ],
+        exemplos: [
+          {
+            label: 'HTTP',
+            language: 'http',
+            code: 'GET /app/integracao/status',
+          },
+          {
+            label: 'Response JSON',
+            language: 'json',
+            code: `{
+  "conectada": true,
+  "idOrganizacao": 1,
+  "autenticacao": "API_KEY",
+  "whatsappConectado": true,
+  "whatsappStatus": "CONECTADO",
+  "whatsappTelefone": "5571981180200"
+}`,
+          },
+        ],
+        dica: 'Se whatsappConectado for false, conecte a sessão no painel antes de chamar o envio.',
       },
     ],
   },
   {
     id: 'autenticacao',
-    titulo: 'Autenticação com API Key',
-    resumo: 'Como criar, configurar e usar a chave de integração.',
+    titulo: 'Autenticação',
+    resumo: 'API Key para integração entre sistemas (M2M).',
     secoes: [
       {
         titulo: 'Criar a API Key',
         paragrafos: [
-          'No painel, acesse Configurações → API Keys (perfil ADMIN da organização).',
+          'No painel: Configurações → API Keys (perfil ADMIN da organização).',
           'Ao criar, copie o campo chave — ele é exibido apenas uma vez.',
           'Use sempre a chave completa no formato nak_prefixo.segredo, nunca só o prefixo.',
         ],
         lista: [
           'NOTIFICACOES_ENVIAR — obrigatório para enviar mensagens',
-          'NOTIFICACOES_CONSULTAR — consultar fila e histórico',
-          'CONTATOS_GERENCIAR — registrar consentimento ou bloquear contatos',
-          'TEMPLATES_CONSULTAR / TEMPLATES_GERENCIAR — gerenciar templates via API',
+          'NOTIFICACOES_CONSULTAR — consultar fila e histórico (opcional)',
+          'CONTATOS_GERENCIAR — registrar consentimento de contatos (quando exigido)',
         ],
       },
       {
-        titulo: 'Header de autenticação',
+        titulo: 'Header obrigatório',
         exemplos: [
           {
-            label: 'Header obrigatório',
+            label: 'HTTP',
             language: 'http',
             code: 'X-API-KEY: nak_wLku5PjG.sua_chave_completa_aqui',
           },
           {
-            label: 'Exemplo cURL',
+            label: 'cURL',
             language: 'bash',
             code: `curl -X POST "{API_URL}/app/notificacoes/enviar" \\
   -H "Content-Type: application/json" \\
   -H "X-API-KEY: nak_prefixo.segredo" \\
-  -d '{"canal":"WHATSAPP","destinatario":"5571999999999","assunto":"Teste","mensagem":"Olá!"}'`,
+  -d '${WHATSAPP_REQUEST_JSON.replace(/\n/g, '').replace(/  +/g, ' ')}'`,
           },
         ],
-        dica: 'JWT (Authorization: Bearer) é usado pelo painel web. Para integração entre APIs, prefira sempre API Key.',
+        dica: 'JWT (Authorization: Bearer) é usado pelo painel web. Para integração entre APIs, use sempre API Key.',
+      },
+      {
+        titulo: 'Erros de autenticação',
+        lista: [
+          '401 — API Key ausente, inválida, expirada ou usando só o prefixo',
+          '403 — API Key sem o scope necessário (ex.: NOTIFICACOES_ENVIAR)',
+        ],
+        exemplos: [
+          {
+            label: 'JSON — exemplo 403',
+            language: 'json',
+            code: `{
+  "status": 403,
+  "mensagem": "Acesso negado",
+  "erro": "Forbidden"
+}`,
+          },
+        ],
       },
     ],
   },
   {
     id: 'envio-whatsapp',
     titulo: 'Enviar WhatsApp',
-    resumo: 'Request e response do envio direto de mensagem de texto.',
+    resumo: 'Endpoint, payload, resposta e exemplos em várias linguagens.',
     secoes: [
       {
         titulo: 'Endpoint',
@@ -117,52 +193,34 @@ export const TUTORIAL_TOPICOS: TutorialTopico[] = [
       {
         titulo: 'Request body',
         paragrafos: [
-          'O destinatário deve ser o telefone em formato internacional, apenas dígitos (ex.: 5571999999999).',
-          'A sessão WhatsApp da organização precisa estar conectada no painel.',
-          'Se a organização exige consentimento, registre o contato antes do envio (veja tópico Consentimento).',
+          'destinatario: telefone em E.164, apenas dígitos (ex.: 5571994686855).',
+          'Celulares brasileiros devem incluir o 9º dígito após o DDD.',
+          'assunto: título interno / referência (não é exibido como push no WhatsApp).',
+          'mensagem: texto enviado ao contato.',
         ],
         exemplos: [
           {
             label: 'JSON',
             language: 'json',
-            code: `{
-  "canal": "WHATSAPP",
-  "destinatario": "5571999999999",
-  "assunto": "Orçamento disponível",
-  "mensagem": "Olá! Seu orçamento está pronto. Acesse o link para visualizar."
-}`,
+            code: WHATSAPP_REQUEST_JSON,
           },
         ],
       },
       {
-        titulo: 'Response (sucesso)',
+        titulo: 'Response',
         paragrafos: [
           'sucesso: true indica que a mensagem foi aceita e enfileirada.',
-          'status PENDENTE significa que aguarda processamento na fila.',
-          'tempoEstimadoEnvioTexto e posicaoFila ajudam a informar o usuário final sobre a previsão de entrega.',
+          'status PENDENTE ou PROCESSANDO: aguardando a fila; ENVIADA: entregue ao gateway.',
+          'Mesmo com HTTP 200, verifique sucesso no body — regras de negócio podem bloquear o envio.',
         ],
         exemplos: [
           {
-            label: 'JSON — 200 OK',
+            label: 'JSON — sucesso (200)',
             language: 'json',
-            code: `{
-  "sucesso": true,
-  "idNotificacao": 42,
-  "canal": "WHATSAPP",
-  "status": "PENDENTE",
-  "erro": null,
-  "tempoEstimadoEnvioSegundos": 45,
-  "posicaoFila": 2,
-  "tempoEstimadoEnvioTexto": "cerca de 45 segundos"
-}`,
+            code: WHATSAPP_RESPONSE_JSON,
           },
-        ],
-      },
-      {
-        titulo: 'Response (erro)',
-        exemplos: [
           {
-            label: 'JSON — falha na validação',
+            label: 'JSON — bloqueio por consentimento',
             language: 'json',
             code: `{
   "sucesso": false,
@@ -170,6 +228,10 @@ export const TUTORIAL_TOPICOS: TutorialTopico[] = [
   "canal": "WHATSAPP",
   "status": "BLOQUEADA",
   "erro": "Contato sem consentimento para WhatsApp",
+  "codigoErro": null,
+  "motivoAguardando": null,
+  "tentativas": null,
+  "tentativasMaximas": null,
   "tempoEstimadoEnvioSegundos": null,
   "posicaoFila": null,
   "tempoEstimadoEnvioTexto": null
@@ -177,359 +239,125 @@ export const TUTORIAL_TOPICOS: TutorialTopico[] = [
           },
         ],
       },
-    ],
+      {
+        titulo: 'Exemplos por linguagem',
+        modoExemplos: 'abas',
+        paragrafos: [
+          'Substitua {API_URL} pela base do ambiente e configure a variável da API Key no seu sistema.',
+        ],
+        exemplos: [
+          {
+            label: 'TypeScript (fetch)',
+            language: 'typescript',
+            code: `const apiUrl = '{API_URL}';
+const apiKey = process.env.NOTIFICACAO_API_KEY!;
+
+const response = await fetch(\`\${apiUrl}/app/notificacoes/enviar\`, {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'X-API-KEY': apiKey,
   },
-  {
-    id: 'envio-email',
-    titulo: 'Enviar E-mail',
-    resumo: 'Mesmo endpoint, canal EMAIL.',
-    secoes: [
-      {
-        titulo: 'Request body',
-        paragrafos: [
-          'Use o mesmo endpoint POST /app/notificacoes/enviar, alterando apenas o canal e o destinatário.',
-          'destinatario deve ser um endereço de e-mail válido.',
-          'assunto é usado como título do e-mail; mensagem como corpo.',
-        ],
-        exemplos: [
-          {
-            label: 'JSON',
-            language: 'json',
-            code: `{
-  "canal": "EMAIL",
-  "destinatario": "cliente@empresa.com",
-  "assunto": "Confirmação de cadastro",
-  "mensagem": "Seu cadastro foi realizado com sucesso.\\n\\nEquipe de suporte"
-}`,
-          },
-        ],
-      },
-      {
-        titulo: 'Response',
-        exemplos: [
-          {
-            label: 'JSON — 200 OK',
-            language: 'json',
-            code: `{
-  "sucesso": true,
-  "idNotificacao": 43,
-  "canal": "EMAIL",
-  "status": "PENDENTE",
-  "erro": null,
-  "tempoEstimadoEnvioSegundos": 10,
-  "posicaoFila": 0,
-  "tempoEstimadoEnvioTexto": "cerca de 10 segundos"
-}`,
-          },
-        ],
-        dica: 'O canal de e-mail precisa estar habilitado no plano da organização e nas configurações globais da plataforma.',
-      },
-    ],
-  },
-  {
-    id: 'envio-template',
-    titulo: 'Enviar com template',
-    resumo: 'Mensagens padronizadas com variáveis substituíveis.',
-    secoes: [
-      {
-        titulo: 'Quando usar',
-        paragrafos: [
-          'Templates permitem padronizar mensagens e alterar o texto sem redeploy do sistema externo.',
-          'Cadastre o template no painel (Templates) e use a chave (templateKey) na integração.',
-        ],
-      },
-      {
-        titulo: 'Endpoint',
-        exemplos: [
-          {
-            label: 'HTTP',
-            language: 'http',
-            code: 'POST /app/notificacoes/templates/enviar',
-          },
-        ],
-      },
-      {
-        titulo: 'Request body',
-        paragrafos: [
-          'templateKey é a chave única do template na organização.',
-          'variaveis é um mapa chave → valor. Cada {{nome}} no template corresponde a variaveis.nome.',
-        ],
-        exemplos: [
-          {
-            label: 'JSON',
-            language: 'json',
-            code: `{
-  "templateKey": "orcamento_disponivel",
-  "destinatario": "5571999999999",
-  "variaveis": {
-    "nomeCliente": "Maria",
-    "numeroOrcamento": "ORC-2026-001",
-    "valorTotal": "R$ 1.250,00",
-    "linkOrcamento": "https://app.exemplo.com/orcamento/abc123"
-  }
-}`,
-          },
-        ],
-      },
-      {
-        titulo: 'Response',
-        exemplos: [
-          {
-            label: 'JSON — 200 OK',
-            language: 'json',
-            code: `{
-  "sucesso": true,
-  "idNotificacao": 44,
-  "canal": "WHATSAPP",
-  "status": "PENDENTE",
-  "erro": null,
-  "tempoEstimadoEnvioSegundos": 30,
-  "posicaoFila": 1,
-  "tempoEstimadoEnvioTexto": "cerca de 30 segundos"
-}`,
-          },
-        ],
-      },
-    ],
-  },
-  {
-    id: 'consentimento',
-    titulo: 'Consentimento de contatos',
-    resumo: 'Autorizar envio WhatsApp quando a política da organização exige.',
-    secoes: [
-      {
-        titulo: 'Endpoint',
-        exemplos: [
-          {
-            label: 'HTTP',
-            language: 'http',
-            code: 'POST /app/contatos/consentimento',
-          },
-        ],
-        paragrafos: [
-          'Requer scope CONTATOS_GERENCIAR na API Key.',
-          'Chame antes do primeiro envio WhatsApp para um número, quando exigirConsentimento estiver ativo nas configurações.',
-        ],
-      },
-      {
-        titulo: 'Request / Response',
-        exemplos: [
-          {
-            label: 'Request JSON',
-            language: 'json',
-            code: `{
-  "canal": "WHATSAPP",
-  "destinatario": "5571999999999",
-  "nmContato": "Maria Silva"
-}`,
+  body: JSON.stringify({
+    canal: 'WHATSAPP',
+    destinatario: '5571994686855',
+    assunto: 'Pedido confirmado',
+    mensagem: 'Olá! Seu pedido foi confirmado.',
+  }),
+});
+
+const data = await response.json();
+console.log(data);`,
           },
           {
-            label: 'Response JSON',
-            language: 'json',
-            code: `{
-  "idContato": 10,
-  "canal": "WHATSAPP",
-  "destinatario": "5571999999999",
-  "nmContato": "Maria Silva",
-  "status": "AUTORIZADO",
-  "bloqueado": false
-}`,
-          },
-        ],
-      },
-    ],
-  },
-  {
-    id: 'consultar-fila',
-    titulo: 'Consultar fila',
-    resumo: 'Acompanhar notificações enfileiradas e processadas.',
-    secoes: [
-      {
-        titulo: 'Endpoint',
-        exemplos: [
-          {
-            label: 'HTTP',
-            language: 'http',
-            code: 'GET /app/notificacoes/fila?page=0&size=10&status=PENDENTE',
-          },
-        ],
-        paragrafos: [
-          'Requer scope NOTIFICACOES_CONSULTAR ou autenticação JWT de usuário.',
-          'Filtros opcionais: status (PENDENTE, ENVIADA, FALHOU…), canal, destinatario.',
-        ],
-      },
-      {
-        titulo: 'Response',
-        exemplos: [
-          {
-            label: 'JSON',
-            language: 'json',
-            code: `{
-  "mensagem": "Operacao realizada com sucesso",
-  "dados": [
-    {
-      "idNotificacao": 42,
-      "canal": "WHATSAPP",
-      "destinatario": "5571999999999",
-      "status": "PENDENTE",
-      "tentativas": 0,
-      "dtCriacao": "2026-07-04T13:00:00"
-    }
-  ]
-}`,
-          },
-        ],
-        dica: 'Headers de paginação: X-Total-Count, X-Page, X-Page-Size, X-Total-Pages.',
-      },
-    ],
-  },
-  {
-    id: 'status-integracao',
-    titulo: 'Status da integração',
-    resumo: 'Verificar se a API Key e o WhatsApp estão operacionais.',
-    secoes: [
-      {
-        titulo: 'Endpoint',
-        exemplos: [
-          {
-            label: 'HTTP',
-            language: 'http',
-            code: 'GET /app/integracao/status',
-          },
-        ],
-      },
-      {
-        titulo: 'Response',
-        exemplos: [
-          {
-            label: 'JSON — integração OK',
-            language: 'json',
-            code: `{
-  "conectada": true,
-  "idOrganizacao": 1,
-  "autenticacao": "API_KEY",
-  "whatsappConectado": true,
-  "whatsappStatus": "CONECTADO",
-  "whatsappTelefone": "5571999999999"
-}`,
-          },
-        ],
-        paragrafos: [
-          'Use este endpoint em health checks do sistema externo antes de tentar enviar mensagens.',
-          'Se whatsappConectado for false, conecte a sessão em WhatsApp no painel.',
-        ],
-      },
-    ],
-  },
-  {
-    id: 'outros-canais',
-    titulo: 'Telegram e Webhook',
-    resumo: 'Canais adicionais com o mesmo padrão de envio.',
-    secoes: [
-      {
-        titulo: 'Telegram',
-        paragrafos: [
-          'Canal TELEGRAM no POST /app/notificacoes/enviar quando habilitado globalmente.',
-          'destinatario é o identificador do chat/usuário no Telegram conforme configurado no provedor.',
-        ],
-        exemplos: [
-          {
-            label: 'Request JSON',
-            language: 'json',
-            code: `{
-  "canal": "TELEGRAM",
-  "destinatario": "123456789",
-  "assunto": "Alerta",
-  "mensagem": "Novo evento registrado no sistema."
-}`,
-          },
-        ],
-      },
-      {
-        titulo: 'Webhook',
-        paragrafos: [
-          'Canal WEBHOOK encaminha o payload para URLs configuradas em Configurações → Webhooks.',
-          'Útil para integrar com Zapier, n8n ou APIs internas sem canal de mensageria direto.',
-        ],
-        exemplos: [
-          {
-            label: 'Request JSON',
-            language: 'json',
-            code: `{
-  "canal": "WEBHOOK",
-  "destinatario": "evento-pedido-criado",
-  "assunto": "Pedido #1001",
-  "mensagem": "{\\"pedidoId\\":1001,\\"valor\\":250.00}"
-}`,
-          },
-        ],
-      },
-    ],
-  },
-  {
-    id: 'exemplo-java',
-    titulo: 'Exemplo em Java',
-    resumo: 'Cliente HTTP com RestClient (Spring).',
-    secoes: [
-      {
-        titulo: 'Envio com API Key',
-        exemplos: [
-          {
-            label: 'Java',
+            label: 'Java (Spring RestClient)',
             language: 'java',
             code: `RestClient client = RestClient.builder()
-    .baseUrl("http://localhost:8086/api")
+    .baseUrl("{API_URL}")
+    .defaultHeader("X-API-KEY", System.getenv("NOTIFICACAO_API_KEY"))
     .build();
 
 Map<String, Object> body = Map.of(
     "canal", "WHATSAPP",
-    "destinatario", "5571999999999",
-    "assunto", "Novo pedido",
-    "mensagem", "Seu pedido foi confirmado."
+    "destinatario", "5571994686855",
+    "assunto", "Pedido confirmado",
+    "mensagem", "Olá! Seu pedido foi confirmado."
 );
 
 var resposta = client.post()
     .uri("/app/notificacoes/enviar")
-    .header("X-API-KEY", System.getenv("NOTIFICACAO_API_KEY"))
     .contentType(MediaType.APPLICATION_JSON)
     .body(body)
     .retrieve()
     .body(EnviarNotificacaoResposta.class);`,
           },
-        ],
-      },
-    ],
-  },
-  {
-    id: 'erros-comuns',
-    titulo: 'Erros comuns',
-    resumo: 'Códigos HTTP e como resolver.',
-    secoes: [
-      {
-        titulo: 'Tabela de referência',
-        lista: [
-          '401 — API Key ausente, inválida, expirada ou usando só o prefixo nak_xxx',
-          '403 — API Key sem o scope necessário (ex.: NOTIFICACOES_ENVIAR)',
-          '400 — Payload inválido, campo obrigatório ausente ou destinatário mal formatado',
-          '404 — Template não encontrado (envio com templateKey inexistente)',
-          '429 — Limite de envio excedido (políticas da organização ou do plano)',
-          '503 — Serviço temporariamente indisponível; a equipe pode receber alerta por e-mail',
-        ],
-      },
-      {
-        titulo: 'Corpo de erro HTTP',
-        exemplos: [
           {
-            label: 'JSON — exemplo 403',
-            language: 'json',
-            code: `{
-  "status": 403,
-  "mensagem": "Acesso negado",
-  "erro": "Forbidden"
-}`,
+            label: 'PHP (cURL)',
+            language: 'php',
+            code: `<?php
+$apiUrl = '{API_URL}';
+$apiKey = getenv('NOTIFICACAO_API_KEY');
+
+$payload = [
+    'canal' => 'WHATSAPP',
+    'destinatario' => '5571994686855',
+    'assunto' => 'Pedido confirmado',
+    'mensagem' => 'Olá! Seu pedido foi confirmado.',
+];
+
+$ch = curl_init("$apiUrl/app/notificacoes/enviar");
+curl_setopt_array($ch, [
+    CURLOPT_POST => true,
+    CURLOPT_RETURNTRANSFER => true,
+    CURLOPT_HTTPHEADER => [
+        'Content-Type: application/json',
+        'X-API-KEY: ' . $apiKey,
+    ],
+    CURLOPT_POSTFIELDS => json_encode($payload),
+]);
+
+$response = curl_exec($ch);
+$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+curl_close($ch);
+
+$data = json_decode($response, true);`,
+          },
+          {
+            label: 'C# (HttpClient)',
+            language: 'csharp',
+            code: `using System.Net.Http.Json;
+
+var apiUrl = "{API_URL}";
+var apiKey = Environment.GetEnvironmentVariable("NOTIFICACAO_API_KEY");
+
+using var client = new HttpClient();
+client.DefaultRequestHeaders.Add("X-API-KEY", apiKey);
+
+var payload = new
+{
+    canal = "WHATSAPP",
+    destinatario = "5571994686855",
+    assunto = "Pedido confirmado",
+    mensagem = "Olá! Seu pedido foi confirmado."
+};
+
+var response = await client.PostAsJsonAsync(
+    $"{apiUrl}/app/notificacoes/enviar",
+    payload);
+
+var data = await response.Content.ReadFromJsonAsync<JsonElement>();`,
           },
         ],
-        dica: 'Em integrações de produção, trate sucesso: false no body mesmo com HTTP 200 — a API pode recusar o envio por regra de negócio sem erro HTTP.',
+      },
+      {
+        titulo: 'Erros comuns no envio',
+        lista: [
+          '400 — payload inválido ou destinatário mal formatado',
+          '429 — limite de envio da organização ou do plano',
+          'WhatsApp não conectado — conecte a sessão no painel',
+          'Restrição 463 / sem histórico — contato pode precisar enviar a primeira mensagem',
+        ],
+        dica: 'Consulte o idNotificacao retornado e acompanhe o status na fila do painel ou via GET /app/notificacoes/fila (scope NOTIFICACOES_CONSULTAR).',
       },
     ],
   },

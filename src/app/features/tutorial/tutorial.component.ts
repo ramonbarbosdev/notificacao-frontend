@@ -4,7 +4,7 @@ import { BookOpen, Check, ChevronRight, Copy, LucideAngularModule } from 'lucide
 
 import { environment } from '../../../environments/environment';
 import { ToastService } from '../../core/services/toast.service';
-import { TUTORIAL_TOPICOS, TutorialTopico } from './tutorial.data';
+import { TUTORIAL_TOPICOS, TutorialCodeLanguage, TutorialSection, TutorialTopico } from './tutorial.data';
 
 @Component({
   selector: 'app-tutorial',
@@ -24,6 +24,7 @@ export class TutorialComponent {
   readonly topicos = TUTORIAL_TOPICOS;
   readonly topicoAtivoId = signal(TUTORIAL_TOPICOS[0].id);
   readonly copiadoId = signal<string | null>(null);
+  readonly abaExemploAtiva = signal<Record<string, number>>({});
 
   readonly topicoAtivo = computed(() =>
     this.topicos.find((t) => t.id === this.topicoAtivoId()) ?? this.topicos[0],
@@ -36,6 +37,54 @@ export class TutorialComponent {
     if (typeof window !== 'undefined') {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
+  }
+
+  secaoComAbas(secao: TutorialSection): boolean {
+    return secao.modoExemplos === 'abas' && (secao.exemplos?.length ?? 0) > 0;
+  }
+
+  chaveSecaoExemplos(topicoId: string, secaoTitulo: string): string {
+    return `${topicoId}::${secaoTitulo}`;
+  }
+
+  indiceAbaAtiva(topicoId: string, secao: TutorialSection): number {
+    const exemplos = secao.exemplos ?? [];
+    if (exemplos.length === 0) {
+      return 0;
+    }
+
+    const chave = this.chaveSecaoExemplos(topicoId, secao.titulo);
+    const salvo = this.abaExemploAtiva()[chave];
+    if (salvo != null && salvo >= 0 && salvo < exemplos.length) {
+      return salvo;
+    }
+
+    return 0;
+  }
+
+  selecionarAbaExemplo(topicoId: string, secao: TutorialSection, indice: number): void {
+    const chave = this.chaveSecaoExemplos(topicoId, secao.titulo);
+    this.abaExemploAtiva.update((mapa) => ({ ...mapa, [chave]: indice }));
+    this.copiadoId.set(null);
+  }
+
+  labelAba(language: TutorialCodeLanguage): string {
+    const rotulos: Partial<Record<TutorialCodeLanguage, string>> = {
+      typescript: 'TypeScript',
+      javascript: 'JavaScript',
+      java: 'Java',
+      php: 'PHP',
+      csharp: 'C#',
+      bash: 'cURL',
+      http: 'HTTP',
+      json: 'JSON',
+    };
+
+    return rotulos[language] ?? language;
+  }
+
+  idCopiaExemplo(topicoId: string, secaoTitulo: string, rotulo: string): string {
+    return `${topicoId}${secaoTitulo}${rotulo}`;
   }
 
   resolverCodigo(code: string): string {
@@ -58,7 +107,7 @@ export class TutorialComponent {
     }
   }
 
-  classeLinguagem(language: string): string {
+  classeLinguagem(language: TutorialCodeLanguage): string {
     return `tutorial-code--${language}`;
   }
 

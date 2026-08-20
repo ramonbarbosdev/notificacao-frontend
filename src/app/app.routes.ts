@@ -62,11 +62,16 @@ export const routes: Routes = [
           import('./features/templates/templates.component').then((m) => m.TemplatesComponent),
       },
       {
-        path: 'tutorial',
+        path: 'documentacao',
         canActivate: [roleGuard],
         data: { roles: ['ADMIN', 'USER'] },
         loadComponent: () =>
           import('./features/tutorial/tutorial.component').then((m) => m.TutorialComponent),
+      },
+      {
+        path: 'tutorial',
+        redirectTo: 'documentacao',
+        pathMatch: 'full',
       },
       {
         path: 'historico',
@@ -189,7 +194,8 @@ export const routes: Routes = [
   { path: 'notificacoes', redirectTo: '/app/whatsapp' },
   { path: 'contatos', redirectTo: '/app/contatos' },
   { path: 'templates', redirectTo: '/app/templates' },
-  { path: 'tutorial', redirectTo: '/app/tutorial' },
+  { path: 'tutorial', redirectTo: '/app/documentacao' },
+  { path: 'documentacao', redirectTo: '/app/documentacao' },
   { path: 'historico', redirectTo: '/app/historico' },
   { path: 'fila', redirectTo: '/app/fila' },
   { path: 'configuracoes', redirectTo: '/app/configuracoes' },

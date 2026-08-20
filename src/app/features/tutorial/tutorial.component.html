@@ -4,10 +4,10 @@
       <lucide-icon [img]="bookIcon" class="w-7 h-7" />
     </div>
     <div>
-      <h1 class="tutorial-header__title">Tutorial de integração</h1>
+      <h1 class="tutorial-header__title">Documentação da API</h1>
       <p class="tutorial-header__subtitle">
-        Guia para conectar outra API ou sistema externo — autenticação, envio por WhatsApp, e-mail,
-        templates, request/response e erros comuns.
+        Referência para integração M2M: visão geral, autenticação com API Key e envio de mensagens
+        WhatsApp, com exemplos em TypeScript, Java, PHP e C#.
       </p>
       <p class="tutorial-header__api">
         Base URL atual: <code>{{ apiUrl }}</code>
@@ -16,8 +16,8 @@
   </header>
 
   <div class="tutorial-layout">
-    <nav class="tutorial-nav" aria-label="Tópicos do tutorial">
-      <p class="tutorial-nav__label">Tópicos</p>
+    <nav class="tutorial-nav" aria-label="Seções da documentação">
+      <p class="tutorial-nav__label">Seções</p>
       <ul class="tutorial-nav__list">
         @for (topico of topicos; track trackTopico($index, topico)) {
           <li>
@@ -57,30 +57,94 @@
             </ul>
           }
 
-          @for (exemplo of secao.exemplos ?? []; track exemplo.label) {
-            <div class="tutorial-code-block">
-              <div class="tutorial-code-block__header">
-                <span class="tutorial-code-block__label">{{ exemplo.label }}</span>
-                <button
-                  type="button"
-                  class="tutorial-code-block__copy"
-                  (click)="copiar(exemplo.code, topicoAtivoId() + secao.titulo + exemplo.label)"
-                  [attr.aria-label]="'Copiar ' + exemplo.label"
-                >
-                  @if (copiadoId() === topicoAtivoId() + secao.titulo + exemplo.label) {
-                    <lucide-icon [img]="checkIcon" class="w-4 h-4" />
-                    Copiado
-                  } @else {
-                    <lucide-icon [img]="copyIcon" class="w-4 h-4" />
-                    Copiar
-                  }
-                </button>
+          @if (secaoComAbas(secao)) {
+            @let exemplosAba = secao.exemplos ?? [];
+            @let indiceAba = indiceAbaAtiva(topicoAtivoId(), secao);
+            @let exemploAba = exemplosAba[indiceAba];
+            <div class="tutorial-code-tabs">
+              <div
+                class="tutorial-code-tabs__nav"
+                role="tablist"
+                [attr.aria-label]="'Exemplos em ' + secao.titulo"
+              >
+                @for (ex of exemplosAba; track ex.language; let i = $index) {
+                  <button
+                    type="button"
+                    class="tutorial-code-tabs__tab"
+                    role="tab"
+                    [class.tutorial-code-tabs__tab--active]="indiceAba === i"
+                    [attr.aria-selected]="indiceAba === i"
+                    (click)="selecionarAbaExemplo(topicoAtivoId(), secao, i)"
+                  >
+                    {{ labelAba(ex.language) }}
+                  </button>
+                }
               </div>
-              <pre
-                class="tutorial-code"
-                [class]="classeLinguagem(exemplo.language)"
-              ><code>{{ resolverCodigo(exemplo.code) }}</code></pre>
+              @if (exemploAba) {
+                <div
+                  class="tutorial-code-block tutorial-code-block--tabbed"
+                  role="tabpanel"
+                >
+                  <div class="tutorial-code-block__header">
+                    <span class="tutorial-code-block__label">{{ exemploAba.label }}</span>
+                    <button
+                      type="button"
+                      class="tutorial-code-block__copy"
+                      (click)="copiar(
+                        exemploAba.code,
+                        idCopiaExemplo(topicoAtivoId(), secao.titulo, exemploAba.label)
+                      )"
+                      [attr.aria-label]="'Copiar ' + exemploAba.label"
+                    >
+                      @if (
+                        copiadoId() === idCopiaExemplo(topicoAtivoId(), secao.titulo, exemploAba.label)
+                      ) {
+                        <lucide-icon [img]="checkIcon" class="w-4 h-4" />
+                        Copiado
+                      } @else {
+                        <lucide-icon [img]="copyIcon" class="w-4 h-4" />
+                        Copiar
+                      }
+                    </button>
+                  </div>
+                  <pre
+                    class="tutorial-code"
+                    [class]="classeLinguagem(exemploAba.language)"
+                  ><code>{{ resolverCodigo(exemploAba.code) }}</code></pre>
+                </div>
+              }
             </div>
+          } @else {
+            @for (exemplo of secao.exemplos ?? []; track exemplo.label) {
+              <div class="tutorial-code-block">
+                <div class="tutorial-code-block__header">
+                  <span class="tutorial-code-block__label">{{ exemplo.label }}</span>
+                  <button
+                    type="button"
+                    class="tutorial-code-block__copy"
+                    (click)="copiar(
+                      exemplo.code,
+                      idCopiaExemplo(topicoAtivoId(), secao.titulo, exemplo.label)
+                    )"
+                    [attr.aria-label]="'Copiar ' + exemplo.label"
+                  >
+                    @if (
+                      copiadoId() === idCopiaExemplo(topicoAtivoId(), secao.titulo, exemplo.label)
+                    ) {
+                      <lucide-icon [img]="checkIcon" class="w-4 h-4" />
+                      Copiado
+                    } @else {
+                      <lucide-icon [img]="copyIcon" class="w-4 h-4" />
+                      Copiar
+                    }
+                  </button>
+                </div>
+                <pre
+                  class="tutorial-code"
+                  [class]="classeLinguagem(exemplo.language)"
+                ><code>{{ resolverCodigo(exemplo.code) }}</code></pre>
+              </div>
+            }
           }
 
           @if (secao.dica) {

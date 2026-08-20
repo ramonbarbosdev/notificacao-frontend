@@ -147,8 +147,8 @@ export class SidebarComponent {
     //   roles: ['ADMIN', 'USER'],
     // },
     {
-      label: 'Tutorial',
-      rota: '/app/tutorial',
+      label: 'Documentação',
+      rota: '/app/documentacao',
       icon: BookOpen,
       scope: 'ORG',
       roles: ['ADMIN', 'USER'],

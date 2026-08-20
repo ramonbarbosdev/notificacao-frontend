@@ -195,6 +195,53 @@
   border-radius: 0.75rem;
   overflow: hidden;
   background: color-mix(in srgb, var(--color-bg-base) 50%, var(--color-surface));
+
+  &--tabbed {
+    margin-top: 0;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+    border-top: none;
+  }
+}
+
+.tutorial-code-tabs {
+  margin: 0.75rem 0;
+  border: 1px solid var(--color-border);
+  border-radius: 0.75rem;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--color-bg-base) 50%, var(--color-surface));
+}
+
+.tutorial-code-tabs__nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  padding: 0.5rem;
+  border-bottom: 1px solid var(--color-border);
+  background: color-mix(in srgb, var(--color-bg-base) 30%, transparent);
+}
+
+.tutorial-code-tabs__tab {
+  border: 1px solid transparent;
+  border-radius: 0.5rem;
+  padding: 0.375rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  background: transparent;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+
+  &:hover {
+    color: var(--color-text);
+    background: color-mix(in srgb, var(--color-primary) 8%, transparent);
+  }
+
+  &--active {
+    color: var(--color-text);
+    background: var(--color-surface);
+    border-color: color-mix(in srgb, var(--color-primary) 25%, var(--color-border));
+  }
 }
 
 .tutorial-code-block__header {
@@ -242,6 +289,32 @@
 
   code {
     white-space: pre;
+  }
+
+  &--typescript,
+  &--javascript {
+    border-left: 3px solid #3178c6;
+  }
+
+  &--java {
+    border-left: 3px solid #b07219;
+  }
+
+  &--php {
+    border-left: 3px solid #777bb4;
+  }
+
+  &--csharp {
+    border-left: 3px solid #68217a;
+  }
+
+  &--json {
+    border-left: 3px solid #6b7280;
+  }
+
+  &--http,
+  &--bash {
+    border-left: 3px solid var(--color-primary);
   }
 }
 
