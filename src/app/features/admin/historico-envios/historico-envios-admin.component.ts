@@ -200,7 +200,7 @@ export class HistoricoEnviosAdminComponent implements OnInit {
     if (status === 'PENDENTE' || status === 'PROCESSANDO') {
       return {
         label: this.statusLabels[status],
-        className: 'bg-amber-500/10 text-amber-400 border-amber-500/30',
+        className: 'app-badge-warning',
       };
     }
     if (['ENVIADA', 'ENTREGUE', 'LIDA'].includes(status)) {

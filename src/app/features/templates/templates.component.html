@@ -187,7 +187,7 @@
               {{ variavel.chave }}
             </p>
             @if (!variavelUsadaNoConteudo(variavel.chave)) {
-            <p class="text-xs text-amber-400 mt-1">
+            <p class="text-xs app-text-warning mt-1">
               Esta variavel esta declarada, mas nao foi encontrada no conteudo.
             </p>
             }
@@ -275,7 +275,7 @@
       @if (resultadoValidacao()!.avisos.length) {
       <div class="space-y-1">
         @for (aviso of resultadoValidacao()!.avisos; track aviso) {
-        <p class="text-xs text-amber-400">{{ aviso }}</p>
+        <p class="text-xs app-text-warning">{{ aviso }}</p>
         }
       </div>
       }

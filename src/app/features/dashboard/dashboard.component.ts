@@ -135,12 +135,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
       icon: MessageCircle,
       tone: 'success',
     },
-    {
-      title: 'Templates',
-      description: 'Gerenciar modelos',
-      routerLink: '/app/templates',
-      icon: MessageSquareText,
-    },
+    // {
+    //   title: 'Templates',
+    //   description: 'Gerenciar modelos',
+    //   routerLink: '/app/templates',
+    //   icon: MessageSquareText,
+    // },
     {
       title: 'Contatos',
       description: 'Consentimentos e bloqueios',

@@ -91,8 +91,7 @@
                   class="rounded-xl border px-4 py-3"
                   [class.bg-[var(--color-danger-bg)]]="severidadeOperacional(op.statusOperacional) === 'danger'"
                   [class.border-[var(--color-danger-border)]]="severidadeOperacional(op.statusOperacional) === 'danger'"
-                  [class.bg-amber-500/10]="severidadeOperacional(op.statusOperacional) === 'warn'"
-                  [class.border-amber-500/30]="severidadeOperacional(op.statusOperacional) === 'warn'"
+                  [class.app-alert-warning]="severidadeOperacional(op.statusOperacional) === 'warn'"
                   [class.bg-[var(--color-success-bg)]]="severidadeOperacional(op.statusOperacional) === 'success'"
                   [class.border-[var(--color-success-border)]]="severidadeOperacional(op.statusOperacional) === 'success'"
                 >
@@ -240,11 +239,11 @@
         <section class="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-6 space-y-6">
           <h2 class="text-[var(--color-text)] font-semibold">API Keys</h2>
           @if (apiKeyCriada()) {
-            <div class="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4">
-              <p class="text-amber-300 text-sm font-semibold">Copie esta chave agora. Ela nao sera exibida novamente.</p>
+            <div class="app-alert-warning border rounded-xl p-4">
+              <p class="app-text-warning text-sm font-semibold">Copie esta chave agora. Ela nao sera exibida novamente.</p>
               <div class="mt-3 flex flex-col sm:flex-row sm:items-center gap-3">
                 <code class="flex-1 text-xs text-[var(--color-text)] break-all bg-[var(--color-bg-base)] rounded-lg px-3 py-2 font-mono">{{ apiKeyCriada()!.chave }}</code>
-                <button type="button" (click)="copiarChave(apiKeyCriada()!.chave)" class="px-4 py-2 rounded-xl border border-amber-500/40 text-amber-200 text-sm font-semibold shrink-0">
+                <button type="button" (click)="copiarChave(apiKeyCriada()!.chave)" class="px-4 py-2 rounded-xl border border-[color-mix(in_srgb,var(--color-warning)_40%,transparent)] app-text-warning text-sm font-semibold shrink-0">
                   Copiar chave
                 </button>
               </div>

@@ -5,7 +5,7 @@
       Acompanhe envios WhatsApp, tentativas e reprocessos da fila.
     </p>
     @if (resumoFila()?.proximoEnvioTexto) {
-      <p class="text-amber-300 text-sm mt-2 m-0">
+      <p class="app-text-warning text-sm mt-2 m-0">
         Próximo envio previsto {{ resumoFila()!.proximoEnvioTexto }}
         @if (resumoFila()!.proximoEnvioEm) {
           · {{ formatarData(resumoFila()!.proximoEnvioEm) }}
@@ -16,7 +16,7 @@
       <p class="text-[var(--color-text-faint)] text-xs mt-1 m-0">
         Atualizado {{ formatarData(ultimaAtualizacao()!.toISOString()) }}
         @if (aoVivo()) {
-          · <span class="inline-flex items-center gap-1 text-emerald-400">
+          · <span class="inline-flex items-center gap-1 app-text-success">
             <lucide-icon [img]="aoVivoIcon" class="w-3 h-3" />
             ao vivo
           </span>
@@ -168,7 +168,7 @@
                 </div>
 
                 @if (motivo) {
-                  <p class="text-xs text-amber-400 mt-2 m-0 line-clamp-1">
+                  <p class="text-xs app-text-warning mt-2 m-0 line-clamp-1">
                     {{ motivo }}
                   </p>
                 } @else if (item.status === 'PENDENTE' || item.status === 'PROCESSANDO') {
@@ -213,7 +213,7 @@
                   @if (item.retomadaPrevistaTexto) {
                     <div class="sm:col-span-2">
                       <p class="text-[var(--color-text-faint)] text-xs m-0 mb-1">Retomada prevista</p>
-                      <p class="text-amber-300 font-medium m-0">{{ item.retomadaPrevistaTexto }}</p>
+                      <p class="app-text-warning font-medium m-0">{{ item.retomadaPrevistaTexto }}</p>
                     </div>
                   }
                   @if (item.tempoEstimadoEnvioTexto) {
@@ -238,7 +238,7 @@
                 }
 
                 @if (item.erro || item.motivoAguardando) {
-                  <div class="rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-3">
+                  <div class="rounded-xl border app-alert-warning-subtle px-4 py-3">
                     <p class="text-sm font-semibold text-[var(--color-text)] m-0">
                       {{ erroDetalhe.titulo ?? erroDetalhe.mensagem }}
                     </p>

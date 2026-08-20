@@ -387,7 +387,7 @@ export class HistoricoFilaComponent implements OnInit, OnDestroy {
     if (status === 'PENDENTE' || status === 'PROCESSANDO') {
       return {
         label: this.statusLabels[status],
-        className: 'bg-amber-500/10 text-amber-400 border-amber-500/30',
+        className: 'app-badge-warning',
       };
     }
 
@@ -409,11 +409,11 @@ export class HistoricoFilaComponent implements OnInit, OnDestroy {
   classeCanal(canal: CanalNotificacao): string {
     switch (canal) {
       case 'WHATSAPP':
-        return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30';
+        return 'app-badge-success';
       case 'EMAIL':
-        return 'bg-sky-500/10 text-sky-400 border-sky-500/30';
+        return 'app-badge-info';
       case 'TELEGRAM':
-        return 'bg-blue-500/10 text-blue-400 border-blue-500/30';
+        return 'app-badge-info';
       default:
         return 'bg-[var(--color-surface-muted)] text-[var(--color-text-muted)] border-[var(--color-border)]';
     }

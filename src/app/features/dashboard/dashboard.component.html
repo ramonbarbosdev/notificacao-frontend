@@ -6,11 +6,11 @@
   <p class="text-[var(--color-text-muted)] text-sm mt-1">
     Visão operacional dos envios WhatsApp da organização.
     @if (aoVivo()) {
-      <span class="text-emerald-400">· atualização ao vivo</span>
+      <span class="app-text-success">· atualização ao vivo</span>
     }
   </p>
   @if (resumoFila()?.proximoEnvioTexto) {
-    <p class="text-amber-300 text-sm mt-2 m-0">
+    <p class="app-text-warning text-sm mt-2 m-0">
       Próximo envio previsto {{ resumoFila()!.proximoEnvioTexto }}
     </p>
   }

@@ -67,8 +67,7 @@
     <div class="mb-6 rounded-xl border px-4 py-4"
       [class.bg-[var(--color-danger-bg)]]="severidadeOperacional(op.statusOperacional) === 'danger'"
       [class.border-[var(--color-danger-border)]]="severidadeOperacional(op.statusOperacional) === 'danger'"
-      [class.bg-amber-500/10]="severidadeOperacional(op.statusOperacional) === 'warn'"
-      [class.border-amber-500/30]="severidadeOperacional(op.statusOperacional) === 'warn'"
+      [class.app-alert-warning]="severidadeOperacional(op.statusOperacional) === 'warn'"
       [class.bg-[var(--color-success-bg)]]="severidadeOperacional(op.statusOperacional) === 'success'"
       [class.border-[var(--color-success-border)]]="severidadeOperacional(op.statusOperacional) === 'success'"
       [class.bg-[var(--color-surface-muted)]]="severidadeOperacional(op.statusOperacional) === 'info'"
@@ -369,10 +368,10 @@
         </a>
       </div>
       } @else if (acompanhandoEnvio() || statusEnvioPendente(resposta.status)) {
-      <div class="bg-amber-500/10 border border-amber-500/30 rounded-xl px-4 py-3 flex items-start gap-3">
-        <lucide-icon [img]="loaderIcon" class="w-4 h-4 text-amber-300 flex-shrink-0 mt-0.5 animate-spin" />
+      <div class="app-alert-warning border rounded-xl px-4 py-3 flex items-start gap-3">
+        <lucide-icon [img]="loaderIcon" class="w-4 h-4 app-text-warning flex-shrink-0 mt-0.5 animate-spin" />
         <div>
-          <p class="text-amber-200 text-sm font-medium m-0">
+          <p class="app-text-warning text-sm font-medium m-0">
             Na fila — aguardando envio pelo WhatsApp...
           </p>
           <p class="text-[var(--color-text-muted)] text-xs mt-1 m-0">
@@ -539,13 +538,12 @@
       <div class="rounded-xl border px-4 py-3"
         [class.bg-[var(--color-success-bg)]]="lote.sucesso"
         [class.border-[var(--color-success-border)]]="lote.sucesso"
-        [class.bg-amber-500/10]="!lote.sucesso && lote.aceitas > 0"
-        [class.border-amber-500/30]="!lote.sucesso && lote.aceitas > 0"
+        [class.app-alert-warning]="!lote.sucesso && lote.aceitas > 0"
         [class.bg-[var(--color-danger-bg)]]="lote.aceitas === 0"
         [class.border-[var(--color-danger-border)]]="lote.aceitas === 0">
         <p class="text-sm font-semibold m-0"
           [class.text-[var(--color-success)]]="lote.sucesso"
-          [class.text-amber-200]="!lote.sucesso && lote.aceitas > 0"
+          [class.app-text-warning]="!lote.sucesso && lote.aceitas > 0"
           [class.text-[var(--color-danger)]]="lote.aceitas === 0">
           @if (lote.sucesso) {
             Lote enfileirado com sucesso.

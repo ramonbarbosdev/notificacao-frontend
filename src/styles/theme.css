@@ -1,48 +1,48 @@
-/* Charcoal & Amber — Carvão neutro com âmbar quente — analytics, dashboards */
+/* WhatsApp — paleta inspirada no WhatsApp Web (modo escuro) */
 @theme {
-  /* Neutrals */
-  --color-bg-base:        #0e0e0c;
-  --color-surface:        #1a1a18;
-  --color-surface-muted:  #242422;
-  --color-border:         #38382e;
-  --color-border-strong:  #4a4a3e;
+  /* Neutrals (WhatsApp Web dark) */
+  --color-bg-base:        #0b141a;
+  --color-surface:        #111b21;
+  --color-surface-muted:  #202c33;
+  --color-border:         #2a3942;
+  --color-border-strong:  #3b4a54;
 
   /* Text */
-  --color-text:           #f5f5f0;
-  --color-text-muted:     #a8a89a;
-  --color-text-subtle:    #787868;
-  --color-text-faint:     #585848;
+  --color-text:           #e9edef;
+  --color-text-muted:     #8696a0;
+  --color-text-subtle:    #667781;
+  --color-text-faint:     #54656f;
 
-  /* Brand / primary */
-  --color-primary:        #d97706;
-  --color-primary-hover:  #b45309;
-  --color-primary-soft:   #fbbf24;
+  /* Brand / primary — verde WhatsApp */
+  --color-primary:        #25d366;
+  --color-primary-hover:  #20bd5a;
+  --color-primary-soft:   #00a884;
 
-  /* Success */
-  --color-success:        #34d399;
-  --color-success-bg:     #012c1a;
-  --color-success-border: #065f30;
+  /* Success (alinhado ao verde WhatsApp) */
+  --color-success:        #25d366;
+  --color-success-bg:     #0d2b1a;
+  --color-success-border: #128c7e;
 
   /* Danger */
-  --color-danger:         #f87171;
-  --color-danger-bg:      #2c0a0a;
-  --color-danger-border:  #7a2020;
+  --color-danger:         #ea0038;
+  --color-danger-bg:      #2c0a12;
+  --color-danger-border:  #7a2030;
 
   /* Sidebar */
-  --color-sidebar-bg:     #0a0a08;
-  --color-sidebar-border: #242422;
-  --color-sidebar-active: #28200a;
-  --color-sidebar-active-text: #fbbf24;
-  --color-sidebar-text:   #a8a89a;
+  --color-sidebar-bg:     #111b21;
+  --color-sidebar-border: #2a3942;
+  --color-sidebar-active: #0d2b1a;
+  --color-sidebar-active-text: #25d366;
+  --color-sidebar-text:   #8696a0;
 
   /* Accent soft (badge bg, icon bg) */
-  --color-accent-soft:    #281400;
+  --color-accent-soft:    #0d3324;
 
   /* Info / warning */
-  --color-info:           #60a5fa;
-  --color-info-bg:        #0a1628;
-  --color-warning:        #fbbf24;
-  --color-warning-bg:     #281400;
+  --color-info:           #53bdeb;
+  --color-info-bg:        #0a2530;
+  --color-warning:        #ffd279;
+  --color-warning-bg:     #2a2410;
 }
 
 :root {
@@ -171,7 +171,7 @@
 
   .app-button-primary {
     background: var(--app-primary);
-    color: var(--app-text);
+    color: #ffffff;
   }
 
   .app-button-primary:hover:not(:disabled) {
@@ -179,12 +179,12 @@
   }
 
   .app-button-success {
-    background: var(--color-emerald-600);
-    color: var(--app-text);
+    background: var(--color-success);
+    color: #ffffff;
   }
 
   .app-button-success:hover:not(:disabled) {
-    background: var(--color-emerald-500);
+    background: var(--color-primary-hover);
   }
 
   .app-alert-danger {
@@ -200,6 +200,46 @@
   .app-alert-info {
     background: var(--app-bg);
     border-color: var(--app-border);
-    color: var(--color-slate-300);
+    color: var(--color-text-muted);
+  }
+
+  .app-text-warning {
+    color: var(--color-warning);
+  }
+
+  .app-text-success {
+    color: var(--color-primary);
+  }
+
+  .app-text-info {
+    color: var(--color-info);
+  }
+
+  .app-alert-warning {
+    background: color-mix(in srgb, var(--color-warning) 10%, transparent);
+    border-color: color-mix(in srgb, var(--color-warning) 30%, transparent);
+  }
+
+  .app-alert-warning-subtle {
+    background: color-mix(in srgb, var(--color-warning) 5%, transparent);
+    border-color: color-mix(in srgb, var(--color-warning) 20%, transparent);
+  }
+
+  .app-badge-warning {
+    background: color-mix(in srgb, var(--color-warning) 10%, transparent);
+    color: var(--color-warning);
+    border-color: color-mix(in srgb, var(--color-warning) 30%, transparent);
+  }
+
+  .app-badge-success {
+    background: var(--color-success-bg);
+    color: var(--color-success);
+    border-color: var(--color-success-border);
+  }
+
+  .app-badge-info {
+    background: color-mix(in srgb, var(--color-info) 10%, transparent);
+    color: var(--color-info);
+    border-color: color-mix(in srgb, var(--color-info) 30%, transparent);
   }
 }
