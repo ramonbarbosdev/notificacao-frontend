@@ -26,7 +26,7 @@ import { EmptyStateComponent } from '../../shared/components/empty-state/empty-s
 import { FormFieldComponent } from '../../shared/components/forms/form-field/app-form-field';
 import { formatScopes, maskApiKeyPrefix } from '../../shared/helper/api-key.utils';
 import { formatDateTimePtBr } from '../../shared/helper/date.utils';
-import { maskPhoneInput, normalizePhone } from '../../shared/helper/phone.utils';
+import { maskPhoneInput, normalizeBrazilWhatsappMobile } from '../../shared/helper/phone.utils';
 import { labelWhatsappStatus as traduzirStatusWhatsapp, extrairMensagemErroHttp } from '../../shared/labels/notificacao.labels';
 import {
   labelStatusOperacional,
@@ -233,7 +233,7 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
     const dados = this.form.getRawValue() as OrganizacaoConfiguracao;
 
     if (dados.nuTelefoneOperacional) {
-      dados.nuTelefoneOperacional = normalizePhone(dados.nuTelefoneOperacional);
+      dados.nuTelefoneOperacional = normalizeBrazilWhatsappMobile(dados.nuTelefoneOperacional);
     }
 
     this.salvando.set(true);

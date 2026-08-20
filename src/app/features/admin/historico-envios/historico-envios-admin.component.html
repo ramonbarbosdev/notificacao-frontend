@@ -112,7 +112,7 @@
                 <div class="text-xs text-[var(--color-text-subtle)]">#{{ item.idOrganizacao }}</div>
               </td>
               <td class="px-4 py-3">{{ formatarCanal(item.canal) }}</td>
-              <td class="px-4 py-3">{{ formatarDestinatario(item) }}</td>
+              <td class="px-4 py-3">{{ formatarDestinatario(item.canal, item.destinatario) }}</td>
               <td class="px-4 py-3">
                 <span class="inline-flex px-2.5 py-1 rounded-full border text-xs font-medium" [ngClass]="statusBadge(item.status).className">
                   {{ statusBadge(item.status).label }}
@@ -167,7 +167,7 @@
         <div><span class="text-[var(--color-text-muted)]">Organização</span><p class="m-0 font-medium">{{ detalhe.nmOrganizacao }}</p></div>
         <div><span class="text-[var(--color-text-muted)]">Status</span><p class="m-0 font-medium">{{ statusLabels[detalhe.status] }}</p></div>
         <div><span class="text-[var(--color-text-muted)]">Canal</span><p class="m-0">{{ formatarCanal(detalhe.canal) }}</p></div>
-        <div><span class="text-[var(--color-text-muted)]">Destinatário</span><p class="m-0">{{ formatarDestinatario(detalhe) }}</p></div>
+        <div><span class="text-[var(--color-text-muted)]">Destinatário</span><p class="m-0">{{ formatarDestinatario(detalhe.canal, detalhe.destinatario) }}</p></div>
         <div><span class="text-[var(--color-text-muted)]">Tentativas</span><p class="m-0">{{ detalhe.tentativas }} / {{ detalhe.tentativasMaximas ?? '—' }}</p></div>
         <div><span class="text-[var(--color-text-muted)]">Criado em</span><p class="m-0">{{ formatarData(detalhe.criadoEm) }}</p></div>
       </div>

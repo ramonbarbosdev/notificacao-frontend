@@ -20,7 +20,7 @@ import { usePaginatedTable } from '../../../shared/helper/paginated-table.state'
 import { useSidePanel } from '../../../shared/helper/side-panel.state';
 import { formatCanal } from '../../../shared/helper/channel.utils';
 import { formatDateTimePtBr } from '../../../shared/helper/date.utils';
-import { formatPhone } from '../../../shared/helper/phone.utils';
+import { formatDestinatario } from '../../../shared/helper/phone.utils';
 import { explicarErroFila } from '../../../shared/labels/whatsapp-operacional.labels';
 import {
   AdminNotificacaoDetalhe,
@@ -182,9 +182,7 @@ export class HistoricoEnviosAdminComponent implements OnInit {
     return status === 'PENDENTE' || status === 'PROCESSANDO' || status === 'FALHOU' || status === 'BLOQUEADA';
   }
 
-  formatarDestinatario(item: AdminNotificacaoFilaItem | AdminNotificacaoDetalhe): string {
-    return item.canal === 'WHATSAPP' ? formatPhone(item.destinatario) : item.destinatario;
-  }
+  formatarDestinatario = formatDestinatario;
 
   formatarCanal(canal: CanalNotificacao): string {
     return formatCanal(canal);

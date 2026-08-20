@@ -20,7 +20,12 @@ import { EmptyStateComponent } from '../../shared/components/empty-state/empty-s
 import { usePaginatedTable } from '../../shared/helper/paginated-table.state';
 import { formatCanal } from '../../shared/helper/channel.utils';
 import { formatDateTimePtBr } from '../../shared/helper/date.utils';
-import { formatPhone } from '../../shared/helper/phone.utils';
+import {
+  destinatarioMatchesFilter,
+  formatDestinatario,
+  maskPhoneInput,
+  normalizeBrazilWhatsappMobile,
+} from '../../shared/helper/phone.utils';
 import { explicarErroFila } from '../../shared/labels/whatsapp-operacional.labels';
 import { CanalNotificacao, FilaNotificacaoItemDTO, FilaResumoResponseDTO, StatusNotificacao } from '../../shared/types/dtos';
 
@@ -97,7 +102,7 @@ export class HistoricoFilaComponent implements OnInit, OnDestroy {
 
     return this.itens().filter((item) => {
       return (
-        (!destinatario || item.destinatario.toLowerCase().includes(destinatario)) &&
+        destinatarioMatchesFilter(item.canal, item.destinatario, destinatario) &&
         (!canal || item.canal === canal) &&
         (!status || item.status === status)
       );
@@ -309,12 +314,7 @@ export class HistoricoFilaComponent implements OnInit, OnDestroy {
     return this.expandidos().has(id);
   }
 
-  formatarDestinatario(item: FilaNotificacaoItemDTO): string {
-    if (item.canal === 'WHATSAPP') {
-      return formatPhone(item.destinatario);
-    }
-    return item.destinatario || '-';
-  }
+  formatarDestinatario = formatDestinatario;
 
   formatarCanal(canal: CanalNotificacao): string {
     return formatCanal(canal);
@@ -324,20 +324,30 @@ export class HistoricoFilaComponent implements OnInit, OnDestroy {
     return formatDateTimePtBr(valor);
   }
 
-  resumoMotivo(erro: string | null | undefined): string | null {
-    if (!erro?.trim()) return null;
-    const info = explicarErroFila(erro);
+  resumoMotivo(item: FilaNotificacaoItemDTO): string | null {
+    if (item.status === 'PENDENTE' && item.motivoAguardando?.trim()) {
+      return item.motivoAguardando;
+    }
+    if (!item.erro?.trim()) return null;
+    const info = explicarErroFila(item.erro);
     return info.titulo ?? info.mensagem;
   }
 
-  detalheErro(erro: string | null | undefined) {
-    return explicarErroFila(erro);
+  detalheErro(item: FilaNotificacaoItemDTO): ReturnType<typeof explicarErroFila> {
+    if (item.status === 'PENDENTE' && item.motivoAguardando?.trim()) {
+      return {
+        titulo: 'Aguardando envio',
+        mensagem: item.motivoAguardando,
+        explicacao: item.motivoAguardando,
+      };
+    }
+    return explicarErroFila(item.erro);
   }
 
-  linkWhatsappOperacional(erro: string | null | undefined): boolean {
+  linkWhatsappOperacional(item: FilaNotificacaoItemDTO): boolean {
+    const texto = item.erro ?? item.motivoAguardando ?? '';
     return (
-      typeof erro === 'string' &&
-      (erro.includes('risco operacional') || erro.includes('pausada automaticamente'))
+      texto.includes('risco operacional') || texto.includes('pausada automaticamente')
     );
   }
 

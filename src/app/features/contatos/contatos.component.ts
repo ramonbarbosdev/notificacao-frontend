@@ -7,7 +7,7 @@ import { ContatoService } from '../../core/services/contato.service';
 import { DataTableColumn } from '../../shared/components/data-table/data-table.types';
 import { usePaginatedTable } from '../../shared/helper/paginated-table.state';
 import { CanalNotificacao, ContatoRequestDTO, ContatoResponseDTO } from '../../shared/types/dtos';
-import { formatPhone, maskPhoneInput, normalizeBrazilWhatsappMobile } from '../../shared/helper/phone.utils';
+import { formatDestinatario, maskPhoneInput, normalizeBrazilWhatsappMobile } from '../../shared/helper/phone.utils';
 import { formatCanal } from '../../shared/helper/channel.utils';
 import { useSidePanel } from '../../shared/helper/side-panel.state';
 import { ContatoListComponent } from './components/contato-list/contato-list.component';
@@ -100,7 +100,7 @@ export class ContatosComponent implements OnInit {
     {
       key: 'destinatario',
       label: 'Destinatario',
-      formatter: (value, row) => formatPhone(value),
+      formatter: (value, row) => formatDestinatario(row.canal, value),
       filter: {
         type: 'text',
         placeholder: 'Buscar destinatario',
@@ -265,7 +265,10 @@ export class ContatosComponent implements OnInit {
     this.form.patchValue({
       canal: contato.canal,
       nmContato: contato.nmContato,
-      destinatario: contato.destinatario,
+      destinatario:
+        contato.canal === 'WHATSAPP'
+          ? maskPhoneInput(contato.destinatario)
+          : contato.destinatario,
       motivo: contato.motivoBloqueio ?? '',
     });
 
@@ -314,7 +317,7 @@ export class ContatosComponent implements OnInit {
   placeholderDestinatario(): string {
     switch (this.form.controls.canal.value) {
       case 'WHATSAPP':
-        return '+55 (71) 99118-0200';
+        return '+55 (99) 99999-9999';
       case 'EMAIL':
         return 'destinatario@email.com';
       case 'TELEGRAM':

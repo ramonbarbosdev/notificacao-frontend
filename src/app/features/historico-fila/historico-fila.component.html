@@ -126,9 +126,9 @@
     <div class="divide-y divide-[var(--color-border)]">
       @for (item of itensPaginados(); track item.idNotificacao) {
         @let badge = statusBadge(item.status);
-        @let motivo = resumoMotivo(item.erro);
+        @let motivo = resumoMotivo(item);
         @let expandido = estaExpandido(item.idNotificacao);
-        @let erroDetalhe = detalheErro(item.erro);
+        @let erroDetalhe = detalheErro(item);
 
         <article>
           <button
@@ -144,7 +144,7 @@
                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                   <div class="min-w-0">
                     <p class="text-[var(--color-text)] font-semibold text-sm m-0 truncate">
-                      {{ formatarDestinatario(item) }}
+                      {{ formatarDestinatario(item.canal, item.destinatario) }}
                     </p>
                     <p class="text-[var(--color-text-faint)] text-xs mt-0.5 m-0">
                       {{ formatarData(item.criadoEm) }}
@@ -235,7 +235,7 @@
                   </button>
                 }
 
-                @if (item.erro) {
+                @if (item.erro || item.motivoAguardando) {
                   <div class="rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-3">
                     <p class="text-sm font-semibold text-[var(--color-text)] m-0">
                       {{ erroDetalhe.titulo ?? erroDetalhe.mensagem }}
@@ -248,7 +248,7 @@
                         <strong>O que fazer:</strong> {{ erroDetalhe.acao }}
                       </p>
                     }
-                    @if (linkWhatsappOperacional(item.erro)) {
+                    @if (linkWhatsappOperacional(item)) {
                       <a
                         routerLink="/app/whatsapp"
                         class="inline-block text-xs font-semibold text-[var(--color-primary-soft)] mt-3 hover:underline">
@@ -259,7 +259,7 @@
                       <summary class="text-xs text-[var(--color-text-faint)] cursor-pointer hover:text-[var(--color-text-muted)]">
                         Ver mensagem técnica
                       </summary>
-                      <p class="text-xs text-[var(--color-text-subtle)] mt-2 m-0 font-mono break-all">{{ item.erro }}</p>
+                      <p class="text-xs text-[var(--color-text-subtle)] mt-2 m-0 font-mono break-all">{{ item.erro ?? item.motivoAguardando }}</p>
                     </details>
                   </div>
                 } @else {

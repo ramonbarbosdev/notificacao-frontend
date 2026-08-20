@@ -157,6 +157,10 @@ export interface EnviarNotificacaoResponse {
   canal: CanalNotificacao;
   status: StatusNotificacao;
   erro: string | null;
+  codigoErro?: string | null;
+  motivoAguardando?: string | null;
+  tentativas?: number | null;
+  tentativasMaximas?: number | null;
   tempoEstimadoEnvioSegundos?: number | null;
   posicaoFila?: number | null;
   tempoEstimadoEnvioTexto?: string | null;
@@ -173,6 +177,8 @@ export interface FilaNotificacaoItemDTO {
   tentativas: number;
   proximaTentativa: string | null;
   erro: string | null;
+  motivoAguardando?: string | null;
+  codigoErro?: string | null;
   criadoEm: string;
   tentativasMaximas?: number | null;
   enviadoEm?: string | null;
@@ -193,6 +199,8 @@ export interface FilaNotificacaoResponseDTO {
   tentativas: number;
   proximaTentativa: string | null;
   erro: string | null;
+  motivoAguardando?: string | null;
+  codigoErro?: string | null;
   criadoEm: string;
   tentativasMaximas?: number | null;
   enviadoEm?: string | null;
@@ -220,6 +228,9 @@ export interface NotificacaoFilaEvento {
   tipo: string;
   idNotificacao: number | null;
   status: StatusNotificacao | null;
+  erro?: string | null;
+  motivoAguardando?: string | null;
+  codigoErro?: string | null;
   resumo: FilaResumoResponseDTO | null;
   dtEvento: string;
 }
@@ -252,6 +263,8 @@ export interface AdminNotificacaoFilaItem {
   retomadaPrevistaEm: string | null;
   retomadaPrevistaTexto: string | null;
   erro: string | null;
+  motivoAguardando?: string | null;
+  codigoErro?: string | null;
   criadoEm: string;
   atualizadoEm: string;
 }

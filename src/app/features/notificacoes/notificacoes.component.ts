@@ -78,7 +78,7 @@ export class NotificacoesComponent {
 
   readonly placeholderDestinatario = () => {
     const mapa: Record<CanalNotificacao, string> = {
-      WHATSAPP: '+55 (71) 99118-0200',
+      WHATSAPP: '+55 (99) 99999-9999',
       EMAIL: 'destinatario@email.com',
       TELEGRAM: '@usuario ou chat_id',
       WEBHOOK: 'https://seu-webhook.com/endpoint',
@@ -91,7 +91,7 @@ export class NotificacoesComponent {
 
   helperDestinatario(): string {
     const mapa: Record<CanalNotificacao, string> = {
-      WHATSAPP: 'Telefone com DDI e DDD, ex: +55 (71) 99118-0200',
+      WHATSAPP: 'Telefone com DDI e DDD, ex: 71981180200 ou +55 (99) 99999-9999',
       EMAIL: 'Endereço de e-mail do destinatário',
       TELEGRAM: 'Usuário (@nome) ou chat_id numérico',
       WEBHOOK: 'URL completa do endpoint que receberá o evento',

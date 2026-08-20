@@ -1,189 +1,169 @@
 <div class="mb-8">
-        <h1 class="text-2xl font-bold text-[var(--color-text)]">
-          WhatsApp
-        </h1>
+  <h1 class="text-2xl font-bold text-[var(--color-text)]">
+    WhatsApp
+  </h1>
 
-        <p class="text-[var(--color-text-muted)] text-sm mt-1">
-          Gerencie a sessao e enfileire mensagens manuais com consentimento.
-        </p>
-      </div>
+  <p class="text-[var(--color-text-muted)] text-sm mt-1">
+    Gerencie a sessao e enfileire mensagens manuais com consentimento.
+  </p>
+</div>
 
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-        <!-- Status -->
-        <div class="bg-[var(--color-surface)]
+  <!-- Status -->
+  <div class="bg-[var(--color-surface)]
                     border border-[var(--color-border)]
                     rounded-2xl p-6">
 
-          <div class="flex items-center justify-between mb-6">
-            <h2 class="text-[var(--color-text)] font-semibold">
-              Status da Sessão
-            </h2>
+    <div class="flex items-center justify-between mb-6">
+      <h2 class="text-[var(--color-text)] font-semibold">
+        Status da Sessão
+      </h2>
 
-            <button
-              type="button"
-              (click)="atualizarStatus()"
-              [disabled]="carregando()"
-              class="text-[var(--color-text-muted)]
+      <button type="button" (click)="atualizarStatus()" [disabled]="carregando()" class="text-[var(--color-text-muted)]
                      hover:text-[var(--color-text)]
                      disabled:opacity-40
                      transition-colors p-1.5 rounded-lg
                      hover:bg-[var(--color-surface-muted)]">
 
-              <lucide-icon
-                [img]="refreshIcon"
-                class="w-4 h-4"
-                [class.animate-spin]="carregando()" />
-            </button>
-          </div>
+        <lucide-icon [img]="refreshIcon" class="w-4 h-4" [class.animate-spin]="carregando()" />
+      </button>
+    </div>
 
-          <div class="flex items-center gap-4 mb-6">
+    <div class="flex items-center gap-4 mb-6">
 
-            <div class="w-14 h-14 rounded-2xl flex items-center justify-center border"
-                 [class.bg-[var(--color-success-bg)]]="status()?.conectado"
-                 [class.border-[var(--color-success-border)]]="status()?.conectado"
-                 [class.bg-[var(--color-surface-muted)]]="!status()?.conectado"
-                 [class.border-[var(--color-border)]]="!status()?.conectado">
+      <div class="w-14 h-14 rounded-2xl flex items-center justify-center border"
+        [class.bg-[var(--color-success-bg)]]="status()?.conectado"
+        [class.border-[var(--color-success-border)]]="status()?.conectado"
+        [class.bg-[var(--color-surface-muted)]]="!status()?.conectado"
+        [class.border-[var(--color-border)]]="!status()?.conectado">
 
-              <lucide-icon
-                [img]="whatsappIcon"
-                class="w-7 h-7"
-                [class.text-[var(--color-success)]]="status()?.conectado"
-                [class.text-[var(--color-text-subtle)]]="!status()?.conectado" />
-            </div>
+        <lucide-icon [img]="whatsappIcon" class="w-7 h-7" [class.text-[var(--color-success)]]="status()?.conectado"
+          [class.text-[var(--color-text-subtle)]]="!status()?.conectado" />
+      </div>
 
-            <div>
-              <p class="text-[var(--color-text)] font-semibold text-lg">
-                {{ labelStatusAtual() }}
-              </p>
+      <div>
+        <p class="text-[var(--color-text)] font-semibold text-lg">
+          {{ labelStatusAtual() }}
+        </p>
 
-              @if (status()?.telefone) {
-                <p class="text-[var(--color-text-subtle)] text-sm">
-                  {{ formatarTelefone(status()?.telefone) }}
-                </p>
-              } @else if (tentativaEmAndamento()) {
-                <p class="text-[var(--color-text-subtle)] text-sm">
-                  Tentativa de conexão em andamento
-                </p>
-              } @else {
-                <p class="text-[var(--color-text-faint)] text-sm">
-                  Nenhum telefone vinculado
-                </p>
-              }
-            </div>
-          </div>
+        @if (status()?.telefone) {
+        <p class="text-[var(--color-text-subtle)] text-sm">
+          {{ formatarTelefone(status()?.telefone) }}
+        </p>
+        } @else if (tentativaEmAndamento()) {
+        <p class="text-[var(--color-text-subtle)] text-sm">
+          Tentativa de conexão em andamento
+        </p>
+        } @else {
+        <p class="text-[var(--color-text-faint)] text-sm">
+          Nenhum telefone vinculado
+        </p>
+        }
+      </div>
+    </div>
 
-          @if (operacional(); as op) {
-            <div
-              class="mb-6 rounded-xl border px-4 py-4"
-              [class.bg-[var(--color-danger-bg)]]="severidadeOperacional(op.statusOperacional) === 'danger'"
-              [class.border-[var(--color-danger-border)]]="severidadeOperacional(op.statusOperacional) === 'danger'"
-              [class.bg-amber-500/10]="severidadeOperacional(op.statusOperacional) === 'warn'"
-              [class.border-amber-500/30]="severidadeOperacional(op.statusOperacional) === 'warn'"
-              [class.bg-[var(--color-success-bg)]]="severidadeOperacional(op.statusOperacional) === 'success'"
-              [class.border-[var(--color-success-border)]]="severidadeOperacional(op.statusOperacional) === 'success'"
-              [class.bg-[var(--color-surface-muted)]]="severidadeOperacional(op.statusOperacional) === 'info'"
-              [class.border-[var(--color-border)]]="severidadeOperacional(op.statusOperacional) === 'info'"
-            >
-              <div class="flex flex-wrap items-center gap-2 mb-2">
-                <span class="text-sm font-semibold text-[var(--color-text)]">{{ op.titulo }}</span>
-                <span class="text-xs px-2 py-0.5 rounded-full border border-[var(--color-border)] text-[var(--color-text-muted)]">
-                  {{ labelStatusOperacional(op.statusOperacional) }}
-                </span>
-                @if (op.falhasConsecutivas > 0) {
-                  <span class="text-xs text-[var(--color-text-muted)]">
-                    {{ op.falhasConsecutivas }}/{{ op.maximoFalhasConsecutivas }} falhas
-                  </span>
-                }
-              </div>
+    @if (operacional(); as op) {
+    <div class="mb-6 rounded-xl border px-4 py-4"
+      [class.bg-[var(--color-danger-bg)]]="severidadeOperacional(op.statusOperacional) === 'danger'"
+      [class.border-[var(--color-danger-border)]]="severidadeOperacional(op.statusOperacional) === 'danger'"
+      [class.bg-amber-500/10]="severidadeOperacional(op.statusOperacional) === 'warn'"
+      [class.border-amber-500/30]="severidadeOperacional(op.statusOperacional) === 'warn'"
+      [class.bg-[var(--color-success-bg)]]="severidadeOperacional(op.statusOperacional) === 'success'"
+      [class.border-[var(--color-success-border)]]="severidadeOperacional(op.statusOperacional) === 'success'"
+      [class.bg-[var(--color-surface-muted)]]="severidadeOperacional(op.statusOperacional) === 'info'"
+      [class.border-[var(--color-border)]]="severidadeOperacional(op.statusOperacional) === 'info'">
+      <div class="flex flex-wrap items-center gap-2 mb-2">
+        <span class="text-sm font-semibold text-[var(--color-text)]">{{ op.titulo }}</span>
+        <span
+          class="text-xs px-2 py-0.5 rounded-full border border-[var(--color-border)] text-[var(--color-text-muted)]">
+          {{ labelStatusOperacional(op.statusOperacional) }}
+        </span>
+        @if (op.falhasConsecutivas > 0) {
+        <span class="text-xs text-[var(--color-text-muted)]">
+          {{ op.falhasConsecutivas }}/{{ op.maximoFalhasConsecutivas }} falhas
+        </span>
+        }
+      </div>
 
-              <p class="text-sm text-[var(--color-text-muted)] m-0 mb-2">{{ op.explicacao }}</p>
-              <p class="text-sm text-[var(--color-text)] m-0 mb-3"><strong>O que fazer:</strong> {{ op.orientacao }}</p>
+      <p class="text-sm text-[var(--color-text-muted)] m-0 mb-2">{{ op.explicacao }}</p>
+      <p class="text-sm text-[var(--color-text)] m-0 mb-3"><strong>O que fazer:</strong> {{ op.orientacao }}</p>
 
-              @if (op.dtPausadoAte) {
-                <p class="text-xs text-[var(--color-text-faint)] m-0 mb-3">Pausa até: {{ op.dtPausadoAte }}</p>
-              }
+      @if (op.dtPausadoAte) {
+      <p class="text-xs text-[var(--color-text-faint)] m-0 mb-3">Pausa até: {{ op.dtPausadoAte }}</p>
+      }
 
-              <div class="flex flex-col gap-2">
-                @for (acao of op.acoes; track acao.codigo) {
-                  <button
-                    type="button"
-                    [class]="classeAcaoOperacional(acao)"
-                    [disabled]="!acao.habilitada || acaoOperacionalCarregando() || carregando()"
-                    (click)="executarAcaoOperacional(acao)"
-                  >
-                    @if (acaoOperacionalCarregando() && acao.habilitada && acao.primaria) {
-                      <lucide-icon [img]="loaderIcon" class="animate-spin h-4 w-4" />
-                    }
-                    {{ acao.rotulo }}
-                  </button>
-                  <p class="text-xs text-[var(--color-text-faint)] m-0 -mt-1">{{ acao.descricao }}</p>
-                }
-              </div>
-            </div>
+      <div class="flex flex-col gap-2">
+        @for (acao of op.acoes; track acao.codigo) {
+        <button type="button" [class]="classeAcaoOperacional(acao)"
+          [disabled]="!acao.habilitada || acaoOperacionalCarregando() || carregando()"
+          (click)="executarAcaoOperacional(acao)">
+          @if (acaoOperacionalCarregando() && acao.habilitada && acao.primaria) {
+          <lucide-icon [img]="loaderIcon" class="animate-spin h-4 w-4" />
           }
+          {{ acao.rotulo }}
+        </button>
+        <p class="text-xs text-[var(--color-text-faint)] m-0 -mt-1">{{ acao.descricao }}</p>
+        }
+      </div>
+    </div>
+    }
 
-          @if (status()?.qrImagem) {
-            <div class="mb-6">
+    @if (status()?.qrImagem) {
+    <div class="mb-6">
 
-              <p class="text-[var(--color-text-muted)] text-sm mb-3 flex items-center gap-2">
-                <span class="w-2 h-2 bg-[var(--color-primary-soft)] rounded-full animate-pulse"></span>
-                Escaneie o QR Code no WhatsApp
-              </p>
+      <p class="text-[var(--color-text-muted)] text-sm mb-3 flex items-center gap-2">
+        <span class="w-2 h-2 bg-[var(--color-primary-soft)] rounded-full animate-pulse"></span>
+        Escaneie o QR Code no WhatsApp
+      </p>
 
-              <div class="bg-white rounded-2xl p-4 inline-flex shadow-xl">
-                <img
-                  [src]="qrImagemSrc()"
-                  alt="QR Code WhatsApp"
-                  class="w-48 h-48 object-contain" />
-              </div>
-            </div>
-          }
+      <div class="bg-white rounded-2xl p-4 inline-flex shadow-xl">
+        <img [src]="qrImagemSrc()" alt="QR Code WhatsApp" class="w-48 h-48 object-contain" />
+      </div>
+    </div>
+    }
 
-          @if (status()?.erro) {
-            <div class="mb-4
+    @if (status()?.erro) {
+    <div class="mb-4
                         bg-[var(--color-danger-bg)]
                         border border-[var(--color-danger-border)]
                         rounded-xl px-4 py-3">
 
-              <p class="text-[var(--color-danger)] text-sm">
-                {{ labelMensagemErro(status()?.erro) }}
-              </p>
-            </div>
-          }
+      <p class="text-[var(--color-danger)] text-sm">
+        {{ labelMensagemErro(status()?.erro) }}
+      </p>
+    </div>
+    }
 
-          @if (erroConexao()) {
-            <div class="mb-4
+    @if (erroConexao()) {
+    <div class="mb-4
                         bg-[var(--color-danger-bg)]
                         border border-[var(--color-danger-border)]
                         rounded-xl px-4 py-3">
 
-              <p class="text-[var(--color-danger)] text-sm">
-                {{ erroConexao() }}
-              </p>
-            </div>
-          }
+      <p class="text-[var(--color-danger)] text-sm">
+        {{ erroConexao() }}
+      </p>
+    </div>
+    }
 
-          @if (mensagemEvento()) {
-            <div class="mb-4
+    @if (mensagemEvento()) {
+    <div class="mb-4
                         bg-[var(--color-bg-base)]
                         border border-[var(--color-border)]
                         rounded-xl px-4 py-3">
 
-              <p class="text-[var(--color-text-muted)] text-sm">
-                {{ mensagemEvento() }}
-              </p>
-            </div>
-          }
+      <p class="text-[var(--color-text-muted)] text-sm">
+        {{ mensagemEvento() }}
+      </p>
+    </div>
+    }
 
-          <div class="flex flex-col gap-3">
+    <div class="flex flex-col gap-3">
 
-            @if (!status()?.conectado && tentativaEmAndamento()) {
+      @if (!status()?.conectado && tentativaEmAndamento()) {
 
-              <button
-                type="button"
-                disabled
-                class="w-full
+      <button type="button" disabled class="w-full
                        bg-[var(--color-surface-muted)]
                        border border-[var(--color-border)]
                        opacity-80
@@ -191,18 +171,12 @@
                        font-semibold py-2.5 rounded-xl text-sm
                        flex items-center justify-center gap-2">
 
-                <lucide-icon
-                  [img]="loaderIcon"
-                  class="animate-spin h-4 w-4" />
+        <lucide-icon [img]="loaderIcon" class="animate-spin h-4 w-4" />
 
-                Conexão em andamento
-              </button>
+        Conexão em andamento
+      </button>
 
-              <button
-                type="button"
-                (click)="cancelarConexao()"
-                [disabled]="carregando()"
-                class="w-full
+      <button type="button" (click)="cancelarConexao()" [disabled]="carregando()" class="w-full
                        bg-[var(--color-surface-muted)]
                        hover:bg-[var(--color-danger-bg)]
                        hover:border-[var(--color-danger-border)]
@@ -214,16 +188,12 @@
                        font-semibold py-2.5 rounded-xl
                        transition-all duration-200 text-sm">
 
-                Cancelar conexão
-              </button>
+        Cancelar conexão
+      </button>
 
-            } @else if (!status()?.conectado) {
+      } @else if (!status()?.conectado) {
 
-              <button
-                type="button"
-                (click)="conectar()"
-                [disabled]="conectarBloqueado()"
-                class="w-full
+      <button type="button" (click)="conectar()" [disabled]="conectarBloqueado()" class="w-full
                        bg-[var(--color-success)]
                        hover:brightness-110
                        disabled:opacity-50
@@ -233,32 +203,24 @@
                        transition-all duration-200 text-sm
                        flex items-center justify-center gap-2">
 
-                @if (carregando()) {
-                  <lucide-icon
-                    [img]="loaderIcon"
-                    class="animate-spin h-4 w-4" />
-                } @else {
-                  <lucide-icon
-                    [img]="plugZapIcon"
-                    class="h-4 w-4" />
-                }
+        @if (carregando()) {
+        <lucide-icon [img]="loaderIcon" class="animate-spin h-4 w-4" />
+        } @else {
+        <lucide-icon [img]="plugZapIcon" class="h-4 w-4" />
+        }
 
-                Conectar WhatsApp
-              </button>
+        Conectar WhatsApp
+      </button>
 
-              @if (segundosRestantes() > 0) {
-                <p class="text-center text-[var(--color-text-faint)] text-xs">
-                  Aguarde {{ segundosRestantes() }}s para tentar novamente
-                </p>
-              }
+      @if (segundosRestantes() > 0) {
+      <p class="text-center text-[var(--color-text-faint)] text-xs">
+        Aguarde {{ segundosRestantes() }}s para tentar novamente
+      </p>
+      }
 
-            } @else {
+      } @else {
 
-              <button
-                type="button"
-                (click)="desconectar()"
-                [disabled]="carregando()"
-                class="w-full
+      <button type="button" (click)="desconectar()" [disabled]="carregando()" class="w-full
                        bg-[var(--color-surface-muted)]
                        hover:bg-[var(--color-danger-bg)]
                        hover:border-[var(--color-danger-border)]
@@ -270,40 +232,32 @@
                        font-semibold py-2.5 rounded-xl
                        transition-all duration-200 text-sm">
 
-                Desconectar
-              </button>
-            }
-          </div>
-        </div>
+        Desconectar
+      </button>
+      }
+    </div>
+  </div>
 
-        <!-- Enviar mensagem -->
-        <div class="bg-[var(--color-surface)]
+  <!-- Enviar mensagem -->
+  <div class="bg-[var(--color-surface)]
                     border border-[var(--color-border)]
                     rounded-2xl p-6">
 
-          <h2 class="text-[var(--color-text)] font-semibold mb-6">
-            Enfileirar Mensagem
-          </h2>
+    <h2 class="text-[var(--color-text)] font-semibold mb-6">
+      Enfileirar Mensagem
+    </h2>
 
-          <form
-            [formGroup]="formMensagem"
-            (ngSubmit)="enviarMensagem()"
-            class="space-y-4">
+    <form [formGroup]="formMensagem" (ngSubmit)="enviarMensagem()" class="space-y-4">
 
-            <div>
-              <label class="block text-sm font-medium
+      <div>
+        <label class="block text-sm font-medium
                             text-[var(--color-text-muted)] mb-2">
 
-                Telefone
-              </label>
+          Telefone
+        </label>
 
-              <input
-                formControlName="telefone"
-                type="tel"
-                inputmode="tel"
-                placeholder="+55 (71) 99118-0200"
-                (input)="atualizarTelefone($event)"
-                class="w-full
+        <input formControlName="telefone" type="tel" inputmode="tel" placeholder="+55 (99) 99999-9999"
+          (input)="atualizarTelefone($event)" class="w-full
                        bg-[var(--color-surface-muted)]
                        border border-[var(--color-border-strong)]
                        rounded-xl px-4 py-3
@@ -315,31 +269,27 @@
                        focus:border-transparent
                        transition-all duration-200" />
 
-              @if (formMensagem.get('telefone')?.invalid &&
-                   formMensagem.get('telefone')?.touched) {
+        @if (formMensagem.get('telefone')?.invalid &&
+        formMensagem.get('telefone')?.touched) {
 
-                <p class="text-[var(--color-danger)] text-xs mt-1">
-                  Informe o telefone com DDI e DDD
-                </p>
-              }
+        <p class="text-[var(--color-danger)] text-xs mt-1">
+          Informe o telefone com DDI e DDD
+        </p>
+        }
 
-              <p class="text-[var(--color-text-faint)] text-xs mt-1">
-                Formato: +55 (DDD) 9XXXX-XXXX
-              </p>
-            </div>
+        <p class="text-[var(--color-text-faint)] text-xs mt-1">
+          Formato: +55 (DDD) 9XXXX-XXXX
+        </p>
+      </div>
 
-            <div>
-              <label class="block text-sm font-medium
+      <div>
+        <label class="block text-sm font-medium
                             text-[var(--color-text-muted)] mb-2">
 
-                Mensagem
-              </label>
+          Mensagem
+        </label>
 
-              <textarea
-                formControlName="mensagem"
-                rows="5"
-                placeholder="Digite a mensagem que sera enfileirada..."
-                class="w-full
+        <textarea formControlName="mensagem" rows="5" placeholder="Digite a mensagem que sera enfileirada..." class="w-full
                        bg-[var(--color-surface-muted)]
                        border border-[var(--color-border-strong)]
                        rounded-xl px-4 py-3
@@ -352,89 +302,84 @@
                        transition-all duration-200">
               </textarea>
 
-              @if (formMensagem.get('mensagem')?.invalid &&
-                   formMensagem.get('mensagem')?.touched) {
+        @if (formMensagem.get('mensagem')?.invalid &&
+        formMensagem.get('mensagem')?.touched) {
 
-                <p class="text-[var(--color-danger)] text-xs mt-1">
-                  Mensagem obrigatória
-                </p>
-              }
-            </div>
+        <p class="text-[var(--color-danger)] text-xs mt-1">
+          Mensagem obrigatória
+        </p>
+        }
+      </div>
 
-            @if (respostaMensagem()?.sucesso === true) {
-              <div class="bg-[var(--color-success-bg)]
+      @if (respostaMensagem()?.sucesso === true) {
+      <div class="bg-[var(--color-success-bg)]
                           border border-[var(--color-success-border)]
                           rounded-xl px-4 py-3
                           flex items-start gap-3">
 
-                <lucide-icon
-                  [img]="checkIcon"
-                  class="w-4 h-4 text-[var(--color-success)] flex-shrink-0 mt-0.5" />
+        <lucide-icon [img]="checkIcon" class="w-4 h-4 text-[var(--color-success)] flex-shrink-0 mt-0.5" />
 
-                <div>
-                  <p class="text-[var(--color-success)] text-sm font-medium">
-                    Mensagem enfileirada com sucesso.
-                  </p>
-                  <p class="text-[var(--color-text-muted)] text-xs mt-1">
-                    ID #{{ respostaMensagem()!.idNotificacao }} - Status:
-                    {{ labelStatus(respostaMensagem()!.status) }}
-                  </p>
-                </div>
-              </div>
-            }
+        <div>
+          <p class="text-[var(--color-success)] text-sm font-medium">
+            Mensagem enfileirada com sucesso.
+          </p>
+          <p class="text-[var(--color-text-muted)] text-xs mt-1">
+            ID #{{ respostaMensagem()!.idNotificacao }} - Status:
+            {{ labelStatus(respostaMensagem()!.status) }}
+          </p>
+        </div>
+      </div>
+      }
 
-            @if (respostaMensagem()?.sucesso === false) {
-              @let erroDetalhe = detalheErro(respostaMensagem()?.erro);
-              <div class="bg-[var(--color-danger-bg)]
+      @if (respostaMensagem()?.sucesso === false) {
+      @let erroDetalhe = detalheErro(respostaMensagem()?.erro);
+      <div class="bg-[var(--color-danger-bg)]
                           border border-[var(--color-danger-border)]
                           rounded-xl px-4 py-3">
 
-                <p class="text-[var(--color-danger)] text-sm font-semibold m-0">
-                  {{ erroDetalhe.titulo ?? labelMensagemErro(respostaMensagem()?.erro, 'Erro ao enviar mensagem.') }}
-                </p>
-                @if (erroDetalhe.explicacao) {
-                  <p class="text-[var(--color-text-muted)] text-xs mt-2 m-0">{{ erroDetalhe.explicacao }}</p>
-                }
-                @if (erroDetalhe.acao) {
-                  <p class="text-[var(--color-text)] text-xs mt-2 m-0">
-                    <strong>O que fazer:</strong> {{ erroDetalhe.acao }}
-                  </p>
-                } @else if (ehErroConsentimento(respostaMensagem()?.erro)) {
-                  <p class="text-[var(--color-text-muted)] text-xs mt-2 m-0">
-                    Cadastre o consentimento do contato, ou verifique se ele esta bloqueado.
-                  </p>
-                }
-              </div>
-            }
+        <p class="text-[var(--color-danger)] text-sm font-semibold m-0">
+          {{ erroDetalhe.titulo ?? labelMensagemErro(respostaMensagem()?.erro, 'Erro ao enviar mensagem.') }}
+        </p>
+        @if (erroDetalhe.explicacao) {
+        <p class="text-[var(--color-text-muted)] text-xs mt-2 m-0">{{ erroDetalhe.explicacao }}</p>
+        }
+        @if (erroDetalhe.acao) {
+        <p class="text-[var(--color-text)] text-xs mt-2 m-0">
+          <strong>O que fazer:</strong> {{ erroDetalhe.acao }}
+        </p>
+        } @else if (ehErroConsentimento(respostaMensagem()?.erro)) {
+        <p class="text-[var(--color-text-muted)] text-xs mt-2 m-0">
+          Cadastre o consentimento do contato, ou verifique se ele esta bloqueado.
+        </p>
+        }
+      </div>
+      }
 
-            @if (erroEnvio()) {
-              @let erroDetalhe = detalheErro(erroEnvio());
-              <div class="bg-[var(--color-danger-bg)]
+      @if (erroEnvio()) {
+      @let erroDetalhe = detalheErro(erroEnvio());
+      <div class="bg-[var(--color-danger-bg)]
                           border border-[var(--color-danger-border)]
                           rounded-xl px-4 py-3">
 
-                <p class="text-[var(--color-danger)] text-sm font-semibold m-0">
-                  {{ erroDetalhe.titulo ?? erroEnvio() }}
-                </p>
-                @if (erroDetalhe.explicacao) {
-                  <p class="text-[var(--color-text-muted)] text-xs mt-2 m-0">{{ erroDetalhe.explicacao }}</p>
-                }
-                @if (erroDetalhe.acao) {
-                  <p class="text-[var(--color-text)] text-xs mt-2 m-0">
-                    <strong>O que fazer:</strong> {{ erroDetalhe.acao }}
-                  </p>
-                } @else if (ehErroConsentimento(erroEnvio())) {
-                  <p class="text-[var(--color-text-muted)] text-xs mt-2 m-0">
-                    Oriente o usuário a cadastrar ou autorizar o contato antes de uma nova tentativa.
-                  </p>
-                }
-              </div>
-            }
+        <p class="text-[var(--color-danger)] text-sm font-semibold m-0">
+          {{ erroDetalhe.titulo ?? erroEnvio() }}
+        </p>
+        @if (erroDetalhe.explicacao) {
+        <p class="text-[var(--color-text-muted)] text-xs mt-2 m-0">{{ erroDetalhe.explicacao }}</p>
+        }
+        @if (erroDetalhe.acao) {
+        <p class="text-[var(--color-text)] text-xs mt-2 m-0">
+          <strong>O que fazer:</strong> {{ erroDetalhe.acao }}
+        </p>
+        } @else if (ehErroConsentimento(erroEnvio())) {
+        <p class="text-[var(--color-text-muted)] text-xs mt-2 m-0">
+          Oriente o usuário a cadastrar ou autorizar o contato antes de uma nova tentativa.
+        </p>
+        }
+      </div>
+      }
 
-            <button
-              type="submit"
-              [disabled]="formMensagem.invalid || enviando() || !status()?.conectado"
-              class="w-full
+      <button type="submit" [disabled]="formMensagem.invalid || enviando() || !status()?.conectado" class="w-full
                      bg-[var(--color-primary)]
                      hover:bg-[var(--color-primary-hover)]
                      disabled:opacity-50
@@ -444,27 +389,22 @@
                      transition-all duration-200 text-sm
                      flex items-center justify-center gap-2">
 
-              @if (enviando()) {
-                <lucide-icon
-                  [img]="loaderIcon"
-                  class="animate-spin h-4 w-4" />
+        @if (enviando()) {
+        <lucide-icon [img]="loaderIcon" class="animate-spin h-4 w-4" />
 
-                Enfileirando...
-              } @else {
-                <lucide-icon
-                  [img]="sendIcon"
-                  class="w-4 h-4" />
+        Enfileirando...
+        } @else {
+        <lucide-icon [img]="sendIcon" class="w-4 h-4" />
 
-                Enfileirar Mensagem
-              }
-            </button>
+        Enfileirar Mensagem
+        }
+      </button>
 
-            @if (!status()?.conectado) {
-              <p class="text-center text-[var(--color-text-faint)] text-xs">
-                Conecte o WhatsApp antes de enviar mensagens
-              </p>
-            }
-          </form>
-        </div>
-      </div>
-
+      @if (!status()?.conectado) {
+      <p class="text-center text-[var(--color-text-faint)] text-xs">
+        Conecte o WhatsApp antes de enviar mensagens
+      </p>
+      }
+    </form>
+  </div>
+</div>
