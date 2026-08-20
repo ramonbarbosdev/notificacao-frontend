@@ -25,6 +25,7 @@ import { useSidePanel } from '../../shared/helper/side-panel.state';
 import { maskBrlInput } from '../../shared/helper/currency.utils';
 import { formatDateTimePtBr } from '../../shared/helper/date.utils';
 import { maskPhoneInput, normalizeBrazilWhatsappMobile } from '../../shared/helper/phone.utils';
+import { canaisVisiveisUi, canalUnicoUi, opcoesCanalFiltro } from '../../shared/helper/channel.utils';
 import { labelStatusNotificacao, extrairMensagemErroHttp } from '../../shared/labels/notificacao.labels';
 import {
   CanalNotificacao,
@@ -85,7 +86,8 @@ export class TemplatesComponent implements OnInit, OnDestroy {
   readonly respostaTeste = signal<TestarTemplateResponseDTO | null>(null);
   readonly respostaEnvio = signal<EnviarNotificacaoResponse | null>(null);
 
-  readonly canais: CanalNotificacao[] = ['WHATSAPP', 'EMAIL', 'TELEGRAM', 'WEBHOOK'];
+  readonly canais = canaisVisiveisUi();
+  readonly canalUnico = canalUnicoUi();
   readonly tiposVariavel: TipoVariavelTemplate[] = [
     'TEXTO',
     'NUMERO',
@@ -131,20 +133,16 @@ export class TemplatesComponent implements OnInit, OnDestroy {
       key: 'chave',
       label: 'Chave',
     },
-    {
+    ...(this.canalUnico
+      ? []
+      : [{
       key: 'canal',
       label: 'Canal',
       filter: {
         type: 'select',
-        options: [
-          { label: 'Todos', value: '' },
-          { label: 'WhatsApp', value: 'WHATSAPP' },
-          { label: 'Email', value: 'EMAIL' },
-          { label: 'Telegram', value: 'TELEGRAM' },
-          { label: 'Webhook', value: 'WEBHOOK' },
-        ],
+        options: opcoesCanalFiltro(),
       },
-    },
+    } as DataTableColumn<TemplateMensagemResponseDTO>]),
     {
       key: 'ativo',
       label: 'Status',

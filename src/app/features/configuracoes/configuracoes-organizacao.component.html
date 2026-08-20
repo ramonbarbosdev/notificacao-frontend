@@ -29,7 +29,7 @@
       }
 
       <div class="flex flex-wrap gap-2 mb-6">
-        @for (item of abas; track item.id) {
+        @for (item of abasVisiveis; track item.id) {
           @if (!item.adminOnly || isAdmin()) {
             <button type="button" (click)="selecionarAba(item.id)" class="px-4 py-2 rounded-xl border text-sm"
               [class.bg-[var(--color-primary)]]="aba() === item.id"

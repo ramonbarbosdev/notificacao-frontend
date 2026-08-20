@@ -129,10 +129,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   readonly quickActions: QuickAction[] = [
     {
-      title: 'Enviar notificação',
-      description: 'Criar envio manual',
-      routerLink: '/app/notificacoes',
-      icon: Send,
+      title: 'Enviar mensagem',
+      description: 'WhatsApp manual com consentimento',
+      routerLink: '/app/whatsapp',
+      icon: MessageCircle,
       tone: 'success',
     },
     {

@@ -5,7 +5,7 @@
     </h1>
 
     <p class="text-[var(--color-text-muted)] text-sm mt-1">
-      Crie mensagens reutilizaveis, teste variaveis e envie notificacoes por template.
+      Crie mensagens reutilizaveis para WhatsApp, teste variaveis e envie por template.
     </p>
   </div>
 
@@ -44,9 +44,9 @@
   </div>
 
   <div class="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-5">
-    <p class="text-[var(--color-text-muted)] text-sm">Canais suportados</p>
+    <p class="text-[var(--color-text-muted)] text-sm">Canal</p>
     <strong class="text-2xl text-[var(--color-text)] mt-2 block">
-      {{ canais.length }}
+      WhatsApp
     </strong>
   </div>
 </div>
@@ -83,6 +83,7 @@
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      @if (!canalUnico) {
       <div>
         <label class="block text-sm font-medium text-[var(--color-text-muted)] mb-2">
           Canal
@@ -94,8 +95,9 @@
           }
         </select>
       </div>
+      }
 
-      <div>
+      <div [class.md:col-span-2]="canalUnico">
         <label class="block text-sm font-medium text-[var(--color-text-muted)] mb-2">
           Assunto
         </label>

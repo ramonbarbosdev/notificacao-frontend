@@ -18,7 +18,7 @@ import { NotificacaoFilaEventsService } from '../../core/http/notificacao-fila-e
 import { AuthService } from '../../core/auth/auth.service';
 import { EmptyStateComponent } from '../../shared/components/empty-state/empty-state.component';
 import { usePaginatedTable } from '../../shared/helper/paginated-table.state';
-import { formatCanal } from '../../shared/helper/channel.utils';
+import { formatCanal, canalUnicoUi } from '../../shared/helper/channel.utils';
 import { formatDateTimePtBr } from '../../shared/helper/date.utils';
 import {
   destinatarioMatchesFilter,
@@ -60,8 +60,9 @@ export class HistoricoFilaComponent implements OnInit, OnDestroy {
   readonly erro = signal<string | null>(null);
   readonly expandidos = signal<Set<number>>(new Set());
 
+  readonly canalUnico = canalUnicoUi();
   readonly filtroDestinatario = signal('');
-  readonly filtroCanal = signal<CanalNotificacao | ''>('');
+  readonly filtroCanal = signal<CanalNotificacao | ''>(this.canalUnico ? 'WHATSAPP' : '');
   readonly filtroStatus = signal<StatusNotificacao | ''>('');
 
   readonly statusLabels: Record<StatusNotificacao, string> = {
@@ -75,13 +76,21 @@ export class HistoricoFilaComponent implements OnInit, OnDestroy {
     CANCELADA: 'Cancelada',
   };
 
-  readonly canais: { value: CanalNotificacao | ''; label: string }[] = [
-    { value: '', label: 'Todos os canais' },
-    { value: 'WHATSAPP', label: 'WhatsApp' },
-    { value: 'EMAIL', label: 'E-mail' },
-    { value: 'TELEGRAM', label: 'Telegram' },
-    { value: 'WEBHOOK', label: 'Webhook' },
-  ];
+  readonly canais = this.montarOpcoesCanal();
+
+  private montarOpcoesCanal(): { value: CanalNotificacao | ''; label: string }[] {
+    if (this.canalUnico) {
+      return [{ value: 'WHATSAPP', label: 'WhatsApp' }];
+    }
+
+    return [
+      { value: '', label: 'Todos os canais' },
+      { value: 'WHATSAPP', label: 'WhatsApp' },
+      { value: 'EMAIL', label: 'E-mail' },
+      { value: 'TELEGRAM', label: 'Telegram' },
+      { value: 'WEBHOOK', label: 'Webhook' },
+    ];
+  }
 
   readonly statusOpcoes: { value: StatusNotificacao | ''; label: string }[] = [
     { value: '', label: 'Todos os status' },

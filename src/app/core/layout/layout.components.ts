@@ -2,7 +2,6 @@ import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import {
-  Bell,
   BookOpen,
   Building2,
   ClipboardList,
@@ -24,6 +23,8 @@ import {
 } from 'lucide-angular';
 import { AuthService } from '../auth/auth.service';
 import { LayoutService } from './layout.service';
+import { APP_NOME } from '../../shared/config/product.config';
+import { FOCO_WHATSAPP } from '../../shared/config/product.config';
 
 interface NavItem {
   label: string;
@@ -31,6 +32,7 @@ interface NavItem {
   icon: LucideIconData;
   scope: 'ADMIN_GLOBAL' | 'ORG';
   roles?: string[];
+  ocultoModoWhatsapp?: boolean;
 }
 
 @Component({
@@ -42,7 +44,8 @@ interface NavItem {
 export class SidebarComponent {
   readonly authService = inject(AuthService);
   readonly layout = inject(LayoutService);
-  readonly brandIcon = Bell;
+  readonly brandIcon = MessageCircle;
+  readonly appNome = APP_NOME;
   readonly logoutIcon = LogOut;
   readonly closeIcon = X;
 
@@ -127,6 +130,7 @@ export class SidebarComponent {
       icon: Send,
       scope: 'ORG',
       roles: ['ADMIN', 'USER'],
+      ocultoModoWhatsapp: true,
     },
     {
       label: 'Contatos',
@@ -173,6 +177,10 @@ export class SidebarComponent {
   ];
 
   podeVer(item: NavItem): boolean {
+    if (FOCO_WHATSAPP && item.ocultoModoWhatsapp) {
+      return false;
+    }
+
     if (item.scope === 'ADMIN_GLOBAL' && !this.authService.isSuperAdmin()) {
       return false;
     }

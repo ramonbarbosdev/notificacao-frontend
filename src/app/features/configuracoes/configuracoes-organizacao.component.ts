@@ -33,6 +33,8 @@ import {
   severidadeOperacional,
 } from '../../shared/labels/whatsapp-operacional.labels';
 
+import { FOCO_WHATSAPP } from '../../shared/config/product.config';
+
 type AbaConfiguracao =
   | 'geral'
   | 'whatsapp'
@@ -66,17 +68,21 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
   protected readonly keyIcon = KeyRound;
   protected readonly webhookIcon = Webhook;
 
-  readonly abas: { id: AbaConfiguracao; label: string; adminOnly?: boolean }[] = [
+  readonly abas: { id: AbaConfiguracao; label: string; adminOnly?: boolean; ocultoModoWhatsapp?: boolean }[] = [
     { id: 'geral', label: 'Geral' },
     { id: 'whatsapp', label: 'WhatsApp' },
     { id: 'consentimento', label: 'Consentimento' },
     { id: 'templates', label: 'Templates' },
-    { id: 'notificacoes', label: 'Notificacoes' },
+    { id: 'notificacoes', label: 'Notificacoes', ocultoModoWhatsapp: true },
     { id: 'apiKeys', label: 'API Keys', adminOnly: true },
-    { id: 'webhooks', label: 'Webhooks', adminOnly: true },
+    { id: 'webhooks', label: 'Webhooks', adminOnly: true, ocultoModoWhatsapp: true },
     { id: 'usuarios', label: 'Usuarios', adminOnly: true },
     { id: 'auditoria', label: 'Auditoria', adminOnly: true },
   ];
+
+  readonly abasVisiveis = this.abas.filter(
+    (aba) => !FOCO_WHATSAPP || !aba.ocultoModoWhatsapp
+  );
 
   readonly aba = signal<AbaConfiguracao>('geral');
   readonly carregando = signal(false);

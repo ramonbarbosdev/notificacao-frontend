@@ -8,7 +8,7 @@ import { DataTableColumn } from '../../shared/components/data-table/data-table.t
 import { usePaginatedTable } from '../../shared/helper/paginated-table.state';
 import { CanalNotificacao, ContatoRequestDTO, ContatoResponseDTO } from '../../shared/types/dtos';
 import { formatDestinatario, maskPhoneInput, normalizeBrazilWhatsappMobile } from '../../shared/helper/phone.utils';
-import { formatCanal } from '../../shared/helper/channel.utils';
+import { formatCanal, canaisVisiveisUi, canalUnicoUi, opcoesCanalFiltro } from '../../shared/helper/channel.utils';
 import { useSidePanel } from '../../shared/helper/side-panel.state';
 import { ContatoListComponent } from './components/contato-list/contato-list.component';
 import { ContatoSummaryCardsComponent } from './components/contato-summary-cards/contato-summary-cards.component';
@@ -64,7 +64,8 @@ export class ContatosComponent implements OnInit {
   readonly erro = signal<string | null>(null);
   readonly mensagemImportacao = signal<string | null>(null);
   readonly errosFormulario = signal<ContatoFormErrors>({});
-  readonly canais: CanalNotificacao[] = ['WHATSAPP', 'EMAIL', 'TELEGRAM', 'WEBHOOK'];
+  readonly canais = canaisVisiveisUi();
+  readonly canalUnico = canalUnicoUi();
 
   readonly contatoPanel = useSidePanel<ContatoResponseDTO>();
   readonly form = this.fb.nonNullable.group({
@@ -88,7 +89,10 @@ export class ContatosComponent implements OnInit {
     this.contatos().filter((contato) => !contato.consentimento && !contato.bloqueado).length
   );
 
-  readonly columns: DataTableColumn<ContatoResponseDTO>[] = [
+  readonly columns: DataTableColumn<ContatoResponseDTO>[] = this.montarColunas();
+
+  private montarColunas(): DataTableColumn<ContatoResponseDTO>[] {
+    const colunas: DataTableColumn<ContatoResponseDTO>[] = [
     {
       key: 'nmContato',
       label: 'Contato',
@@ -99,28 +103,28 @@ export class ContatosComponent implements OnInit {
     },
     {
       key: 'destinatario',
-      label: 'Destinatario',
+      label: this.canalUnico ? 'Telefone' : 'Destinatario',
       formatter: (value, row) => formatDestinatario(row.canal, value),
       filter: {
         type: 'text',
-        placeholder: 'Buscar destinatario',
+        placeholder: this.canalUnico ? 'Buscar telefone' : 'Buscar destinatario',
       },
     },
-    {
+    ];
+
+    if (!this.canalUnico) {
+      colunas.push({
       key: 'canal',
       label: 'Canal',
       formatter: (value) => formatCanal(value),
       filter: {
         type: 'select',
-        options: [
-          { label: 'Todos', value: '' },
-          { label: 'WhatsApp', value: 'WHATSAPP' },
-          { label: 'Email', value: 'EMAIL' },
-          { label: 'Telegram', value: 'TELEGRAM' },
-          { label: 'Webhook', value: 'WEBHOOK' },
-        ],
+        options: opcoesCanalFiltro(),
       },
-    },
+    });
+    }
+
+    colunas.push(
     {
       key: 'consentimento',
       label: 'Consentimento',
@@ -171,7 +175,10 @@ export class ContatosComponent implements OnInit {
         },
       ],
     },
-  ];
+    );
+
+    return colunas;
+  }
 
   ngOnInit(): void {
     this.listarContatos();

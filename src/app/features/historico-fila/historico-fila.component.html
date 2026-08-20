@@ -2,7 +2,7 @@
   <div>
     <h1 class="text-2xl font-bold text-[var(--color-text)]">Histórico / Fila</h1>
     <p class="text-[var(--color-text-muted)] text-sm mt-1">
-      Visão resumida dos envios. Expanda um item para ver tentativas, provider e motivo completo.
+      Acompanhe envios WhatsApp, tentativas e reprocessos da fila.
     </p>
     @if (resumoFila()?.proximoEnvioTexto) {
       <p class="text-amber-300 text-sm mt-2 m-0">
@@ -56,11 +56,12 @@
           type="text"
           [value]="filtroDestinatario()"
           (input)="atualizarFiltroDestinatario($event)"
-          placeholder="Buscar por telefone ou e-mail"
+          placeholder="Buscar por telefone"
           class="w-full bg-[var(--color-bg-base)] border border-[var(--color-border-strong)] rounded-xl pl-10 pr-4 py-2.5 text-sm text-[var(--color-text)] placeholder:text-[var(--color-text-subtle)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]" />
       </div>
     </div>
 
+    @if (!canalUnico) {
     <div class="w-full lg:w-44">
       <label class="block text-xs font-medium text-[var(--color-text-muted)] mb-1.5">Canal</label>
       <select
@@ -72,6 +73,7 @@
         }
       </select>
     </div>
+    }
 
     <div class="w-full lg:w-44">
       <label class="block text-xs font-medium text-[var(--color-text-muted)] mb-1.5">Status</label>

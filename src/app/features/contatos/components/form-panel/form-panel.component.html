@@ -2,6 +2,7 @@
   description="Registre consentimento ou bloqueie um destinatário antes de permitir envios." size="md"
   (closed)="closed.emit()">
 
+@if (!canalUnico) {
 <app-form-select
   label="Canal"
   [control]="getControl('canal')"
@@ -9,6 +10,7 @@
   [error]="campoErro('canal')"
   (changed)="canalChange.emit()"
 />
+}
 
 <app-form-input
   label="Nome do contato"
@@ -18,7 +20,7 @@
 />
 
 <app-form-input
-  label="Telefone ou identificador"
+  [label]="canalUnico ? 'Telefone WhatsApp' : 'Telefone ou identificador'"
   [control]="getControl('destinatario')"
   [type]="tipoInputDestinatario()"
   [placeholder]="placeholderDestinatario()"

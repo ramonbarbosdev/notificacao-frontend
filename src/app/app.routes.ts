@@ -44,10 +44,8 @@ export const routes: Routes = [
       },
       {
         path: 'notificacoes',
-        canActivate: [roleGuard],
-        data: { roles: ['ADMIN', 'USER'] },
-        loadComponent: () =>
-          import('./features/notificacoes/notificacoes.component').then((m) => m.NotificacoesComponent),
+        redirectTo: 'whatsapp',
+        pathMatch: 'full',
       },
       {
         path: 'contatos',
@@ -99,7 +97,7 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/auditoria/auditoria.component').then((m) => m.AuditoriaComponent),
       },
-      { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+      { path: '', redirectTo: 'whatsapp', pathMatch: 'full' },
     ],
   },
 
@@ -188,7 +186,7 @@ export const routes: Routes = [
 
   { path: 'dashboard', redirectTo: '/app/dashboard' },
   { path: 'whatsapp', redirectTo: '/app/whatsapp' },
-  { path: 'notificacoes', redirectTo: '/app/notificacoes' },
+  { path: 'notificacoes', redirectTo: '/app/whatsapp' },
   { path: 'contatos', redirectTo: '/app/contatos' },
   { path: 'templates', redirectTo: '/app/templates' },
   { path: 'tutorial', redirectTo: '/app/tutorial' },

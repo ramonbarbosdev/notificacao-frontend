@@ -2,9 +2,10 @@ import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
-import { Bell, LoaderCircle, LucideAngularModule } from 'lucide-angular';
+import { Bell, LoaderCircle, LucideAngularModule, MessageCircle } from 'lucide-angular';
 import { AuthService } from '../../core/auth/auth.service';
 import { maskCpfInput, normalizeCpf } from '../../shared/helper/cpf.utils';
+import { APP_DESCRICAO, APP_NOME } from '../../shared/config/product.config';
 
 @Component({
   selector: 'app-login',
@@ -17,7 +18,9 @@ export class LoginComponent {
   private readonly fb = inject(FormBuilder);
   private readonly router = inject(Router);
 
-  protected readonly brandIcon = Bell;
+  protected readonly brandIcon = MessageCircle;
+  protected readonly appNome = APP_NOME;
+  protected readonly appDescricao = APP_DESCRICAO;
   protected readonly loaderIcon = LoaderCircle;
 
   readonly ano = new Date().getFullYear();

@@ -22,11 +22,11 @@
       </div>
 
       <h1 class="text-2xl font-bold text-[var(--color-text)] tracking-tight">
-        Notificação
+        {{ appNome }}
       </h1>
 
       <p class="text-[var(--color-text-muted)] text-sm mt-1">
-        Acesse sua conta para continuar
+        {{ appDescricao }}
       </p>
     </div>
 
@@ -142,7 +142,7 @@
     </div>
 
     <p class="text-center text-[var(--color-text-faint)] text-xs mt-6">
-      © {{ ano }} Notificação API · Todos os direitos reservados
+      © {{ ano }} {{ appNome }} · Todos os direitos reservados
     </p>
   </div>
 </div>

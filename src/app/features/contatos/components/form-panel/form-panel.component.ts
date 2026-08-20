@@ -10,6 +10,7 @@ import {
 import { SidePanelComponent } from '../../../../shared/components/side-panel/side-panel.component';
 import { CanalNotificacao, ContatoResponseDTO } from '../../../../shared/types/dtos';
 import { ContatoFormData, ContatoFormErrors } from '../../schemas/contato-form.schema';
+import { canalUnicoUi } from '../../../../shared/helper/channel.utils';
 import { FormTextareaComponent } from '../../../../shared/components/forms/textarea-input/form-textarea.component';
 import { FormInputComponent } from '../../../../shared/components/forms/text-input/app-text-input';
 import { FormSelectComponent } from '../../../../shared/components/forms/select-input/form-select.component';
@@ -51,6 +52,7 @@ export class FormPanelComponent {
   registrarConsentimento = output<void>();
   bloquearContato = output<void>();
 
+  readonly canalUnico = canalUnicoUi();
   readonly loaderIcon = LoaderCircle;
   readonly shieldIcon = ShieldCheck;
   readonly banIcon = Ban;
