@@ -3,14 +3,16 @@ import { StatusOperacionalSessao } from '../types/dtos';
 export const CODIGO_ERRO_RESTRICAO_CONTATO_WHATSAPP = 'WHATSAPP_RESTRICAO_463';
 
 export const EXPLICACAO_RESTRICAO_CONTATO_WHATSAPP = {
-  titulo: 'Contato precisa iniciar a conversa',
-  mensagem: 'Restrição do WhatsApp para novo contato',
+  titulo: 'Sessão não pronta para este contato',
+  mensagem: 'Sem tctoken ou restrição 463 (reach-out timelock)',
   explicacao:
     'Esta falha é só deste destinatário. A sessão WhatsApp continua ativa para os demais contatos. ' +
-    'O WhatsApp exige histórico ou que o contato envie a primeira mensagem antes de receber mensagens outbound.',
+    'O WhatsApp exige token de conversa (tctoken) nesta sessão linkada antes de enviar pela API. ' +
+    'Tentativas sem token podem acumular reach-out timelock na conta.',
   acao:
-    'Peça para o destinatário enviar uma mensagem para o seu número conectado. ' +
-    'Depois tente reenviar esta notificação — não é necessário reativar a sessão.',
+    'Peça para o destinatário enviar uma mensagem de TEXTO (não só ligar) para o número conectado. ' +
+    'Use “Verificar se pode enviar” na tela WhatsApp antes de enfileirar. ' +
+    'Evite reenvios em massa enquanto o diagnóstico mostrar sem tctoken.',
 };
 
 export const STATUS_OPERACIONAL_LABELS: Record<StatusOperacionalSessao, string> = {
@@ -118,6 +120,11 @@ export function ehErroRestricaoContatoWhatsapp(
     normalizado.includes('lid indisponível') ||
     normalizado.includes('463') ||
     normalizado.includes('tctoken') ||
+    normalizado.includes('nao pronto para envio') ||
+    normalizado.includes('não pronto para envio') ||
+    normalizado.includes('token de conversa') ||
+    normalizado.includes('reach-out timelock') ||
+    normalizado.includes('reach-out') ||
     normalizado.includes('restricao 463') ||
     normalizado.includes('restrição 463') ||
     normalizado.includes('account restricted')
@@ -209,6 +216,11 @@ export function explicarErroFila(
     normalizado.includes('lid indisponível') ||
     normalizado.includes('463') ||
     normalizado.includes('tctoken') ||
+    normalizado.includes('nao pronto para envio') ||
+    normalizado.includes('não pronto para envio') ||
+    normalizado.includes('token de conversa') ||
+    normalizado.includes('reach-out timelock') ||
+    normalizado.includes('reach-out') ||
     normalizado.includes('restricao 463') ||
     normalizado.includes('restrição 463') ||
     normalizado.includes('account restricted')
