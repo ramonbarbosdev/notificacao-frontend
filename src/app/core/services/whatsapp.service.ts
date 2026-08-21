@@ -7,6 +7,7 @@ import {
   EnviarMensagemRequest,
   EnviarMensagemResponse,
   ProvisionarConfigWhatsappResponse,
+  WhatsappDiagnosticoContatoResponse,
 } from '../../shared/types/dtos';
 
 @Injectable({ providedIn: 'root' })
@@ -36,6 +37,12 @@ export class WhatsappService {
 
   reativarOperacao(): Observable<WhatsappStatusResponse> {
     return this.http.post<WhatsappStatusResponse>(`${this.base}/reativar-operacao`, {});
+  }
+
+  diagnosticarContato(telefone: string): Observable<WhatsappDiagnosticoContatoResponse> {
+    return this.http.get<WhatsappDiagnosticoContatoResponse>(`${this.base}/diagnostico`, {
+      params: { telefone },
+    });
   }
 
   enviarMensagem(dados: EnviarMensagemRequest): Observable<EnviarMensagemResponse> {

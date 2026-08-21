@@ -131,13 +131,13 @@ export class SidebarComponent {
       roles: ['ADMIN', 'USER'],
       ocultoModoWhatsapp: true,
     },
-    {
-      label: 'Contatos',
-      rota: '/app/contatos',
-      icon: UserCheck,
-      scope: 'ORG',
-      roles: ['ADMIN', 'USER'],
-    },
+    // {
+    //   label: 'Contatos',
+    //   rota: '/app/contatos',
+    //   icon: UserCheck,
+    //   scope: 'ORG',
+    //   roles: ['ADMIN', 'USER'],
+    // },
     // {
     //   label: 'Templates',
     //   rota: '/app/templates',

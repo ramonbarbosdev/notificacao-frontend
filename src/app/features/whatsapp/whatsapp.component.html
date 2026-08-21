@@ -297,6 +297,84 @@
         <p class="text-[var(--color-text-faint)] text-xs mt-1">
           Digite para sugerir telefones do historico/fila · formato: 71981180200
         </p>
+
+        <div class="mt-3 flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            (click)="verificarDiagnosticoContato()"
+            [disabled]="carregandoDiagnostico() || !sessaoConectada()"
+            class="border border-[var(--color-border)] text-[var(--color-text)] hover:bg-[var(--color-surface-muted)] disabled:opacity-50 disabled:cursor-not-allowed font-semibold px-3 py-2 rounded-xl text-xs flex items-center gap-2"
+          >
+            @if (carregandoDiagnostico()) {
+              <lucide-icon [img]="loaderIcon" class="w-3.5 h-3.5 animate-spin" />
+            } @else {
+              <lucide-icon [img]="refreshIcon" class="w-3.5 h-3.5" />
+            }
+            Verificar se pode enviar
+          </button>
+        </div>
+
+        @if (erroDiagnostico()) {
+          <p class="text-[var(--color-danger)] text-xs mt-2 m-0">{{ erroDiagnostico() }}</p>
+        }
+
+        @if (diagnosticoContato(); as diag) {
+          <div class="mt-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-3 space-y-3">
+            <p class="text-sm font-semibold text-[var(--color-text)] m-0">
+              Diagnostico de envio
+              @if (diag.prontoParaEnvio) {
+                <span class="text-[var(--color-success)]"> · pronto</span>
+              } @else {
+                <span class="text-[var(--color-danger)]"> · bloqueado</span>
+              }
+            </p>
+
+            @if (diag.checklist?.length) {
+              <ul class="space-y-1.5 m-0 p-0 list-none">
+                @for (item of diag.checklist; track item.id) {
+                  <li class="flex items-start gap-2 text-xs">
+                    @if (item.ok) {
+                      <lucide-icon [img]="checkIcon" class="w-3.5 h-3.5 text-[var(--color-success)] mt-0.5 shrink-0" />
+                    } @else {
+                      <lucide-icon [img]="xIcon" class="w-3.5 h-3.5 text-[var(--color-danger)] mt-0.5 shrink-0" />
+                    }
+                    <span class="text-[var(--color-text-muted)]">{{ item.rotulo }}</span>
+                  </li>
+                }
+              </ul>
+            }
+
+            @if (diag.inbound) {
+              <div class="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2">
+                <p class="text-xs font-medium text-[var(--color-text)] m-0">
+                  Ultima inbound nesta sessao
+                </p>
+                @if (diag.inbound.recebida) {
+                  <p class="text-xs text-[var(--color-text-muted)] mt-1 m-0">
+                    {{ formatarDataDiagnostico(diag.inbound.recebidaEm) }}
+                    · {{ diag.inbound.tipo }}
+                    @if (diag.inbound.preview) {
+                      · "{{ diag.inbound.preview }}"
+                    }
+                  </p>
+                } @else {
+                  <p class="text-xs text-[var(--color-text-muted)] mt-1 m-0">
+                    Nenhuma mensagem inbound registrada nesta conexao do gateway.
+                  </p>
+                }
+                @if (diag.inbound.orientacao) {
+                  <p class="text-xs text-[var(--color-text-faint)] mt-1 m-0">{{ diag.inbound.orientacao }}</p>
+                }
+              </div>
+            }
+
+            @if (diag.orientacao) {
+              <p class="text-xs text-[var(--color-text)] m-0">
+                <strong>O que fazer:</strong> {{ diag.orientacao }}
+              </p>
+            }
+          </div>
+        }
       </div>
 
       <div>

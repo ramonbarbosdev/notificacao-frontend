@@ -77,6 +77,45 @@ export interface WhatsappStatusResponse {
   operacional?: SessaoOperacionalContexto | null;
 }
 
+export interface WhatsappDiagnosticoChecklistItem {
+  id: string;
+  ok: boolean;
+  rotulo: string;
+}
+
+export interface WhatsappDiagnosticoInboundSecao {
+  recebida: boolean;
+  telefone: string | null;
+  jid: string | null;
+  recebidaEm: string | null;
+  tipo: string | null;
+  preview: string | null;
+  orientacao: string | null;
+}
+
+export interface WhatsappDiagnosticoContatoResponse {
+  sucesso: boolean;
+  idOrganizacao: string | number;
+  erro: string | null;
+  telefoneInformado: string;
+  telefoneNormalizado: string | null;
+  sessaoConectada: boolean;
+  statusSessao: string;
+  conversa: boolean;
+  prontoParaEnvio: boolean;
+  orientacao: string | null;
+  inbound?: WhatsappDiagnosticoInboundSecao | null;
+  checklist?: WhatsappDiagnosticoChecklistItem[] | null;
+  tctoken?: {
+    presente?: boolean;
+    jidComToken?: string | null;
+    estrategia?: string | null;
+  } | null;
+  whatsapp?: {
+    existe?: boolean;
+  } | null;
+}
+
 export interface GatewaySessaoResumo {
   idOrganizacao: number;
   pasta: string;

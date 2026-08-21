@@ -21,6 +21,7 @@ import {
   WhatsappEvento,
   WhatsappStatus,
   WhatsappStatusResponse,
+  WhatsappDiagnosticoContatoResponse,
 } from '../../shared/types/dtos';
 
 import {
@@ -47,6 +48,7 @@ import {
   parseLinhasImportacaoLote,
 } from './whatsapp-lote.helpers';
 import { formatPhone, normalizeBrazilWhatsappMobile } from '../../shared/helper/phone.utils';
+import { formatDateTimePtBr } from '../../shared/helper/date.utils';
 import { ContatoTelefoneSugestoesComponent } from '../../shared/components/contato-telefone-sugestoes/contato-telefone-sugestoes.component';
 import {
   ehErroConsentimento,
@@ -118,6 +120,9 @@ export class WhatsappComponent implements OnInit, OnDestroy {
   readonly acaoOperacionalCarregando = signal(false);
   readonly acompanhandoEnvio = signal(false);
   readonly avisoProvisionamento = signal<string | null>(null);
+  readonly diagnosticoContato = signal<WhatsappDiagnosticoContatoResponse | null>(null);
+  readonly carregandoDiagnostico = signal(false);
+  readonly erroDiagnostico = signal<string | null>(null);
 
   readonly operacional = computed(() => this.status()?.operacional ?? null);
 
@@ -147,6 +152,7 @@ export class WhatsappComponent implements OnInit, OnDestroy {
   readonly itensLote = itensLoteFormulario(this.formLote);
 
   readonly formatarTelefone = formatPhone;
+  readonly formatarDataDiagnostico = formatDateTimePtBr;
 
   telefoneLoteControl(indice: number) {
     return this.itensLote.at(indice).get('telefone') as FormControl<string | null>;
@@ -287,6 +293,42 @@ export class WhatsappComponent implements OnInit, OnDestroy {
         next: (resposta) => this.tratarRespostaEnvio(resposta),
         error: (err: HttpErrorResponse) => this.tratarErroEnvio(err),
       });
+  }
+
+  verificarDiagnosticoContato(): void {
+    const telefone = this.formMensagem.getRawValue().telefone;
+    const digits = normalizeBrazilWhatsappMobile(telefone ?? '');
+
+    if (digits.length < 12 || digits.length > 13) {
+      this.erroDiagnostico.set('Informe o telefone com DDI e DDD antes de verificar.');
+      this.formMensagem.controls.telefone.markAsTouched();
+      return;
+    }
+
+    if (!this.sessaoConectada()) {
+      this.erroDiagnostico.set('Conecte o WhatsApp antes de verificar o destino.');
+      return;
+    }
+
+    this.carregandoDiagnostico.set(true);
+    this.erroDiagnostico.set(null);
+    this.diagnosticoContato.set(null);
+
+    this.whatsappService.diagnosticarContato(digits).subscribe({
+      next: (resposta) => {
+        this.diagnosticoContato.set(resposta);
+        this.carregandoDiagnostico.set(false);
+        if (resposta.erro && resposta.sucesso === false) {
+          this.erroDiagnostico.set(resposta.erro);
+        }
+      },
+      error: (err: HttpErrorResponse) => {
+        this.carregandoDiagnostico.set(false);
+        this.erroDiagnostico.set(
+          extrairMensagemErro(err, 'Nao foi possivel consultar o diagnostico de envio.'),
+        );
+      },
+    });
   }
 
   enviarLote(): void {
