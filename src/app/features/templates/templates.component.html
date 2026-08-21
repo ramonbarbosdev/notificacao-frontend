@@ -111,6 +111,24 @@
       Template ativo
     </label>
 
+    @if (form.controls.canal.value === 'WHATSAPP') {
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-[var(--color-text-muted)] mb-2">Template Meta (nome aprovado)</label>
+          <input formControlName="metaTemplateName" type="text" placeholder="pagamento_aprovado"
+            class="w-full form-input-admin" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-[var(--color-text-muted)] mb-2">Idioma Meta</label>
+          <input formControlName="metaIdioma" type="text" placeholder="pt_BR"
+            class="w-full form-input-admin" />
+        </div>
+      </div>
+      <p class="text-xs text-[var(--color-text-subtle)] -mt-2">
+        Obrigatorio para envios transacionais via WhatsApp Cloud API quando Meta Cloud estiver ativo.
+      </p>
+    }
+
     <div>
       <label class="block text-sm font-medium text-[var(--color-text-muted)] mb-2">
         Conteudo

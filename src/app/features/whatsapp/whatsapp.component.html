@@ -14,6 +14,17 @@
 </div>
 }
 
+@if (metaCloudAtivo()) {
+<div class="mb-6 rounded-xl border border-[var(--color-primary)]/30 bg-[color-mix(in_srgb,var(--color-primary)_8%,transparent)] px-4 py-3">
+  <p class="text-[var(--color-text)] text-sm m-0">
+    <strong>WhatsApp Cloud API (Meta) ativo.</strong> Os envios desta organizacao usam a conta Meta configurada — sessao Baileys/QR nao e necessaria.
+  </p>
+  <a routerLink="/app/configuracoes" class="inline-block mt-2 text-xs font-semibold text-[var(--color-primary-soft)] hover:underline">
+    Gerenciar configuracao Meta
+  </a>
+</div>
+}
+
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
   <!-- Status -->

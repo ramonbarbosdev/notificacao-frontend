@@ -77,6 +77,29 @@ export interface WhatsappStatusResponse {
   operacional?: SessaoOperacionalContexto | null;
 }
 
+export interface WhatsappCloudConfigRequest {
+  phoneNumberId: string;
+  wabaId?: string | null;
+  accessToken?: string;
+  apiVersion?: string;
+  active?: boolean;
+}
+
+export interface WhatsappCloudConfigResponse {
+  provider: string;
+  phoneNumberId: string;
+  wabaId: string | null;
+  apiVersion: string;
+  active: boolean;
+  accessTokenConfigured: boolean;
+  ultimoTeste: string | null;
+}
+
+export interface WhatsappCloudConfigTestResponse {
+  success: boolean;
+  message: string;
+}
+
 export interface WhatsappDiagnosticoChecklistItem {
   id: string;
   ok: boolean;
@@ -423,6 +446,8 @@ export interface TemplateMensagemRequestDTO {
   ativo: boolean;
   variaveis: TemplateVariavelDTO[];
   variaveisObrigatorias?: string[];
+  metaTemplateName?: string | null;
+  metaIdioma?: string | null;
 }
 
 export interface TemplateMensagemResponseDTO {
@@ -439,6 +464,8 @@ export interface TemplateMensagemResponseDTO {
   versao: number;
   dtCriacao?: string | null;
   dtAtualizacao?: string | null;
+  metaTemplateName?: string | null;
+  metaIdioma?: string | null;
 }
 
 export interface ExtrairVariaveisTemplateRequestDTO {

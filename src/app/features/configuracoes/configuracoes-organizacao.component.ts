@@ -13,6 +13,7 @@ import { OrganizacaoConfiguracaoService } from '../../core/services/organizacao-
 import { AlertaOperacionalService } from '../../core/services/alerta-operacional.service';
 import { WebhookService } from '../../core/services/webhook.service';
 import { WhatsappService } from '../../core/services/whatsapp.service';
+import { WhatsappCloudConfigService } from '../../core/services/whatsapp-cloud-config.service';
 import { ToastService } from '../../core/services/toast.service';
 import {
   ApiKey,
@@ -23,6 +24,7 @@ import {
   RecursoFeature,
   Webhook as WebhookDTO,
   WebhookEvento,
+  WhatsappCloudConfigResponse,
   WhatsappStatusResponse,
 } from '../../shared/types/dtos';
 import { EmptyStateComponent } from '../../shared/components/empty-state/empty-state.component';
@@ -53,6 +55,7 @@ import {
 
 type AbaConfiguracao =
   | AbaConfiguracaoOrganizacao
+  | 'metaCloud'
   | 'apiKeys'
   | 'webhooks'
   | 'usuarios'
@@ -71,7 +74,8 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
   private readonly alertaService = inject(AlertaOperacionalService);
   private readonly apiKeyService = inject(ApiKeyService);
   private readonly webhookService = inject(WebhookService);
-  private   readonly whatsappService = inject(WhatsappService);
+  private readonly whatsappService = inject(WhatsappService);
+  private readonly metaCloudService = inject(WhatsappCloudConfigService);
   private readonly toast = inject(ToastService);
   readonly authService = inject(AuthService);
 
@@ -90,6 +94,7 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
   }[] = [
     { id: 'geral', label: 'Geral' },
     { id: 'whatsapp', label: 'WhatsApp', recurso: 'WHATSAPP' },
+    { id: 'metaCloud', label: 'WhatsApp Cloud (Meta)', adminOnly: true, recurso: 'WHATSAPP' },
     { id: 'consentimento', label: 'Consentimento' },
     { id: 'templates', label: 'Templates', recurso: 'TEMPLATES' },
     { id: 'notificacoes', label: 'Notificacoes', ocultoModoWhatsapp: true },
@@ -123,6 +128,10 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
   readonly webhooks = signal<WebhookDTO[]>([]);
   readonly webhookEditando = signal<WebhookDTO | null>(null);
   readonly whatsappStatus = signal<WhatsappStatusResponse | null>(null);
+  readonly metaCloudConfig = signal<WhatsappCloudConfigResponse | null>(null);
+  readonly metaCloudExiste = signal(false);
+  readonly salvandoMetaCloud = signal(false);
+  readonly testandoMetaCloud = signal(false);
   readonly alertasOperacionais = signal<AlertaOperacional[]>([]);
   readonly carregandoAlertas = signal(false);
 
@@ -192,6 +201,14 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
     ativo: [true],
   });
 
+  readonly metaCloudForm = this.fb.group({
+    phoneNumberId: ['', [Validators.required]],
+    wabaId: [''],
+    accessToken: [''],
+    apiVersion: ['v21.0', [Validators.required]],
+    active: [true],
+  });
+
   readonly isAdmin = () => this.authService.role() === 'ADMIN';
 
   campoErro(campo: keyof OrganizacaoConfiguracaoFormData): string | null {
@@ -243,6 +260,7 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
     this.aba.set(aba);
     if (aba === 'apiKeys') this.carregarApiKeys();
     if (aba === 'webhooks') this.carregarWebhooks();
+    if (aba === 'metaCloud') this.carregarMetaCloudConfig();
     if (aba === 'notificacoes') this.carregarAlertasOperacionais();
   }
 
@@ -327,6 +345,125 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
 
   carregarWhatsappStatus(): void {
     this.whatsappService.status().subscribe({ next: (status) => this.whatsappStatus.set(status) });
+  }
+
+  carregarMetaCloudConfig(): void {
+    if (!this.isAdmin()) return;
+    this.metaCloudService.buscar().subscribe({
+      next: (config) => {
+        this.metaCloudExiste.set(true);
+        this.metaCloudConfig.set(config);
+        this.metaCloudForm.patchValue({
+          phoneNumberId: config.phoneNumberId,
+          wabaId: config.wabaId ?? '',
+          apiVersion: config.apiVersion,
+          active: config.active,
+          accessToken: '',
+        });
+      },
+      error: (err: HttpErrorResponse) => {
+        if (err.status === 404) {
+          this.metaCloudExiste.set(false);
+          this.metaCloudConfig.set(null);
+          this.metaCloudForm.reset({
+            phoneNumberId: '',
+            wabaId: '',
+            accessToken: '',
+            apiVersion: 'v21.0',
+            active: true,
+          });
+          return;
+        }
+        this.erro.set(this.mensagemErro(err, 'Erro ao carregar WhatsApp Cloud API.'));
+      },
+    });
+  }
+
+  salvarMetaCloudConfig(): void {
+    if (!this.isAdmin() || this.metaCloudForm.invalid) {
+      this.metaCloudForm.markAllAsTouched();
+      return;
+    }
+
+    const raw = this.metaCloudForm.getRawValue();
+    const payload = {
+      phoneNumberId: raw.phoneNumberId!.trim(),
+      wabaId: raw.wabaId?.trim() || null,
+      apiVersion: raw.apiVersion?.trim() || 'v21.0',
+      active: !!raw.active,
+      ...(raw.accessToken?.trim() ? { accessToken: raw.accessToken.trim() } : {}),
+    };
+
+    if (!this.metaCloudExiste() && !payload.accessToken) {
+      this.erro.set('Informe o access token para criar a configuracao Meta Cloud.');
+      return;
+    }
+
+    this.salvandoMetaCloud.set(true);
+    this.erro.set(null);
+    const chamada = this.metaCloudExiste()
+      ? this.metaCloudService.atualizar(payload)
+      : this.metaCloudService.criar(payload as Required<typeof payload> & { accessToken: string });
+
+    chamada.subscribe({
+      next: (config) => {
+        this.metaCloudExiste.set(true);
+        this.metaCloudConfig.set(config);
+        this.metaCloudForm.patchValue({ accessToken: '' });
+        this.sucesso.set('Configuracao WhatsApp Cloud salva.');
+        this.toast.success('WhatsApp Cloud API configurada');
+        this.salvandoMetaCloud.set(false);
+      },
+      error: (err: HttpErrorResponse) => {
+        this.erro.set(this.mensagemErro(err, 'Erro ao salvar WhatsApp Cloud API.'));
+        this.salvandoMetaCloud.set(false);
+      },
+    });
+  }
+
+  testarMetaCloudConfig(): void {
+    if (!this.isAdmin()) return;
+    this.testandoMetaCloud.set(true);
+    this.metaCloudService.testar().subscribe({
+      next: (res) => {
+        this.testandoMetaCloud.set(false);
+        if (res.success) {
+          this.toast.success(res.message);
+        } else {
+          this.toast.error('Teste falhou', res.message);
+        }
+        this.carregarMetaCloudConfig();
+      },
+      error: (err: HttpErrorResponse) => {
+        this.testandoMetaCloud.set(false);
+        this.toast.error('Erro no teste', this.mensagemErro(err, 'Nao foi possivel testar a configuracao.'));
+      },
+    });
+  }
+
+  desativarMetaCloudConfig(): void {
+    if (!this.isAdmin()) return;
+    this.metaCloudService.desativar().subscribe({
+      next: () => {
+        this.metaCloudExiste.set(false);
+        this.metaCloudConfig.set(null);
+        this.toast.success('WhatsApp Cloud API desativada');
+        this.carregarMetaCloudConfig();
+      },
+      error: (err: HttpErrorResponse) =>
+        this.toast.error('Erro', this.mensagemErro(err, 'Nao foi possivel desativar.')),
+    });
+  }
+
+  metaCloudWebhookUrl(): string {
+    return this.metaCloudService.webhookUrl();
+  }
+
+  copiarWebhookUrl(): void {
+    navigator.clipboard.writeText(this.metaCloudWebhookUrl()).then(
+      () => this.toast.success('URL do webhook copiada'),
+      () => this.toast.error('Nao foi possivel copiar'),
+    );
   }
 
   carregarAlertasOperacionais(): void {

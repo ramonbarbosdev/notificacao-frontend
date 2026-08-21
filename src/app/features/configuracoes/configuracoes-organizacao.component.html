@@ -235,6 +235,59 @@
         }
       </form>
 
+      @if (aba() === 'metaCloud') {
+        <section class="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-6 space-y-5" [formGroup]="metaCloudForm">
+          <div>
+            <h2 class="text-[var(--color-text)] font-semibold">WhatsApp Cloud API (Meta)</h2>
+            <p class="text-xs text-[var(--color-text-muted)] mt-1">
+              Provider exclusivo: quando ativo, substitui o Baileys para envios desta organizacao.
+            </p>
+            @if (metaCloudConfig()?.accessTokenConfigured) {
+              <p class="text-xs text-[var(--color-success)] mt-2">Access token configurado (valor nao exibido).</p>
+            }
+          </div>
+
+          <div class="rounded-xl border border-[var(--color-border)] px-4 py-3 text-xs text-[var(--color-text-muted)]">
+            <p class="m-0"><strong>Webhook Meta:</strong> {{ metaCloudWebhookUrl() }}</p>
+            <button type="button" (click)="copiarWebhookUrl()" class="mt-2 text-[var(--color-primary-soft)] font-semibold">Copiar URL</button>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <app-form-field label="Phone Number ID">
+              <input formControlName="phoneNumberId" class="form-input-admin" placeholder="123456789" />
+            </app-form-field>
+            <app-form-field label="WABA ID">
+              <input formControlName="wabaId" class="form-input-admin" placeholder="987654321" />
+            </app-form-field>
+            <app-form-field label="API Version">
+              <input formControlName="apiVersion" class="form-input-admin" placeholder="v21.0" />
+            </app-form-field>
+            <app-form-field label="Access Token" helper="Informe apenas ao cadastrar ou rotacionar. Nunca e exibido depois.">
+              <input formControlName="accessToken" type="password" class="form-input-admin" autocomplete="new-password" placeholder="EAA..." />
+            </app-form-field>
+          </div>
+
+          <label class="config-toggle">Ativo <input type="checkbox" formControlName="active" /></label>
+
+          <div class="flex flex-wrap gap-3">
+            <button type="button" (click)="salvarMetaCloudConfig()" [disabled]="salvandoMetaCloud() || !isAdmin()"
+              class="px-4 py-3 rounded-xl bg-[var(--color-primary)] disabled:opacity-50 text-[var(--color-bg-base)] text-sm font-semibold">
+              Salvar configuracao Meta
+            </button>
+            <button type="button" (click)="testarMetaCloudConfig()" [disabled]="testandoMetaCloud() || !metaCloudExiste() || !isAdmin()"
+              class="px-4 py-3 rounded-xl border border-[var(--color-border)] text-sm text-[var(--color-text)]">
+              Testar conexao
+            </button>
+            @if (metaCloudExiste()) {
+              <button type="button" (click)="desativarMetaCloudConfig()" [disabled]="!isAdmin()"
+                class="px-4 py-3 rounded-xl border border-[var(--color-danger-border)] text-sm text-[var(--color-danger)]">
+                Desativar Meta Cloud
+              </button>
+            }
+          </div>
+        </section>
+      }
+
       @if (aba() === 'apiKeys') {
         <section class="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-6 space-y-6">
           <h2 class="text-[var(--color-text)] font-semibold">API Keys</h2>

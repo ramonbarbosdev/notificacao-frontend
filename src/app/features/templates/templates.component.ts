@@ -105,6 +105,8 @@ export class TemplatesComponent implements OnInit, OnDestroy {
     canal: this.fb.control<CanalNotificacao>('WHATSAPP', { nonNullable: true }),
     assunto: [''],
     conteudo: ['', [Validators.required]],
+    metaTemplateName: [''],
+    metaIdioma: ['pt_BR'],
     ativo: this.fb.control(true, { nonNullable: true }),
   });
 
@@ -279,6 +281,8 @@ export class TemplatesComponent implements OnInit, OnDestroy {
       canal: 'WHATSAPP',
       assunto: '',
       conteudo: '',
+      metaTemplateName: '',
+      metaIdioma: 'pt_BR',
       ativo: true,
     });
     this.variaveisEncontradas.set([]);
@@ -295,6 +299,8 @@ export class TemplatesComponent implements OnInit, OnDestroy {
       canal: template.canal,
       assunto: template.assunto ?? '',
       conteudo: template.conteudo,
+      metaTemplateName: template.metaTemplateName ?? '',
+      metaIdioma: template.metaIdioma ?? 'pt_BR',
       ativo: template.ativo,
     });
     this.variaveis.set(this.normalizarVariaveisTemplate(template));
@@ -616,6 +622,8 @@ export class TemplatesComponent implements OnInit, OnDestroy {
       assunto: dados.assunto?.trim() || null,
       conteudo: dados.conteudo!.trim(),
       ativo: dados.ativo,
+      metaTemplateName: dados.metaTemplateName?.trim() || null,
+      metaIdioma: dados.metaIdioma?.trim() || null,
       variaveis,
       variaveisObrigatorias: variaveis
         .filter((variavel) => variavel.obrigatoria)
