@@ -338,8 +338,10 @@ export class HistoricoFilaComponent implements OnInit, OnDestroy {
   }
 
   resumoMotivo(item: FilaNotificacaoItemDTO): string | null {
-    if (item.status === 'PENDENTE' && item.motivoAguardando?.trim()) {
-      return item.motivoAguardando;
+    if (item.motivoAguardando?.trim()) {
+      if (item.status === 'PENDENTE' || item.status === 'ENVIADA') {
+        return item.motivoAguardando;
+      }
     }
     if (!item.erro?.trim()) return null;
     const info = explicarErroFila(item.erro, item.codigoErro);
@@ -347,12 +349,21 @@ export class HistoricoFilaComponent implements OnInit, OnDestroy {
   }
 
   detalheErro(item: FilaNotificacaoItemDTO): ReturnType<typeof explicarErroFila> {
-    if (item.status === 'PENDENTE' && item.motivoAguardando?.trim()) {
-      return {
-        titulo: 'Aguardando envio',
-        mensagem: item.motivoAguardando,
-        explicacao: item.motivoAguardando,
-      };
+    if (item.motivoAguardando?.trim()) {
+      if (item.status === 'PENDENTE') {
+        return {
+          titulo: 'Aguardando envio',
+          mensagem: item.motivoAguardando,
+          explicacao: item.motivoAguardando,
+        };
+      }
+      if (item.status === 'ENVIADA') {
+        return {
+          titulo: 'Entrega nao confirmada',
+          mensagem: item.motivoAguardando,
+          explicacao: item.motivoAguardando,
+        };
+      }
     }
     return explicarErroFila(item.erro, item.codigoErro);
   }

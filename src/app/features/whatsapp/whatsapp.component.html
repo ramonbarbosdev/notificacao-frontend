@@ -4,7 +4,7 @@
   </h1>
 
   <p class="text-[var(--color-text-muted)] text-sm mt-1">
-    Conecte sua sessão, envie mensagens e gerencie contatos via WhatsApp.
+    Conecte sua sessão e envie mensagens via WhatsApp.
   </p>
 </div>
 
@@ -295,7 +295,7 @@
         }
 
         <p class="text-[var(--color-text-faint)] text-xs mt-1">
-          Digite para sugerir contatos cadastrados · formato: 71981180200
+          Digite para sugerir telefones do historico/fila · formato: 71981180200
         </p>
       </div>
 
@@ -330,6 +330,19 @@
 
       @if (respostaMensagem(); as resposta) {
       @if (statusEnvioSucesso(resposta.status)) {
+      @if (envioComAviso(resposta)) {
+      <div class="app-alert-warning border rounded-xl px-4 py-3 flex items-start gap-3">
+        <lucide-icon [img]="alertIcon" class="w-4 h-4 app-text-warning flex-shrink-0 mt-0.5" />
+        <div>
+          <p class="app-text-warning text-sm font-medium m-0">
+            Mensagem enviada, mas o WhatsApp nao confirmou a entrega.
+          </p>
+          <p class="text-[var(--color-text-muted)] text-xs mt-1 m-0">
+            {{ resposta.motivoAguardando }}
+          </p>
+        </div>
+      </div>
+      } @else {
       <div class="bg-[var(--color-success-bg)] border border-[var(--color-success-border)] rounded-xl px-4 py-3 flex items-start gap-3">
         <lucide-icon [img]="checkIcon" class="w-4 h-4 text-[var(--color-success)] flex-shrink-0 mt-0.5" />
         <div>
@@ -342,6 +355,7 @@
           </p>
         </div>
       </div>
+      }
       } @else if (envioFalhou(resposta.status)) {
       @let erroDetalhe = detalheErro(resposta.erro);
       <div class="bg-[var(--color-danger-bg)] border border-[var(--color-danger-border)] rounded-xl px-4 py-3">

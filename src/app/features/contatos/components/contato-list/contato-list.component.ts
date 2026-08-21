@@ -4,7 +4,6 @@ import {
   Download,
   LoaderCircle,
   LucideAngularModule,
-  RefreshCcw,
   Upload,
 } from 'lucide-angular';
 
@@ -12,7 +11,7 @@ import { DataTableComponent } from '../../../../shared/components/data-table/dat
 import { DataTableColumn } from '../../../../shared/components/data-table/data-table.types';
 import { ContatoResponseDTO } from '../../../../shared/types/dtos';
 
-type AcaoContato = 'consentimento' | 'bloqueio' | 'sync' | 'import' | 'export' | 'excluir' | null;
+type AcaoContato = 'consentimento' | 'bloqueio' | 'import' | 'export' | 'excluir' | null;
 
 @Component({
   selector: 'app-contato-list',
@@ -31,7 +30,6 @@ export class ContatoListComponent {
   novoContato = output<void>();
   importar = output<Event>();
   exportar = output<void>();
-  sincronizar = output<void>();
   filterChange = output<Record<string, any>>();
   nextPage = output<void>();
   previousPage = output<void>();
@@ -40,5 +38,4 @@ export class ContatoListComponent {
   readonly loaderIcon = LoaderCircle;
   readonly importIcon = Upload;
   readonly exportIcon = Download;
-  readonly syncIcon = RefreshCcw;
 }

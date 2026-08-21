@@ -16,7 +16,7 @@ import { FormInputComponent } from '../../../../shared/components/forms/text-inp
 import { FormSelectComponent } from '../../../../shared/components/forms/select-input/form-select.component';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 
-type AcaoContato = 'consentimento' | 'bloqueio' | 'sync' | 'import' | 'export' | 'excluir' | null;
+type AcaoContato = 'consentimento' | 'bloqueio' | 'import' | 'export' | 'excluir' | null;
 
 @Component({
   selector: 'app-form-panel',

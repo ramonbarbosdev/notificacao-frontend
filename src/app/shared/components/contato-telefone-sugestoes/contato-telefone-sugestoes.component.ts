@@ -12,9 +12,15 @@ import {
   switchMap,
 } from 'rxjs';
 
-import { ContatoService } from '../../../core/services/contato.service';
+import { NotificacaoService } from '../../../core/services/notificacao.service';
 import { formatPhone, maskPhoneInput } from '../../helper/phone.utils';
-import { ContatoResponseDTO } from '../../types/dtos';
+import { FilaNotificacaoItemDTO, StatusNotificacao } from '../../types/dtos';
+
+interface SugestaoDestinatario {
+  idNotificacao: number;
+  destinatario: string;
+  status: StatusNotificacao;
+}
 
 @Component({
   selector: 'app-contato-telefone-sugestoes',
@@ -23,7 +29,7 @@ import { ContatoResponseDTO } from '../../types/dtos';
   templateUrl: './contato-telefone-sugestoes.component.html',
 })
 export class ContatoTelefoneSugestoesComponent {
-  private readonly contatoService = inject(ContatoService);
+  private readonly notificacaoService = inject(NotificacaoService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly busca$ = new Subject<string>();
 
@@ -31,7 +37,7 @@ export class ContatoTelefoneSugestoesComponent {
   readonly placeholder = input('+55 (71) 98118-0200');
   readonly compacto = input(false);
 
-  readonly sugestoes = signal<ContatoResponseDTO[]>([]);
+  readonly sugestoes = signal<SugestaoDestinatario[]>([]);
   readonly aberto = signal(false);
   readonly carregando = signal(false);
 
@@ -73,8 +79,8 @@ export class ContatoTelefoneSugestoesComponent {
     window.setTimeout(() => this.aberto.set(false), 150);
   }
 
-  selecionar(contato: ContatoResponseDTO): void {
-    const valorFormatado = maskPhoneInput(contato.destinatario);
+  selecionar(item: SugestaoDestinatario): void {
+    const valorFormatado = maskPhoneInput(item.destinatario);
     this.control().setValue(valorFormatado);
     this.control().markAsTouched();
     this.aberto.set(false);
@@ -82,20 +88,43 @@ export class ContatoTelefoneSugestoesComponent {
 
   private buscarSugestoes(termo: string) {
     const digitos = termo.replace(/\D/g, '');
-    const texto = termo.trim();
 
-    return this.contatoService
+    return this.notificacaoService
       .listar({
         page: 0,
-        size: 8,
+        size: 20,
         sort: 'dtCriacao,desc',
         canal: 'WHATSAPP',
         ...(digitos.length >= 2 ? { destinatario: digitos } : {}),
-        ...(digitos.length < 2 && texto.length >= 2 ? { nmContato: texto } : {}),
       })
       .pipe(
-        map((page) => page.data),
-        catchError(() => of([] as ContatoResponseDTO[])),
+        map((page) => this.deduplicarDestinatarios(page.data)),
+        catchError(() => of([] as SugestaoDestinatario[])),
       );
+  }
+
+  private deduplicarDestinatarios(itens: FilaNotificacaoItemDTO[]): SugestaoDestinatario[] {
+    const vistos = new Set<string>();
+    const resultado: SugestaoDestinatario[] = [];
+
+    for (const item of itens) {
+      const destinatario = item.destinatario?.trim();
+      if (!destinatario || vistos.has(destinatario)) {
+        continue;
+      }
+
+      vistos.add(destinatario);
+      resultado.push({
+        idNotificacao: item.idNotificacao,
+        destinatario,
+        status: item.status,
+      });
+
+      if (resultado.length >= 8) {
+        break;
+      }
+    }
+
+    return resultado;
   }
 }

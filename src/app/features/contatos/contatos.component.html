@@ -6,7 +6,7 @@
       <app-contato-list [contatos]="contatos()" [columns]="columns" [table]="table" [acaoAtual]="acaoAtual()"
         [erro]="erro()" [mensagemImportacao]="mensagemImportacao()" (novoContato)="abrirNovoContato()"
         (importar)="importarContatos($event)" (exportar)="exportarContatos()"
-        (sincronizar)="sincronizarContatosWhatsapp()" (filterChange)="aplicarFiltros($event)"
+        (filterChange)="aplicarFiltros($event)"
         (nextPage)="proximaPagina()" (previousPage)="paginaAnterior()"
         (pageSizeChange)="alterarTamanhoPagina($event)" />
 

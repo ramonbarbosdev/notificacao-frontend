@@ -14,7 +14,7 @@ import { ContatoListComponent } from './components/contato-list/contato-list.com
 import { ContatoSummaryCardsComponent } from './components/contato-summary-cards/contato-summary-cards.component';
 import { FormPanelComponent } from './components/form-panel/form-panel.component';
 
-type AcaoContato = 'consentimento' | 'bloqueio' | 'sync' | 'import' | 'export' | 'excluir' | null;
+type AcaoContato = 'consentimento' | 'bloqueio' | 'import' | 'export' | 'excluir' | null;
 
 import {
   contatoBloqueioFormSchema,
@@ -373,32 +373,6 @@ export class ContatosComponent implements OnInit {
 
   tipoInputDestinatario(): string {
     return this.form.controls.canal.value === 'EMAIL' ? 'email' : 'text';
-  }
-
-  sincronizarContatosWhatsapp(): void {
-    if (this.acaoAtual()) return;
-
-    this.acaoAtual.set('sync');
-    this.erro.set(null);
-    this.mensagemImportacao.set(null);
-    this.resposta.set(null);
-
-    this.contatoService.sincronizarWhatsapp().subscribe({
-      next: (resultado) => {
-        this.acaoAtual.set(null);
-        this.mensagemImportacao.set(
-          `${resultado.importados} importados, ${resultado.atualizados} atualizados`
-            + ` (${resultado.totalGateway} no WhatsApp).`
-        );
-        this.listarContatos();
-      },
-      error: (err) => {
-        this.erro.set(
-          err.error?.mensagem ?? err.error?.erro ?? 'Nao foi possivel sincronizar contatos.'
-        );
-        this.acaoAtual.set(null);
-      },
-    });
   }
 
   exportarContatos(): void {

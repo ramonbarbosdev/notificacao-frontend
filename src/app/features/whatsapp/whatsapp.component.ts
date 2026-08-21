@@ -92,6 +92,7 @@ export class WhatsappComponent implements OnInit, OnDestroy {
   protected readonly loaderIcon = WHATSAPP_ICONS.loader;
   protected readonly sendIcon = WHATSAPP_ICONS.send;
   protected readonly checkIcon = WHATSAPP_ICONS.check;
+  protected readonly alertIcon = WHATSAPP_ICONS.alert;
   protected readonly xIcon = WHATSAPP_ICONS.x;
   protected readonly plugZapIcon = WHATSAPP_ICONS.plugZap;
   protected readonly qrCodeIcon = WHATSAPP_ICONS.qrCode;
@@ -362,6 +363,10 @@ export class WhatsappComponent implements OnInit, OnDestroy {
 
   statusEnvioSucesso(status: StatusNotificacao | null | undefined): boolean {
     return !!status && ['ENVIADA', 'ENTREGUE', 'LIDA'].includes(status);
+  }
+
+  envioComAviso(resposta: EnviarMensagemResponse | null | undefined): boolean {
+    return !!resposta?.motivoAguardando?.trim() && this.statusEnvioSucesso(resposta.status);
   }
 
   statusEnvioPendente(status: StatusNotificacao | null | undefined): boolean {

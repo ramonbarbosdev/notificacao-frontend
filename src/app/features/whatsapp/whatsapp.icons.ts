@@ -9,6 +9,7 @@ import {
   RefreshCw,
   Send,
   Trash2,
+  TriangleAlert,
   X,
 } from 'lucide-angular';
 
@@ -18,6 +19,7 @@ export const WHATSAPP_ICONS = {
   loader: LoaderCircle,
   send: Send,
   check: Check,
+  alert: TriangleAlert,
   x: X,
   plugZap: PlugZap,
   qrCode: QrCode,

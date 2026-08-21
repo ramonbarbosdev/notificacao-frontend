@@ -4,6 +4,7 @@ import { map, Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
   ApiResponseDTO,
+  CanalNotificacao,
   EnviarNotificacaoLoteRequest,
   EnviarNotificacaoLoteResponse,
   EnviarNotificacaoRequest,
@@ -12,6 +13,7 @@ import {
   FilaResumoResponseDTO,
   PageResult,
   StatusEnvioOrganizacaoResponse,
+  StatusNotificacao,
 } from '../../shared/types/dtos';
 
 
@@ -32,14 +34,29 @@ export class NotificacaoService {
     page: number;
     size: number;
     sort?: string;
+    destinatario?: string;
+    canal?: CanalNotificacao;
+    status?: StatusNotificacao;
   }): Observable<PageResult<FilaNotificacaoResponseDTO>> {
+    const query: Record<string, string | number> = {
+      page: params.page,
+      size: params.size,
+      sort: params.sort ?? 'dtCriacao,desc',
+    };
+
+    if (params.destinatario?.trim()) {
+      query['destinatario'] = params.destinatario.trim();
+    }
+    if (params.canal) {
+      query['canal'] = params.canal;
+    }
+    if (params.status) {
+      query['status'] = params.status;
+    }
+
     return this.http
       .get<ApiResponseDTO<FilaNotificacaoResponseDTO[]>>(`${this.base}/fila`, {
-        params: {
-          page: params.page,
-          size: params.size,
-          sort: params.sort ?? 'dtCriacao,desc',
-        },
+        params: query,
         observe: 'response',
       })
       .pipe(
