@@ -2,7 +2,17 @@ import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { Check, LoaderCircle, LucideAngularModule, MessageSquare, RefreshCw, Trash2 } from 'lucide-angular';
+import {
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  LoaderCircle,
+  LucideAngularModule,
+  MessageSquare,
+  RefreshCw,
+  Search,
+  Trash2,
+} from 'lucide-angular';
 import { Subscription } from 'rxjs';
 
 import { AuthService } from '../../core/auth/auth.service';
@@ -10,8 +20,12 @@ import { WhatsappEventsService } from '../../core/http/whatsapp-events.service';
 import { CommandDialogService } from '../../core/services/command-dialog.service';
 import { WhatsappConversasService } from '../../core/services/whatsapp-conversas.service';
 import { formatDateTimePtBr } from '../../shared/helper/date.utils';
+import { usePaginatedTable } from '../../shared/helper/paginated-table.state';
 import { formatPhone } from '../../shared/helper/phone.utils';
 import { WhatsappConversaResponse, WhatsappConversaStatus } from '../../shared/types/dtos';
+
+type FiltroProntoWhatsapp = '' | 'true' | 'false';
+type FiltroNaoLida = '' | 'true';
 
 @Component({
   selector: 'app-whatsapp-conversas',
@@ -32,15 +46,24 @@ export class WhatsappConversasComponent implements OnInit, OnDestroy {
   protected readonly checkIcon = Check;
   protected readonly messageIcon = MessageSquare;
   protected readonly trashIcon = Trash2;
+  protected readonly searchIcon = Search;
+  protected readonly chevronLeftIcon = ChevronLeft;
+  protected readonly chevronRightIcon = ChevronRight;
+
+  readonly table = usePaginatedTable(10);
 
   readonly conversas = signal<WhatsappConversaResponse[]>([]);
-  readonly carregando = signal(false);
   readonly erro = signal<string | null>(null);
   readonly acaoTelefone = signal<string | null>(null);
   readonly mensagemSucesso = signal<string | null>(null);
 
-  readonly totalPendentes = computed(
-    () => this.conversas().filter((item) => item.status === 'PENDENTE' && item.exigirConsentimento).length,
+  readonly filtroBusca = signal('');
+  readonly filtroProntoWhatsapp = signal<FiltroProntoWhatsapp>('');
+  readonly filtroStatus = signal<WhatsappConversaStatus | ''>('');
+  readonly filtroNaoLida = signal<FiltroNaoLida>('');
+
+  readonly totalProntasPagina = computed(
+    () => this.conversas().filter((item) => item.prontoParaEnvioWhatsapp).length,
   );
 
   readonly exigirConsentimento = computed(
@@ -60,19 +83,88 @@ export class WhatsappConversasComponent implements OnInit, OnDestroy {
   }
 
   carregar(): void {
-    this.carregando.set(true);
+    this.table.loading.set(true);
     this.erro.set(null);
 
-    this.conversasService.listar().subscribe({
-      next: (lista) => {
-        this.conversas.set(lista);
-        this.carregando.set(false);
-      },
-      error: (err: HttpErrorResponse) => {
-        this.erro.set(err.error?.message || 'Nao foi possivel carregar as conversas.');
-        this.carregando.set(false);
-      },
-    });
+    this.conversasService
+      .listar({
+        page: this.table.paginaAtual(),
+        size: this.table.tamanhoPagina(),
+        busca: this.filtroBusca().trim() || undefined,
+        prontoParaEnvioWhatsapp: this.parseBooleanFiltro(this.filtroProntoWhatsapp()),
+        status: this.filtroStatus() || undefined,
+        naoLida: this.parseBooleanFiltro(this.filtroNaoLida()),
+      })
+      .subscribe({
+        next: (page) => {
+          this.conversas.set(page.data);
+          this.table.atualizarPaginacao(page);
+          this.table.loading.set(false);
+        },
+        error: (err: HttpErrorResponse) => {
+          this.erro.set(err.error?.message || 'Nao foi possivel carregar as conversas.');
+          this.table.loading.set(false);
+        },
+      });
+  }
+
+  aplicarFiltros(): void {
+    this.table.aplicarFiltros(() => this.carregar());
+  }
+
+  limparFiltros(): void {
+    this.filtroBusca.set('');
+    this.filtroProntoWhatsapp.set('');
+    this.filtroStatus.set('');
+    this.filtroNaoLida.set('');
+    this.aplicarFiltros();
+  }
+
+  temFiltrosAtivos(): boolean {
+    return Boolean(
+      this.filtroBusca().trim()
+      || this.filtroProntoWhatsapp()
+      || this.filtroStatus()
+      || this.filtroNaoLida(),
+    );
+  }
+
+  atualizarFiltroBusca(event: Event): void {
+    this.filtroBusca.set((event.target as HTMLInputElement).value);
+  }
+
+  buscarPorEnter(event: KeyboardEvent): void {
+    if (event.key === 'Enter') {
+      this.aplicarFiltros();
+    }
+  }
+
+  atualizarFiltroProntoWhatsapp(event: Event): void {
+    this.filtroProntoWhatsapp.set((event.target as HTMLSelectElement).value as FiltroProntoWhatsapp);
+    this.aplicarFiltros();
+  }
+
+  atualizarFiltroStatus(event: Event): void {
+    this.filtroStatus.set((event.target as HTMLSelectElement).value as WhatsappConversaStatus | '');
+    this.aplicarFiltros();
+  }
+
+  atualizarFiltroNaoLida(event: Event): void {
+    this.filtroNaoLida.set((event.target as HTMLSelectElement).value as FiltroNaoLida);
+    this.aplicarFiltros();
+  }
+
+  alterarTamanhoPagina(event: Event): void {
+    const size = Number((event.target as HTMLSelectElement).value);
+    this.table.alterarTamanhoPagina(size, () => this.carregar());
+  }
+
+  proximaPagina(): void {
+    this.table.proximaPagina(() => this.carregar());
+  }
+
+  paginaAnterior(): void {
+    this.table.paginaAnterior(() => this.carregar());
   }
 
   liberar(conversa: WhatsappConversaResponse): void {
@@ -85,7 +177,7 @@ export class WhatsappConversasComponent implements OnInit, OnDestroy {
 
     this.conversasService.liberar(conversa.telefone).subscribe({
       next: (atualizada) => {
-        this.atualizarConversaNaLista(atualizada);
+        this.carregar();
         this.mensagemSucesso.set(`Contato ${atualizada.nmContato} liberado para notificacoes.`);
         this.acaoTelefone.set(null);
       },
@@ -116,7 +208,7 @@ export class WhatsappConversasComponent implements OnInit, OnDestroy {
 
     this.conversasService.excluir(conversa.telefone).subscribe({
       next: () => {
-        this.removerConversaDaLista(conversa);
+        this.carregar();
         this.mensagemSucesso.set(`Conversa de ${conversa.nmContato} removida.`);
         this.acaoTelefone.set(null);
       },
@@ -125,6 +217,30 @@ export class WhatsappConversasComponent implements OnInit, OnDestroy {
         this.acaoTelefone.set(null);
       },
     });
+  }
+
+  labelWhatsapp(conversa: WhatsappConversaResponse): string {
+    if (conversa.prontoParaEnvioWhatsapp) {
+      return 'Pronto no WhatsApp';
+    }
+
+    if (conversa.inboundRecebidaWhatsapp) {
+      return 'Aguardando tctoken';
+    }
+
+    return 'Sem conversa na sessao';
+  }
+
+  classeWhatsapp(conversa: WhatsappConversaResponse): string {
+    if (conversa.prontoParaEnvioWhatsapp) {
+      return 'bg-[var(--color-success-bg)] text-[var(--color-success)] border-[var(--color-success-border)]';
+    }
+
+    if (conversa.inboundRecebidaWhatsapp) {
+      return 'bg-amber-500/10 text-amber-400 border-amber-500/30';
+    }
+
+    return 'bg-[var(--color-surface-muted)] text-[var(--color-text-muted)] border-[var(--color-border)]';
   }
 
   labelStatus(status: WhatsappConversaStatus): string {
@@ -165,6 +281,18 @@ export class WhatsappConversasComponent implements OnInit, OnDestroy {
     return 'Mensagem recebida';
   }
 
+  private parseBooleanFiltro(valor: string): boolean | undefined {
+    if (valor === 'true') {
+      return true;
+    }
+
+    if (valor === 'false') {
+      return false;
+    }
+
+    return undefined;
+  }
+
   private conectarEventos(): void {
     const idOrganizacao = this.authService.idOrganizacaoAtual();
     if (!idOrganizacao) {
@@ -173,46 +301,14 @@ export class WhatsappConversasComponent implements OnInit, OnDestroy {
 
     this.eventosSubscription = this.whatsappEventsService.conectar(idOrganizacao).subscribe({
       next: (evento) => {
-        if (evento.tipo === 'CONVERSA_EXCLUIDA' && evento.conversa) {
-          this.removerConversaDaLista(evento.conversa);
-          return;
-        }
-
         if (
-          (evento.tipo === 'MENSAGEM_RECEBIDA' || evento.tipo === 'CONVERSA_ATUALIZADA')
-          && evento.conversa
+          evento.tipo === 'MENSAGEM_RECEBIDA'
+          || evento.tipo === 'CONVERSA_ATUALIZADA'
+          || evento.tipo === 'CONVERSA_EXCLUIDA'
         ) {
-          this.atualizarConversaNaLista(evento.conversa);
+          this.carregar();
         }
       },
     });
-  }
-
-  private atualizarConversaNaLista(atualizada: WhatsappConversaResponse): void {
-    const lista = [...this.conversas()];
-    const indice = lista.findIndex((item) => item.telefone === atualizada.telefone);
-
-    if (indice >= 0) {
-      lista[indice] = atualizada;
-    } else {
-      lista.unshift(atualizada);
-    }
-
-    lista.sort(
-      (a, b) =>
-        new Date(b.dtUltimaMensagem).getTime() - new Date(a.dtUltimaMensagem).getTime(),
-    );
-
-    this.conversas.set(lista);
-  }
-
-  private removerConversaDaLista(conversa: WhatsappConversaResponse): void {
-    this.conversas.set(
-      this.conversas().filter(
-        (item) =>
-          item.idConversa !== conversa.idConversa
-          && item.telefone !== conversa.telefone,
-      ),
-    );
   }
 }

@@ -221,6 +221,8 @@ export interface WhatsappConversaResponse {
   naoLida: boolean;
   dtUltimaMensagem: string;
   exigirConsentimento: boolean;
+  prontoParaEnvioWhatsapp: boolean | null;
+  inboundRecebidaWhatsapp: boolean | null;
 }
 
 export interface WhatsappEvento {
