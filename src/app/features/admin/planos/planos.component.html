@@ -38,7 +38,6 @@
           <th class="px-5 py-3 text-left">Mensagens</th>
           <th class="px-5 py-3 text-left">Usuarios</th>
           <th class="px-5 py-3 text-left">Templates</th>
-          <th class="px-5 py-3 text-left">Contatos</th>
           <th class="px-5 py-3 text-left">Canais</th>
           <th class="px-5 py-3 text-left">Status</th>
           <th class="px-5 py-3 text-right">Acoes</th>
@@ -51,7 +50,6 @@
             <td class="px-5 py-4">{{ formatarNumero(plano.nuLimiteMensagensMensal) }}</td>
             <td class="px-5 py-4">{{ formatarNumero(plano.nuLimiteUsuarios) }}</td>
             <td class="px-5 py-4">{{ formatarNumero(plano.nuLimiteTemplates) }}</td>
-            <td class="px-5 py-4">{{ formatarNumero(plano.nuLimiteContatos) }}</td>
             <td class="px-5 py-4 text-[var(--color-text-muted)]">
               {{ plano.flWhatsappHabilitado ? 'WhatsApp ' : '' }}
               {{ plano.flEmailHabilitado ? 'Email ' : '' }}
@@ -79,7 +77,7 @@
             </td>
           </tr>
         } @empty {
-          <tr><td colspan="8" class="px-5 py-10 text-center text-[var(--color-text-muted)]">Nenhum plano encontrado.</td></tr>
+          <tr><td colspan="7" class="px-5 py-10 text-center text-[var(--color-text-muted)]">Nenhum plano encontrado.</td></tr>
         }
       </tbody>
     </table>
@@ -126,12 +124,6 @@
         [control]="getControl('nuLimiteTemplates')"
         type="number"
         [error]="campoErro('nuLimiteTemplates')"
-      />
-      <app-form-input
-        label="Limite contatos"
-        [control]="getControl('nuLimiteContatos')"
-        type="number"
-        [error]="campoErro('nuLimiteContatos')"
       />
     </div>
 

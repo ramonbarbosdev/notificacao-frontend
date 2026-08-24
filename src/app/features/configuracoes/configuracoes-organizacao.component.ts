@@ -95,7 +95,6 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
     { id: 'geral', label: 'Geral' },
     { id: 'whatsapp', label: 'WhatsApp', recurso: 'WHATSAPP' },
     { id: 'metaCloud', label: 'WhatsApp Cloud (Meta)', adminOnly: true, recurso: 'WHATSAPP' },
-    { id: 'consentimento', label: 'Consentimento' },
     { id: 'templates', label: 'Templates', recurso: 'TEMPLATES' },
     { id: 'notificacoes', label: 'Notificacoes', ocultoModoWhatsapp: true },
     { id: 'apiKeys', label: 'API Keys', adminOnly: true, recurso: 'API_PUBLICA' },
@@ -141,8 +140,6 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
     { value: 'NOTIFICACOES_CONSULTAR', label: 'Consultar notificacoes' },
     { value: 'TEMPLATES_CONSULTAR', label: 'Consultar templates' },
     { value: 'TEMPLATES_GERENCIAR', label: 'Gerenciar templates' },
-    { value: 'CONTATOS_CONSULTAR', label: 'Consultar contatos' },
-    { value: 'CONTATOS_GERENCIAR', label: 'Gerenciar contatos' },
   ];
 
   readonly eventos: { value: WebhookEvento; label: string }[] = [
@@ -151,7 +148,6 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
     { value: 'NOTIFICACAO_ENTREGUE', label: 'Notificacao entregue' },
     { value: 'NOTIFICACAO_LIDA', label: 'Notificacao lida' },
     { value: 'NOTIFICACAO_FALHOU', label: 'Notificacao falhou' },
-    { value: 'CONTATO_BLOQUEADO', label: 'Contato bloqueado' },
     { value: 'WHATSAPP_DESCONECTADO', label: 'WhatsApp desconectado' },
     { value: 'WHATSAPP_QR_ATUALIZADO', label: 'QR atualizado' },
   ];
@@ -171,11 +167,6 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
     whatsappLimitePorMinuto: [30],
     whatsappLimitePorDia: [1000],
     whatsappModoEnvio: ['SEGURO'],
-    exigirConsentimento: [true],
-    consentimentoExpira: [false],
-    diasExpiracaoConsentimento: [365],
-    bloqueioAutomatico: [true],
-    limiteFalhasParaBloqueio: [3],
     templatesVersionamento: [true],
     templatesExigirAprovacao: [false],
     templatesValidarVariaveis: [true],
@@ -292,7 +283,7 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
     }
 
     const abaAtual = this.aba();
-    if (!['geral', 'whatsapp', 'consentimento', 'templates', 'notificacoes'].includes(abaAtual)) {
+    if (!['geral', 'whatsapp', 'templates', 'notificacoes'].includes(abaAtual)) {
       return;
     }
 

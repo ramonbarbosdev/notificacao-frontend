@@ -230,7 +230,6 @@ export interface WhatsappMensagemResponse {
 
 export interface WhatsappConversaResponse {
   idConversa: number | null;
-  idContato: number | null;
   telefone: string;
   nmContato: string;
   ultimaMensagem: string | null;
@@ -242,7 +241,6 @@ export interface WhatsappConversaResponse {
   status: WhatsappConversaStatus;
   naoLida: boolean;
   dtUltimaMensagem: string;
-  exigirConsentimento: boolean;
   prontoParaEnvioWhatsapp: boolean | null;
   inboundRecebidaWhatsapp: boolean | null;
 }
@@ -552,34 +550,6 @@ export interface EnviarTemplateRequestDTO {
   variaveis: Record<string, string>;
 }
 
-// CONTATOS
-
-export interface ContatoRequestDTO {
-  canal: CanalNotificacao;
-  nmContato: string;
-  destinatario: string;
-  motivo?: string | null;
-}
-
-export interface ContatoResponseDTO {
-  idContato: number;
-  canal: CanalNotificacao;
-  nmContato: string;
-  destinatario: string;
-  consentimento: boolean;
-  bloqueado: boolean;
-  motivoBloqueio: string | null;
-  dtConsentimento: string | null;
-  dtBloqueio: string | null;
-}
-
-export interface SincronizarContatosWhatsappResponseDTO {
-  importados: number;
-  atualizados: number;
-  removidos: number;
-  totalGateway: number;
-}
-
 // ADMIN
 
 export interface SystemStatus {
@@ -704,7 +674,6 @@ export interface Plano {
   nuLimiteMensagensMensal: number | null;
   nuLimiteUsuarios: number | null;
   nuLimiteTemplates: number | null;
-  nuLimiteContatos: number | null;
   flWhatsappHabilitado: boolean;
   flEmailHabilitado: boolean;
   flTelegramHabilitado: boolean;
@@ -745,11 +714,6 @@ export interface OrganizacaoConfiguracao {
   whatsappLimitePorMinuto: number | null;
   whatsappLimitePorDia: number | null;
   whatsappModoEnvio: 'SEGURO' | 'BALANCEADO' | 'AGRESSIVO' | string;
-  exigirConsentimento: boolean;
-  consentimentoExpira: boolean;
-  diasExpiracaoConsentimento: number | null;
-  bloqueioAutomatico: boolean;
-  limiteFalhasParaBloqueio: number | null;
   templatesVersionamento: boolean;
   templatesExigirAprovacao: boolean;
   templatesValidarVariaveis: boolean;

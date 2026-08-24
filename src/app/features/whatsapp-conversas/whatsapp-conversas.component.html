@@ -258,17 +258,6 @@
               </span>
             }
 
-            @if (conversa.exigirConsentimento && conversa.status === 'PENDENTE') {
-              <button
-                type="button"
-                (click)="liberar(conversa)"
-                [disabled]="acaoTelefone() === conversa.telefone"
-                class="text-xs font-medium px-2.5 py-1 rounded-[10px] bg-[var(--color-warning-bg)] text-[var(--color-warning)] border border-[color-mix(in_srgb,var(--color-warning)_30%,transparent)] disabled:opacity-60"
-              >
-                Liberar
-              </button>
-            }
-
             @if (podeSincronizarInbox(conversa)) {
               <button
                 type="button"
@@ -400,21 +389,6 @@
             <option value="false">Sem tctoken</option>
           </select>
         </div>
-        @if (exigirConsentimento()) {
-          <div>
-            <label class="block text-xs text-[var(--color-text-muted)] mb-1">Consentimento</label>
-            <select
-              [value]="filtroStatus()"
-              (change)="atualizarFiltroStatus($event)"
-              class="w-full bg-[var(--color-bg-base)] border border-[var(--color-border)] rounded-[10px] px-3 py-2 text-sm text-[var(--color-text)]"
-            >
-              <option value="">Todos</option>
-              <option value="PENDENTE">Pendente</option>
-              <option value="LIBERADO">Liberado</option>
-              <option value="BLOQUEADO">Bloqueado</option>
-            </select>
-          </div>
-        }
         <div>
           <label class="block text-xs text-[var(--color-text-muted)] mb-1">Leitura</label>
           <select

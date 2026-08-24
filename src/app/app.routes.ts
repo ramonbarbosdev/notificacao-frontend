@@ -66,13 +66,6 @@ export const routes: Routes = [
         pathMatch: 'full',
       },
       {
-        path: 'contatos',
-        canActivate: [roleGuard],
-        data: { roles: ['ADMIN', 'USER'] },
-        loadComponent: () =>
-          import('./features/contatos/contatos.component').then((m) => m.ContatosComponent),
-      },
-      {
         path: 'templates',
         canActivate: [roleGuard],
         data: { roles: ['ADMIN', 'USER'] },
@@ -208,7 +201,6 @@ export const routes: Routes = [
   { path: 'dashboard', redirectTo: '/app/dashboard' },
   { path: 'whatsapp', redirectTo: '/app/whatsapp' },
   { path: 'notificacoes', redirectTo: '/app/whatsapp' },
-  { path: 'contatos', redirectTo: '/app/contatos' },
   { path: 'templates', redirectTo: '/app/templates' },
   { path: 'tutorial', redirectTo: '/app/documentacao' },
   { path: 'documentacao', redirectTo: '/app/documentacao' },

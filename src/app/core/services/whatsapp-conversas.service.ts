@@ -119,14 +119,6 @@ export class WhatsappConversasService {
 
 
 
-  liberar(telefone: string): Observable<WhatsappConversaResponse> {
-
-    return this.http.post<WhatsappConversaResponse>(`${this.base}/${encodeURIComponent(telefone)}/liberar`, {});
-
-  }
-
-
-
   marcarComoLida(telefone: string): Observable<WhatsappConversaResponse> {
 
     return this.http.patch<WhatsappConversaResponse>(`${this.base}/${encodeURIComponent(telefone)}/marcar-lida`, {});

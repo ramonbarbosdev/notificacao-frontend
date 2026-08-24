@@ -8,8 +8,6 @@ const API_KEY_SCOPES = [
   'NOTIFICACOES_CONSULTAR',
   'TEMPLATES_CONSULTAR',
   'TEMPLATES_GERENCIAR',
-  'CONTATOS_CONSULTAR',
-  'CONTATOS_GERENCIAR',
 ] as const satisfies readonly ApiKeyScope[];
 
 export const apiKeyFormSchema = z.object({

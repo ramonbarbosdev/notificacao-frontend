@@ -133,26 +133,6 @@
             </section>
           }
 
-          @case ('consentimento') {
-            <section class="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-6 space-y-4">
-              <h2 class="text-[var(--color-text)] font-semibold">Consentimento</h2>
-              <p class="text-sm text-[var(--color-text-muted)]">
-                O consentimento controla se um contato pode receber mensagens. Quando ativado, a API bloqueia envios para contatos sem consentimento ativo.
-              </p>
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <label class="config-toggle">Exigir consentimento <input type="checkbox" formControlName="exigirConsentimento" /></label>
-                <label class="config-toggle">Consentimento expira <input type="checkbox" formControlName="consentimentoExpira" /></label>
-                <label class="config-toggle">Bloqueio automático <input type="checkbox" formControlName="bloqueioAutomatico" /></label>
-                <app-form-field label="Dias para expiração do consentimento" [error]="campoErro('diasExpiracaoConsentimento')">
-                  <input formControlName="diasExpiracaoConsentimento" type="number" class="form-input-admin" placeholder="365" />
-                </app-form-field>
-                <app-form-field label="Limite de falhas para bloqueio" [error]="campoErro('limiteFalhasParaBloqueio')">
-                  <input formControlName="limiteFalhasParaBloqueio" type="number" class="form-input-admin" placeholder="3" />
-                </app-form-field>
-              </div>
-            </section>
-          }
-
           @case ('templates') {
             <section class="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-6 space-y-4">
               <h2 class="text-[var(--color-text)] font-semibold">Templates</h2>
@@ -221,7 +201,7 @@
           }
         }
 
-        @if (['geral','whatsapp','consentimento','templates','notificacoes'].includes(aba())) {
+        @if (['geral','whatsapp','templates','notificacoes'].includes(aba())) {
           <div class="flex justify-end">
             <button type="button" (click)="salvar()" [disabled]="salvando() || !isAdmin()" class="px-4 py-3 rounded-xl bg-[var(--color-primary)] disabled:opacity-50 text-[var(--color-bg-base)] text-sm font-semibold flex items-center gap-2">
               @if (salvando()) {

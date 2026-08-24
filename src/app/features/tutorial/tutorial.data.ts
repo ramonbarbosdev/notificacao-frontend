@@ -133,8 +133,8 @@ export const TUTORIAL_TOPICOS: TutorialTopico[] = [
         lista: [
           'NOTIFICACOES_ENVIAR — envio unitário (uma mensagem por requisição)',
           'NOTIFICACOES_ENVIAR_LOTE — envio em lote (scope separado, menor risco de abuso acidental)',
-          'NOTIFICACOES_CONSULTAR — consultar fila e histórico (opcional)',
-          'CONTATOS_GERENCIAR — registrar consentimento de contatos (quando exigido)',
+          'NOTIFICACOES_CONSULTAR — consultar fila e historico (opcional)',
+          'TEMPLATES_CONSULTAR — listar templates aprovados (opcional)',
         ],
       },
       {

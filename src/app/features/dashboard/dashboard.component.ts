@@ -15,7 +15,6 @@ import {
   MessageSquareText,
   Send,
   TriangleAlert,
-  UserCheck,
 } from 'lucide-angular';
 
 import { formatNumberPtBr } from '../../shared/helper/number.utils';
@@ -130,22 +129,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
   readonly quickActions: QuickAction[] = [
     {
       title: 'Enviar mensagem',
-      description: 'WhatsApp manual com consentimento',
+      description: 'WhatsApp manual pela sessao conectada',
       routerLink: '/app/whatsapp',
       icon: MessageCircle,
       tone: 'success',
-    },
-    // {
-    //   title: 'Templates',
-    //   description: 'Gerenciar modelos',
-    //   routerLink: '/app/templates',
-    //   icon: MessageSquareText,
-    // },
-    {
-      title: 'Contatos',
-      description: 'Consentimentos e bloqueios',
-      routerLink: '/app/contatos',
-      icon: UserCheck,
     },
     {
       title: 'Histórico da fila',

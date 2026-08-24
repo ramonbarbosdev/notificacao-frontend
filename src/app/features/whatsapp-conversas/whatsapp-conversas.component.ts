@@ -25,7 +25,7 @@ import { WhatsappService } from '../../core/services/whatsapp.service';
 import { formatDateTimePtBr, formatRelativeTimePtBr } from '../../shared/helper/date.utils';
 import { usePaginatedTable } from '../../shared/helper/paginated-table.state';
 import { formatPhone, formatPhoneNationalDigits, normalizeBrazilWhatsappMobile } from '../../shared/helper/phone.utils';
-import { WhatsappConversaAba, WhatsappConversaResponse, WhatsappConversaStatus, WhatsappMensagemDirecao, WhatsappMensagemResponse } from '../../shared/types/dtos';
+import { WhatsappConversaAba, WhatsappConversaResponse, WhatsappMensagemDirecao, WhatsappMensagemResponse } from '../../shared/types/dtos';
 import { ehWhatsappConectado } from '../whatsapp/whatsapp.helpers';
 
 type FiltroProntoWhatsapp = '' | 'true' | 'false';
@@ -111,7 +111,6 @@ export class WhatsappConversasComponent implements OnInit, OnDestroy {
 
   readonly filtroBusca = signal('');
   readonly filtroProntoWhatsapp = signal<FiltroProntoWhatsapp>('');
-  readonly filtroStatus = signal<WhatsappConversaStatus | ''>('');
   readonly filtroNaoLida = signal<FiltroNaoLida>('');
   readonly filtroUltimaDirecao = signal<FiltroUltimaDirecao>('');
 
@@ -176,10 +175,6 @@ export class WhatsappConversasComponent implements OnInit, OnDestroy {
     () => this.conversas().filter((item) => item.prontoParaEnvioWhatsapp).length,
   );
 
-  readonly exigirConsentimento = computed(
-    () => this.conversas()[0]?.exigirConsentimento ?? true,
-  );
-
   readonly resumoOrigem = computed(() => {
     const itens = this.conversas();
     return {
@@ -226,7 +221,6 @@ export class WhatsappConversasComponent implements OnInit, OnDestroy {
         size: this.table.tamanhoPagina(),
         busca: this.filtroBusca().trim() || undefined,
         prontoParaEnvioWhatsapp: this.parseBooleanFiltro(this.filtroProntoWhatsapp()),
-        status: this.filtroStatus() || undefined,
         naoLida: this.parseBooleanFiltro(this.filtroNaoLida()),
         ultimaDirecaoMensagem: this.filtroUltimaDirecao() || undefined,
         aba: this.abaAtiva(),
@@ -251,7 +245,6 @@ export class WhatsappConversasComponent implements OnInit, OnDestroy {
   limparFiltros(): void {
     this.filtroBusca.set('');
     this.filtroProntoWhatsapp.set('');
-    this.filtroStatus.set('');
     this.filtroNaoLida.set('');
     this.filtroUltimaDirecao.set('');
     this.filtroPainel.set('todos');
@@ -302,18 +295,7 @@ export class WhatsappConversasComponent implements OnInit, OnDestroy {
 
     this.sincronizandoHistorico.set(true);
     this.erro.set(null);
-
-    this.conversasService.sincronizarHistorico(conversa.telefone).subscribe({
-      next: () => {
-        this.carregarMensagens(conversa.telefone, false);
-        this.carregar();
-        this.sincronizandoHistorico.set(false);
-      },
-      error: (err: HttpErrorResponse) => {
-        this.erro.set(err.error?.message || 'Nao foi possivel sincronizar o historico com a sessao.');
-        this.sincronizandoHistorico.set(false);
-      },
-    });
+    this.carregarMensagens(conversa.telefone, false);
   }
 
   conteudoMensagem(mensagem: WhatsappMensagemResponse): string {
@@ -334,16 +316,8 @@ export class WhatsappConversasComponent implements OnInit, OnDestroy {
 
   private carregarThread(telefone: string): void {
     this.carregarMensagens(telefone, true);
-    this.sincronizandoHistorico.set(true);
-
-    this.conversasService.sincronizarHistorico(telefone).subscribe({
-      next: () => {
-        this.carregarMensagens(telefone, false);
-        this.sincronizandoHistorico.set(false);
-      },
-      error: () => {
-        this.sincronizandoHistorico.set(false);
-      },
+    this.conversasService.marcarComoLida(telefone).subscribe({
+      error: () => undefined,
     });
   }
 
@@ -356,10 +330,12 @@ export class WhatsappConversasComponent implements OnInit, OnDestroy {
       next: (page) => {
         this.mensagens.set(page.data);
         this.carregandoMensagens.set(false);
+        this.sincronizandoHistorico.set(false);
       },
       error: (err: HttpErrorResponse) => {
         this.erro.set(err.error?.message || 'Nao foi possivel carregar as mensagens.');
         this.carregandoMensagens.set(false);
+        this.sincronizandoHistorico.set(false);
       },
     });
   }
@@ -378,7 +354,6 @@ export class WhatsappConversasComponent implements OnInit, OnDestroy {
     return Boolean(
       this.filtroBusca().trim()
       || this.filtroProntoWhatsapp()
-      || this.filtroStatus()
       || this.filtroNaoLida()
       || this.filtroUltimaDirecao(),
     );
@@ -449,16 +424,8 @@ export class WhatsappConversasComponent implements OnInit, OnDestroy {
   }
 
   situacaoConversa(conversa: WhatsappConversaResponse): SituacaoConversa {
-    if (conversa.status === 'BLOQUEADO') {
-      return 'falha';
-    }
-
     if (!conversa.prontoParaEnvioWhatsapp && !conversa.inboundRecebidaWhatsapp) {
       return 'falha';
-    }
-
-    if (conversa.exigirConsentimento && conversa.status === 'PENDENTE') {
-      return 'pendente';
     }
 
     if (conversa.origem === 'SESSAO' && !conversa.registradaNaApi) {
@@ -478,7 +445,7 @@ export class WhatsappConversasComponent implements OnInit, OnDestroy {
     if (situacao === 'falha') {
       return {
         classe: 'bg-[var(--color-danger-bg)] text-[var(--color-danger)]',
-        texto: conversa.status === 'BLOQUEADO' ? 'Bloqueado' : 'Sem tctoken',
+        texto: 'Sem tctoken',
         acionavel: false,
       };
     }
@@ -488,14 +455,6 @@ export class WhatsappConversasComponent implements OnInit, OnDestroy {
         return {
           classe: 'bg-[var(--color-warning-bg)] text-[var(--color-warning)] border border-[color-mix(in_srgb,var(--color-warning)_30%,transparent)]',
           texto: 'Importar',
-          acionavel: true,
-        };
-      }
-
-      if (conversa.exigirConsentimento && conversa.status === 'PENDENTE') {
-        return {
-          classe: 'bg-[var(--color-warning-bg)] text-[var(--color-warning)] border border-[color-mix(in_srgb,var(--color-warning)_30%,transparent)]',
-          texto: 'Liberar',
           acionavel: true,
         };
       }
@@ -531,10 +490,7 @@ export class WhatsappConversasComponent implements OnInit, OnDestroy {
 
     if (conversa.origem === 'SESSAO' && !conversa.registradaNaApi) {
       this.sincronizarInbox(conversa);
-      return;
     }
-
-    this.liberar(conversa);
   }
 
   atualizarFiltroBusca(event: Event): void {
@@ -549,11 +505,6 @@ export class WhatsappConversasComponent implements OnInit, OnDestroy {
 
   atualizarFiltroProntoWhatsapp(event: Event): void {
     this.filtroProntoWhatsapp.set((event.target as HTMLSelectElement).value as FiltroProntoWhatsapp);
-    this.aplicarFiltros();
-  }
-
-  atualizarFiltroStatus(event: Event): void {
-    this.filtroStatus.set((event.target as HTMLSelectElement).value as WhatsappConversaStatus | '');
     this.aplicarFiltros();
   }
 
@@ -614,33 +565,12 @@ export class WhatsappConversasComponent implements OnInit, OnDestroy {
     this.table.paginaAnterior(() => this.carregar());
   }
 
-  liberar(conversa: WhatsappConversaResponse): void {
-    if (conversa.status === 'LIBERADO' || conversa.status === 'BLOQUEADO') {
-      return;
-    }
-
-    this.acaoTelefone.set(conversa.telefone);
-    this.mensagemSucesso.set(null);
-
-    this.conversasService.liberar(conversa.telefone).subscribe({
-      next: (atualizada) => {
-        this.carregar();
-        this.mensagemSucesso.set(`Contato ${atualizada.nmContato} liberado para notificacoes.`);
-        this.acaoTelefone.set(null);
-      },
-      error: (err: HttpErrorResponse) => {
-        this.erro.set(err.error?.message || 'Nao foi possivel liberar o contato.');
-        this.acaoTelefone.set(null);
-      },
-    });
-  }
-
   async excluir(conversa: WhatsappConversaResponse): Promise<void> {
     const confirmado = await this.commandDialog.confirm({
       title: 'Remover conversa',
       message:
         `Remover a conversa de ${conversa.nmContato} da caixa de entrada?\n\n`
-        + 'O contato e o historico de mensagens nao serao apagados.',
+        + 'O historico no gateway nao sera apagado.',
       confirmLabel: 'Remover',
       variant: 'danger',
     });
@@ -691,32 +621,6 @@ export class WhatsappConversasComponent implements OnInit, OnDestroy {
     }
 
     return 'bg-[var(--color-surface-muted)] text-[var(--color-text-muted)] border-[var(--color-border)]';
-  }
-
-  labelStatus(status: WhatsappConversaStatus): string {
-    if (!this.exigirConsentimento() && status === 'LIBERADO') {
-      return 'Recebida';
-    }
-
-    switch (status) {
-      case 'LIBERADO':
-        return 'Liberado';
-      case 'BLOQUEADO':
-        return 'Bloqueado';
-      default:
-        return 'Pendente';
-    }
-  }
-
-  classeStatus(status: WhatsappConversaStatus): string {
-    switch (status) {
-      case 'LIBERADO':
-        return 'bg-[var(--color-success-bg)] text-[var(--color-success)] border-[var(--color-success-border)]';
-      case 'BLOQUEADO':
-        return 'bg-[var(--color-danger-bg)] text-[var(--color-danger)] border-[var(--color-danger-border)]';
-      default:
-        return 'bg-amber-500/10 text-amber-400 border-amber-500/30';
-    }
   }
 
   previewMensagem(conversa: WhatsappConversaResponse): string {

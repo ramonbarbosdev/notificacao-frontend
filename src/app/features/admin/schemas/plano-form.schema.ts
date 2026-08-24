@@ -6,7 +6,6 @@ export const planoFormSchema = z.object({
   nuLimiteMensagensMensal: z.coerce.number().min(0, 'Limite de mensagens invalido.'),
   nuLimiteUsuarios: z.coerce.number().min(0, 'Limite de usuarios invalido.'),
   nuLimiteTemplates: z.coerce.number().min(0, 'Limite de templates invalido.'),
-  nuLimiteContatos: z.coerce.number().min(0, 'Limite de contatos invalido.'),
   flWhatsappHabilitado: z.boolean(),
   flEmailHabilitado: z.boolean(),
   flTelegramHabilitado: z.boolean(),

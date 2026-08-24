@@ -5,7 +5,6 @@ import { normalizeBrazilWhatsappMobile } from '../../../shared/helper/phone.util
 export type AbaConfiguracaoOrganizacao =
   | 'geral'
   | 'whatsapp'
-  | 'consentimento'
   | 'templates'
   | 'notificacoes';
 
@@ -82,22 +81,6 @@ export const orgConfigWhatsappSchema = orgConfigWhatsappBaseSchema.superRefine((
   }
 });
 
-export const orgConfigConsentimentoSchema = z.object({
-  exigirConsentimento: z.boolean(),
-  consentimentoExpira: z.boolean(),
-  diasExpiracaoConsentimento: z.coerce
-    .number()
-    .int('Use um numero inteiro.')
-    .min(1, 'Informe pelo menos 1 dia.')
-    .max(3650, 'A expiracao deve ser no maximo 3650 dias.'),
-  bloqueioAutomatico: z.boolean(),
-  limiteFalhasParaBloqueio: z.coerce
-    .number()
-    .int('Use um numero inteiro.')
-    .min(1, 'Informe pelo menos 1 falha.')
-    .max(20, 'O limite de falhas deve ser no maximo 20.'),
-});
-
 export const orgConfigTemplatesSchema = z.object({
   templatesVersionamento: z.boolean(),
   templatesExigirAprovacao: z.boolean(),
@@ -140,7 +123,6 @@ export const orgConfigNotificacoesSchema = orgConfigNotificacoesBaseSchema.super
 export type OrganizacaoConfiguracaoFormData =
   z.infer<typeof orgConfigGeralSchema> &
   z.infer<typeof orgConfigWhatsappBaseSchema> &
-  z.infer<typeof orgConfigConsentimentoSchema> &
   z.infer<typeof orgConfigTemplatesSchema> &
   z.infer<typeof orgConfigNotificacoesBaseSchema>;
 export type OrganizacaoConfiguracaoFormErrors = Partial<
@@ -166,13 +148,6 @@ export const CAMPOS_POR_ABA_ORG: Record<AbaConfiguracaoOrganizacao, (keyof Organ
     'whatsappLimitePorDia',
     'whatsappModoEnvio',
   ],
-  consentimento: [
-    'exigirConsentimento',
-    'consentimentoExpira',
-    'diasExpiracaoConsentimento',
-    'bloqueioAutomatico',
-    'limiteFalhasParaBloqueio',
-  ],
   templates: [
     'templatesVersionamento',
     'templatesExigirAprovacao',
@@ -194,8 +169,6 @@ export function schemaOrganizacaoConfigPorAba(aba: AbaConfiguracaoOrganizacao) {
       return orgConfigGeralSchema;
     case 'whatsapp':
       return orgConfigWhatsappSchema;
-    case 'consentimento':
-      return orgConfigConsentimentoSchema;
     case 'templates':
       return orgConfigTemplatesSchema;
     case 'notificacoes':
