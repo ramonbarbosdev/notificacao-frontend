@@ -19,6 +19,7 @@ import {
   WhatsappConversaOrigem,
   WhatsappConversaAba,
   WhatsappMensagemDirecao,
+  WhatsappMensagemResponse,
 
 } from '../../shared/types/dtos';
 
@@ -151,6 +152,60 @@ export class WhatsappConversasService {
   excluir(telefone: string): Observable<void> {
 
     return this.http.delete<void>(`${this.base}/${encodeURIComponent(telefone)}`);
+
+  }
+
+
+
+  listarMensagens(telefone: string, page = 0, size = 100): Observable<PageResult<WhatsappMensagemResponse>> {
+
+    return this.http
+
+      .get<ApiResponseDTO<WhatsappMensagemResponse[]>>(
+
+        `${this.base}/${encodeURIComponent(telefone)}/mensagens`,
+
+        {
+
+          params: { page, size },
+
+          observe: 'response',
+
+        },
+
+      )
+
+      .pipe(
+
+        map((response) => ({
+
+          data: response.body?.data ?? [],
+
+          totalElements: Number(response.headers.get('X-Total-Count') ?? 0),
+
+          page: Number(response.headers.get('X-Page') ?? 0),
+
+          pageSize: Number(response.headers.get('X-Page-Size') ?? size),
+
+          totalPages: Number(response.headers.get('X-Total-Pages') ?? 0),
+
+        })),
+
+      );
+
+  }
+
+
+
+  sincronizarHistorico(telefone: string): Observable<WhatsappConversaResponse> {
+
+    return this.http.post<WhatsappConversaResponse>(
+
+      `${this.base}/${encodeURIComponent(telefone)}/sincronizar-historico`,
+
+      {},
+
+    );
 
   }
 

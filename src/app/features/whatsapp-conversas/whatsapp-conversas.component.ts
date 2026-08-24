@@ -3,6 +3,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import {
+  ArrowLeft,
   Check,
   ChevronLeft,
   ChevronRight,
@@ -24,7 +25,7 @@ import { WhatsappService } from '../../core/services/whatsapp.service';
 import { formatDateTimePtBr, formatRelativeTimePtBr } from '../../shared/helper/date.utils';
 import { usePaginatedTable } from '../../shared/helper/paginated-table.state';
 import { formatPhone, formatPhoneNationalDigits } from '../../shared/helper/phone.utils';
-import { WhatsappConversaAba, WhatsappConversaResponse, WhatsappConversaStatus, WhatsappMensagemDirecao } from '../../shared/types/dtos';
+import { WhatsappConversaAba, WhatsappConversaResponse, WhatsappConversaStatus, WhatsappMensagemDirecao, WhatsappMensagemResponse } from '../../shared/types/dtos';
 import { ehWhatsappConectado } from '../whatsapp/whatsapp.helpers';
 
 type FiltroProntoWhatsapp = '' | 'true' | 'false';
@@ -32,6 +33,7 @@ type FiltroNaoLida = '' | 'true';
 type FiltroUltimaDirecao = '' | WhatsappMensagemDirecao;
 type FiltroPainel = 'todos' | 'pendente' | 'falha';
 type SituacaoConversa = 'ok' | 'pendente' | 'falha';
+type PainelMobile = 'lista' | 'chat';
 
 interface AbaConversa {
   id: WhatsappConversaAba;
@@ -74,6 +76,7 @@ export class WhatsappConversasComponent implements OnInit, OnDestroy {
   protected readonly chevronLeftIcon = ChevronLeft;
   protected readonly chevronRightIcon = ChevronRight;
   protected readonly syncIcon = CloudDownload;
+  protected readonly arrowLeftIcon = ArrowLeft;
 
   readonly filtrosPainel: FiltroPainelOpcao[] = [
     { id: 'todos', label: 'Todos' },
@@ -111,6 +114,12 @@ export class WhatsappConversasComponent implements OnInit, OnDestroy {
   readonly filtroStatus = signal<WhatsappConversaStatus | ''>('');
   readonly filtroNaoLida = signal<FiltroNaoLida>('');
   readonly filtroUltimaDirecao = signal<FiltroUltimaDirecao>('');
+
+  readonly conversaSelecionada = signal<WhatsappConversaResponse | null>(null);
+  readonly mensagens = signal<WhatsappMensagemResponse[]>([]);
+  readonly carregandoMensagens = signal(false);
+  readonly sincronizandoHistorico = signal(false);
+  readonly painelMobile = signal<PainelMobile>('lista');
 
   readonly abaDescricao = computed(
     () => this.abas.find((item) => item.id === this.abaAtiva())?.descricao ?? '',
@@ -180,10 +189,20 @@ export class WhatsappConversasComponent implements OnInit, OnDestroy {
     };
   });
 
+  readonly conversaSelecionadaAtiva = computed(() => {
+    const selecionada = this.conversaSelecionada();
+    if (!selecionada) {
+      return null;
+    }
+
+    return this.conversas().find((item) => this.mesmoTelefone(item.telefone, selecionada.telefone)) ?? selecionada;
+  });
+
   readonly podeSincronizarInbox = (conversa: WhatsappConversaResponse): boolean =>
     conversa.origem === 'SESSAO' && !conversa.registradaNaApi;
 
   readonly formatarTelefone = formatPhone;
+  readonly formatPhoneNationalDigits = formatPhoneNationalDigits;
   readonly formatarData = formatDateTimePtBr;
   readonly tempoExibicao = formatRelativeTimePtBr;
 
@@ -248,7 +267,110 @@ export class WhatsappConversasComponent implements OnInit, OnDestroy {
     this.filtroPainel.set('todos');
     this.mensagemSucesso.set(null);
     this.erro.set(null);
+    this.fecharChat();
     this.table.aplicarFiltros(() => this.carregar());
+  }
+
+  selecionarConversa(conversa: WhatsappConversaResponse): void {
+    this.conversaSelecionada.set(conversa);
+    this.painelMobile.set('chat');
+    this.mensagemSucesso.set(null);
+    this.erro.set(null);
+    this.carregarThread(conversa.telefone);
+  }
+
+  fecharChat(): void {
+    this.conversaSelecionada.set(null);
+    this.mensagens.set([]);
+    this.painelMobile.set('lista');
+  }
+
+  voltarParaLista(): void {
+    this.painelMobile.set('lista');
+  }
+
+  conversaEstaSelecionada(conversa: WhatsappConversaResponse): boolean {
+    const selecionada = this.conversaSelecionada();
+    return Boolean(selecionada && this.mesmoTelefone(selecionada.telefone, conversa.telefone));
+  }
+
+  sincronizarHistoricoChat(): void {
+    const conversa = this.conversaSelecionadaAtiva();
+    if (!conversa) {
+      return;
+    }
+
+    this.sincronizandoHistorico.set(true);
+    this.erro.set(null);
+
+    this.conversasService.sincronizarHistorico(conversa.telefone).subscribe({
+      next: () => {
+        this.carregarMensagens(conversa.telefone, false);
+        this.carregar();
+        this.sincronizandoHistorico.set(false);
+      },
+      error: (err: HttpErrorResponse) => {
+        this.erro.set(err.error?.message || 'Nao foi possivel sincronizar o historico com a sessao.');
+        this.sincronizandoHistorico.set(false);
+      },
+    });
+  }
+
+  conteudoMensagem(mensagem: WhatsappMensagemResponse): string {
+    if (mensagem.conteudo?.trim()) {
+      return mensagem.conteudo;
+    }
+
+    if (mensagem.tipo && mensagem.tipo !== 'texto') {
+      return `[${mensagem.tipo}]`;
+    }
+
+    return mensagem.direcao === 'OUTBOUND' ? 'Mensagem enviada' : 'Mensagem recebida';
+  }
+
+  dataMensagem(mensagem: WhatsappMensagemResponse): string {
+    return this.formatarData(mensagem.dtEnvio ?? mensagem.dtCriacao);
+  }
+
+  private carregarThread(telefone: string): void {
+    this.carregarMensagens(telefone, true);
+    this.sincronizandoHistorico.set(true);
+
+    this.conversasService.sincronizarHistorico(telefone).subscribe({
+      next: () => {
+        this.carregarMensagens(telefone, false);
+        this.carregar();
+        this.sincronizandoHistorico.set(false);
+      },
+      error: () => {
+        this.sincronizandoHistorico.set(false);
+      },
+    });
+  }
+
+  private carregarMensagens(telefone: string, exibirLoading = true): void {
+    if (exibirLoading) {
+      this.carregandoMensagens.set(true);
+    }
+
+    this.conversasService.listarMensagens(telefone, 0, 200).subscribe({
+      next: (page) => {
+        this.mensagens.set(page.data);
+        this.carregandoMensagens.set(false);
+      },
+      error: (err: HttpErrorResponse) => {
+        this.erro.set(err.error?.message || 'Nao foi possivel carregar as mensagens.');
+        this.carregandoMensagens.set(false);
+      },
+    });
+  }
+
+  private mesmoTelefone(a: string, b: string): boolean {
+    const digitosA = a.replace(/\D/g, '');
+    const digitosB = b.replace(/\D/g, '');
+    return digitosA === digitosB
+      || digitosA.endsWith(digitosB)
+      || digitosB.endsWith(digitosA);
   }
 
   temFiltrosAtivos(): boolean {
@@ -536,6 +658,9 @@ export class WhatsappConversasComponent implements OnInit, OnDestroy {
 
     this.conversasService.excluir(conversa.telefone).subscribe({
       next: () => {
+        if (this.conversaEstaSelecionada(conversa)) {
+          this.fecharChat();
+        }
         this.carregar();
         this.mensagemSucesso.set(`Conversa de ${conversa.nmContato} removida.`);
         this.acaoTelefone.set(null);
@@ -709,11 +834,26 @@ export class WhatsappConversasComponent implements OnInit, OnDestroy {
 
     this.eventosSubscription = this.whatsappEventsService.conectar(idOrganizacao).subscribe({
       next: (evento) => {
-        if (
-          evento.tipo === 'MENSAGEM_RECEBIDA'
-          || evento.tipo === 'CONVERSA_ATUALIZADA'
-          || evento.tipo === 'CONVERSA_EXCLUIDA'
-        ) {
+        if (evento.tipo === 'CONVERSA_EXCLUIDA') {
+          const telefoneExcluido = evento.conversa?.telefone;
+          if (telefoneExcluido && this.conversaSelecionada() && this.mesmoTelefone(telefoneExcluido, this.conversaSelecionada()!.telefone)) {
+            this.fecharChat();
+          }
+          this.carregar();
+          return;
+        }
+
+        if (evento.tipo === 'MENSAGEM_RECEBIDA' || evento.tipo === 'CONVERSA_ATUALIZADA') {
+          const telefoneEvento = evento.conversa?.telefone;
+          const selecionada = this.conversaSelecionada();
+
+          if (telefoneEvento && selecionada && this.mesmoTelefone(telefoneEvento, selecionada.telefone)) {
+            if (evento.conversa) {
+              this.conversaSelecionada.set(evento.conversa);
+            }
+            this.carregarMensagens(selecionada.telefone, false);
+          }
+
           this.carregar();
         }
       },

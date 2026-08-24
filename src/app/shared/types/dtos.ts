@@ -216,6 +216,18 @@ export type WhatsappConversaOrigem = 'INBOX' | 'SESSAO' | 'SINCRONIZADA';
 
 export type WhatsappConversaAba = 'INBOX' | 'SESSAO';
 
+export interface WhatsappMensagemResponse {
+  idMensagem: number;
+  telefone: string;
+  direcao: WhatsappMensagemDirecao;
+  tipo: string;
+  conteudo: string | null;
+  status: string;
+  idExterno: string | null;
+  dtEnvio: string | null;
+  dtCriacao: string;
+}
+
 export interface WhatsappConversaResponse {
   idConversa: number | null;
   idContato: number | null;
