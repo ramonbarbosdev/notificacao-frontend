@@ -101,6 +101,7 @@ export function normalizeBrazilWhatsappMobile(value: string): string {
     && digits.length === 12
     && digits.charAt(4) === '9'
     && digits.slice(4).length === 8
+    && !['7', '8', '9'].includes(digits.charAt(5))
   ) {
     return digits.slice(0, 4) + '98' + digits.slice(5);
   }
@@ -148,6 +149,10 @@ export function formatPhone(value: string | null | undefined): string {
 
   if (digits.length === 13 && digits.startsWith('55')) {
     return digits.replace(/^(\d{2})(\d{2})(\d{5})(\d{4})$/, '+$1 ($2) $3-$4');
+  }
+
+  if (digits.length === 12 && digits.startsWith('55')) {
+    return digits.replace(/^(\d{2})(\d{2})(\d{4})(\d{4})$/, '+$1 ($2) $3-$4');
   }
 
   if (digits.length === 11 && digits.charAt(2) === '9') {
