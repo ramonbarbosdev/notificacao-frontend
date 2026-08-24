@@ -3,8 +3,6 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import {
-  ArrowDownLeft,
-  ArrowUpRight,
   Check,
   ChevronLeft,
   ChevronRight,
@@ -22,19 +20,34 @@ import { AuthService } from '../../core/auth/auth.service';
 import { WhatsappEventsService } from '../../core/http/whatsapp-events.service';
 import { CommandDialogService } from '../../core/services/command-dialog.service';
 import { WhatsappConversasService } from '../../core/services/whatsapp-conversas.service';
-import { formatDateTimePtBr } from '../../shared/helper/date.utils';
+import { WhatsappService } from '../../core/services/whatsapp.service';
+import { formatDateTimePtBr, formatRelativeTimePtBr } from '../../shared/helper/date.utils';
 import { usePaginatedTable } from '../../shared/helper/paginated-table.state';
-import { formatPhone } from '../../shared/helper/phone.utils';
+import { formatPhone, formatPhoneNationalDigits } from '../../shared/helper/phone.utils';
 import { WhatsappConversaAba, WhatsappConversaResponse, WhatsappConversaStatus, WhatsappMensagemDirecao } from '../../shared/types/dtos';
+import { ehWhatsappConectado } from '../whatsapp/whatsapp.helpers';
 
 type FiltroProntoWhatsapp = '' | 'true' | 'false';
 type FiltroNaoLida = '' | 'true';
 type FiltroUltimaDirecao = '' | WhatsappMensagemDirecao;
+type FiltroPainel = 'todos' | 'pendente' | 'falha';
+type SituacaoConversa = 'ok' | 'pendente' | 'falha';
 
 interface AbaConversa {
   id: WhatsappConversaAba;
   label: string;
   descricao: string;
+}
+
+interface FiltroPainelOpcao {
+  id: FiltroPainel;
+  label: string;
+}
+
+interface BadgeConversa {
+  classe: string;
+  texto: string;
+  acionavel: boolean;
 }
 
 @Component({
@@ -45,6 +58,7 @@ interface AbaConversa {
 })
 export class WhatsappConversasComponent implements OnInit, OnDestroy {
   private readonly conversasService = inject(WhatsappConversasService);
+  private readonly whatsappService = inject(WhatsappService);
   private readonly commandDialog = inject(CommandDialogService);
   private readonly whatsappEventsService = inject(WhatsappEventsService);
   private readonly authService = inject(AuthService);
@@ -59,9 +73,13 @@ export class WhatsappConversasComponent implements OnInit, OnDestroy {
   protected readonly searchIcon = Search;
   protected readonly chevronLeftIcon = ChevronLeft;
   protected readonly chevronRightIcon = ChevronRight;
-  protected readonly inboundIcon = ArrowDownLeft;
-  protected readonly outboundIcon = ArrowUpRight;
   protected readonly syncIcon = CloudDownload;
+
+  readonly filtrosPainel: FiltroPainelOpcao[] = [
+    { id: 'todos', label: 'Todos' },
+    { id: 'pendente', label: 'Acao pendente' },
+    { id: 'falha', label: 'Atencao' },
+  ];
 
   readonly abas: AbaConversa[] = [
     {
@@ -83,6 +101,10 @@ export class WhatsappConversasComponent implements OnInit, OnDestroy {
   readonly acaoTelefone = signal<string | null>(null);
   readonly mensagemSucesso = signal<string | null>(null);
   readonly abaAtiva = signal<WhatsappConversaAba>('INBOX');
+  readonly filtroPainel = signal<FiltroPainel>('todos');
+  readonly telefoneSessao = signal<string | null>(null);
+  readonly sessaoConectada = signal(false);
+  readonly carregandoStatus = signal(false);
 
   readonly filtroBusca = signal('');
   readonly filtroProntoWhatsapp = signal<FiltroProntoWhatsapp>('');
@@ -93,6 +115,53 @@ export class WhatsappConversasComponent implements OnInit, OnDestroy {
   readonly abaDescricao = computed(
     () => this.abas.find((item) => item.id === this.abaAtiva())?.descricao ?? '',
   );
+
+  readonly tituloPainel = computed(() =>
+    this.abaAtiva() === 'SESSAO' ? 'Contatos prontos na sessao' : 'Historico na plataforma',
+  );
+
+  readonly conversasExibidas = computed(() => {
+    const filtro = this.filtroPainel();
+
+    return this.conversas().filter((conversa) => {
+      const situacao = this.situacaoConversa(conversa);
+
+      if (filtro === 'pendente') {
+        return situacao === 'pendente';
+      }
+
+      if (filtro === 'falha') {
+        return situacao === 'falha';
+      }
+
+      return true;
+    });
+  });
+
+  readonly metricas = computed(() => {
+    const itens = this.conversas();
+    const total = this.table.totalElementos();
+
+    if (this.abaAtiva() === 'SESSAO') {
+      return {
+        principalLabel: 'Prontos na sessao',
+        principal: itens.filter((item) => item.prontoParaEnvioWhatsapp).length,
+        secundarioLabel: 'So na sessao',
+        secundario: itens.filter((item) => item.origem === 'SESSAO').length,
+        alertaLabel: 'Aguardando acao',
+        alerta: itens.filter((item) => this.situacaoConversa(item) !== 'ok').length,
+      };
+    }
+
+    return {
+      principalLabel: 'Conversas na inbox',
+      principal: total,
+      secundarioLabel: 'Nao lidas',
+      secundario: itens.filter((item) => item.naoLida).length,
+      alertaLabel: 'Pendentes',
+      alerta: itens.filter((item) => this.situacaoConversa(item) === 'pendente').length,
+    };
+  });
 
   readonly totalProntasPagina = computed(
     () => this.conversas().filter((item) => item.prontoParaEnvioWhatsapp).length,
@@ -116,8 +185,10 @@ export class WhatsappConversasComponent implements OnInit, OnDestroy {
 
   readonly formatarTelefone = formatPhone;
   readonly formatarData = formatDateTimePtBr;
+  readonly tempoExibicao = formatRelativeTimePtBr;
 
   ngOnInit(): void {
+    this.carregarStatusSessao();
     this.carregar();
     this.conectarEventos();
   }
@@ -164,6 +235,7 @@ export class WhatsappConversasComponent implements OnInit, OnDestroy {
     this.filtroStatus.set('');
     this.filtroNaoLida.set('');
     this.filtroUltimaDirecao.set('');
+    this.filtroPainel.set('todos');
     this.aplicarFiltros();
   }
 
@@ -173,12 +245,17 @@ export class WhatsappConversasComponent implements OnInit, OnDestroy {
     }
 
     this.abaAtiva.set(aba);
+    this.filtroPainel.set('todos');
     this.mensagemSucesso.set(null);
     this.erro.set(null);
     this.table.aplicarFiltros(() => this.carregar());
   }
 
   temFiltrosAtivos(): boolean {
+    return this.temFiltrosAvancadosAtivos() || this.filtroPainel() !== 'todos';
+  }
+
+  temFiltrosAvancadosAtivos(): boolean {
     return Boolean(
       this.filtroBusca().trim()
       || this.filtroProntoWhatsapp()
@@ -186,6 +263,159 @@ export class WhatsappConversasComponent implements OnInit, OnDestroy {
       || this.filtroNaoLida()
       || this.filtroUltimaDirecao(),
     );
+  }
+
+  selecionarFiltroPainel(filtro: FiltroPainel): void {
+    this.filtroPainel.set(filtro);
+  }
+
+  carregarStatusSessao(): void {
+    this.carregandoStatus.set(true);
+
+    this.whatsappService.status().subscribe({
+      next: (status) => {
+        this.telefoneSessao.set(status.telefone);
+        this.sessaoConectada.set(ehWhatsappConectado(status.status, status.conectado));
+        this.carregandoStatus.set(false);
+      },
+      error: () => {
+        this.sessaoConectada.set(false);
+        this.carregandoStatus.set(false);
+      },
+    });
+  }
+
+  iniciaisContato(conversa: WhatsappConversaResponse): string {
+    const nome = conversa.nmContato?.trim();
+
+    if (!nome) {
+      return '?';
+    }
+
+    const partes = nome.split(/\s+/).filter(Boolean);
+
+    if (partes.length >= 2) {
+      return `${partes[0][0]}${partes[1][0]}`.toUpperCase();
+    }
+
+    return nome.slice(0, 2).toUpperCase();
+  }
+
+  tituloContato(conversa: WhatsappConversaResponse): string {
+    const nome = conversa.nmContato?.trim();
+    const telefoneFormatado = formatPhoneNationalDigits(conversa.telefone);
+
+    if (!nome) {
+      return telefoneFormatado;
+    }
+
+    if (this.nomePareceTelefone(nome, conversa.telefone)) {
+      return formatPhoneNationalDigits(nome) || telefoneFormatado;
+    }
+
+    return `${nome} - ${telefoneFormatado}`;
+  }
+
+  private nomePareceTelefone(nome: string, telefone: string): boolean {
+    const digitosNome = nome.replace(/\D/g, '');
+    const digitosTelefone = telefone.replace(/\D/g, '');
+
+    if (!digitosNome || digitosNome.length < 8) {
+      return false;
+    }
+
+    return digitosNome === digitosTelefone
+      || digitosTelefone.endsWith(digitosNome)
+      || digitosNome.endsWith(digitosTelefone);
+  }
+
+  situacaoConversa(conversa: WhatsappConversaResponse): SituacaoConversa {
+    if (conversa.status === 'BLOQUEADO') {
+      return 'falha';
+    }
+
+    if (!conversa.prontoParaEnvioWhatsapp && !conversa.inboundRecebidaWhatsapp) {
+      return 'falha';
+    }
+
+    if (conversa.exigirConsentimento && conversa.status === 'PENDENTE') {
+      return 'pendente';
+    }
+
+    if (conversa.origem === 'SESSAO' && !conversa.registradaNaApi) {
+      return 'pendente';
+    }
+
+    if (!conversa.prontoParaEnvioWhatsapp && conversa.inboundRecebidaWhatsapp) {
+      return 'pendente';
+    }
+
+    return 'ok';
+  }
+
+  badgeConversa(conversa: WhatsappConversaResponse): BadgeConversa {
+    const situacao = this.situacaoConversa(conversa);
+
+    if (situacao === 'falha') {
+      return {
+        classe: 'bg-[var(--color-danger-bg)] text-[var(--color-danger)]',
+        texto: conversa.status === 'BLOQUEADO' ? 'Bloqueado' : 'Sem tctoken',
+        acionavel: false,
+      };
+    }
+
+    if (situacao === 'pendente') {
+      if (conversa.origem === 'SESSAO' && !conversa.registradaNaApi) {
+        return {
+          classe: 'bg-[var(--color-warning-bg)] text-[var(--color-warning)] border border-[color-mix(in_srgb,var(--color-warning)_30%,transparent)]',
+          texto: 'Importar',
+          acionavel: true,
+        };
+      }
+
+      if (conversa.exigirConsentimento && conversa.status === 'PENDENTE') {
+        return {
+          classe: 'bg-[var(--color-warning-bg)] text-[var(--color-warning)] border border-[color-mix(in_srgb,var(--color-warning)_30%,transparent)]',
+          texto: 'Liberar',
+          acionavel: true,
+        };
+      }
+
+      return {
+        classe: 'bg-[var(--color-warning-bg)] text-[var(--color-warning)] border border-[color-mix(in_srgb,var(--color-warning)_30%,transparent)]',
+        texto: 'Aguardando',
+        acionavel: false,
+      };
+    }
+
+    if (conversa.origem === 'SINCRONIZADA') {
+      return {
+        classe: 'bg-[var(--color-success-bg)] text-[var(--color-success)]',
+        texto: 'Sincronizado',
+        acionavel: false,
+      };
+    }
+
+    return {
+      classe: 'bg-[var(--color-success-bg)] text-[var(--color-success)]',
+      texto: conversa.prontoParaEnvioWhatsapp ? 'Pronto' : 'Na inbox',
+      acionavel: false,
+    };
+  }
+
+  acaoBadge(conversa: WhatsappConversaResponse): void {
+    const badge = this.badgeConversa(conversa);
+
+    if (!badge.acionavel) {
+      return;
+    }
+
+    if (conversa.origem === 'SESSAO' && !conversa.registradaNaApi) {
+      this.sincronizarInbox(conversa);
+      return;
+    }
+
+    this.liberar(conversa);
   }
 
   atualizarFiltroBusca(event: Event): void {
@@ -390,7 +620,7 @@ export class WhatsappConversasComponent implements OnInit, OnDestroy {
     }
 
     if (conversa.ultimaDirecaoMensagem === 'INBOUND') {
-      return 'Recebida: ';
+      return ' ';
     }
 
     return '';
