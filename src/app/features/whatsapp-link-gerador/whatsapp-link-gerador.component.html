@@ -1,0 +1,367 @@
+<div class="mb-8 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+
+  <div>
+
+    <h1 class="text-2xl font-bold text-[var(--color-text)]">Link do WhatsApp</h1>
+
+    <p class="text-[var(--color-text-muted)] text-sm mt-1 max-w-2xl">
+
+      Gere um link para o numero conectado na sua sessao. Quem abrir ja inicia a conversa com a mensagem de saudacao.
+
+    </p>
+
+  </div>
+
+
+
+  <button
+
+    type="button"
+
+    (click)="carregarNumeroSessao()"
+
+    [disabled]="carregando()"
+
+    class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[var(--color-border)] text-sm font-semibold text-[var(--color-text)] hover:bg-[var(--color-surface-muted)] disabled:opacity-50"
+
+  >
+
+    <lucide-icon [img]="refreshIcon" class="w-4 h-4" [class.animate-spin]="carregando()" />
+
+    Atualizar numero
+
+  </button>
+
+</div>
+
+
+
+@if (erro()) {
+
+  <div class="mb-6 rounded-xl border border-[var(--color-danger-border)] bg-[var(--color-danger-bg)] px-4 py-3">
+
+    <p class="text-[var(--color-danger)] text-sm m-0">{{ erro() }}</p>
+
+    @if (!sessaoConectada()) {
+
+      <a routerLink="/app/whatsapp" class="inline-block mt-2 text-sm font-semibold text-[var(--color-primary-soft)] hover:underline">
+
+        Ir para conexao WhatsApp
+
+      </a>
+
+    }
+
+  </div>
+
+}
+
+
+
+<div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+
+  <section class="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-6 space-y-4">
+
+    <div>
+
+      <h2 class="text-[var(--color-text)] font-semibold">Numero da sessao</h2>
+
+      <p class="text-xs text-[var(--color-text-muted)] mt-1">
+
+        O link usa o numero vinculado ao WhatsApp conectado nesta organizacao.
+
+      </p>
+
+    </div>
+
+
+
+    @if (carregando()) {
+
+      <div class="flex items-center gap-2 text-sm text-[var(--color-text-muted)] py-4">
+
+        <lucide-icon [img]="loaderIcon" class="w-4 h-4 animate-spin" />
+
+        Carregando numero...
+
+      </div>
+
+    } @else if (telefoneSessao()) {
+
+      <div class="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-base)] px-4 py-3">
+
+        <p class="text-lg font-semibold text-[var(--color-text)]">{{ formatarTelefone(telefoneSessao()!) }}</p>
+
+        <p class="text-xs text-[var(--color-text-muted)] mt-1">
+
+          {{ sessaoConectada() ? 'Sessao conectada' : 'Numero salvo, mas sessao offline' }}
+
+        </p>
+
+      </div>
+
+    } @else {
+
+      <p class="text-sm text-[var(--color-text-muted)]">
+
+        Conecte o WhatsApp para exibir o numero vinculado.
+
+      </p>
+
+    }
+
+
+
+    <div>
+
+      <h2 class="text-[var(--color-text)] font-semibold">Mensagem do WhatsApp</h2>
+
+      <p class="text-xs text-[var(--color-text-muted)] mt-1">
+
+        Texto pre-preenchido quando alguem abrir o link (ex.: opt-in para notificacoes).
+
+      </p>
+
+    </div>
+
+
+
+    <div class="rounded-xl border border-[var(--color-border-strong)] overflow-hidden bg-[var(--color-bg-base)]">
+
+      <div class="flex items-center gap-1 px-3 py-2 border-b border-[var(--color-border)] bg-[var(--color-surface-muted)]/40">
+
+        <button
+
+          type="button"
+
+          (click)="aplicarFormatacao('bold', mensagemInput)"
+
+          class="w-8 h-8 rounded-lg hover:bg-[var(--color-surface-muted)] text-[var(--color-text-muted)]"
+
+          title="Negrito"
+
+        >
+
+          <lucide-icon [img]="boldIcon" class="w-4 h-4 mx-auto" />
+
+        </button>
+
+        <button
+
+          type="button"
+
+          (click)="aplicarFormatacao('italic', mensagemInput)"
+
+          class="w-8 h-8 rounded-lg hover:bg-[var(--color-surface-muted)] text-[var(--color-text-muted)]"
+
+          title="Italico"
+
+        >
+
+          <lucide-icon [img]="italicIcon" class="w-4 h-4 mx-auto" />
+
+        </button>
+
+        <button
+
+          type="button"
+
+          (click)="aplicarFormatacao('strike', mensagemInput)"
+
+          class="w-8 h-8 rounded-lg hover:bg-[var(--color-surface-muted)] text-[var(--color-text-muted)]"
+
+          title="Tachado"
+
+        >
+
+          <lucide-icon [img]="strikeIcon" class="w-4 h-4 mx-auto" />
+
+        </button>
+
+        <button
+
+          type="button"
+
+          (click)="adicionarEmoji('🙂', mensagemInput)"
+
+          class="w-8 h-8 rounded-lg hover:bg-[var(--color-surface-muted)] text-[var(--color-text-muted)]"
+
+          title="Adicionar emoji"
+
+        >
+
+          <lucide-icon [img]="smileIcon" class="w-4 h-4 mx-auto" />
+
+        </button>
+
+      </div>
+
+
+
+      <textarea
+
+        #mensagemInput
+
+        rows="5"
+
+        [value]="mensagem()"
+
+        (input)="atualizarMensagem(mensagemInput.value)"
+
+        placeholder="Quero receber notificação!"
+
+        class="w-full px-4 py-3 text-sm text-[var(--color-text)] bg-transparent resize-y min-h-[120px] focus:outline-none"
+
+      ></textarea>
+
+
+
+      <div class="px-3 py-2 border-t border-[var(--color-border)] flex flex-wrap gap-2">
+
+        @for (emoji of emojisRapidos; track emoji) {
+
+          <button
+
+            type="button"
+
+            (click)="adicionarEmoji(emoji, mensagemInput)"
+
+            class="px-2 py-1 rounded-lg hover:bg-[var(--color-surface-muted)] text-base"
+
+          >
+
+            {{ emoji }}
+
+          </button>
+
+        }
+
+      </div>
+
+    </div>
+
+  </section>
+
+
+
+  <section class="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-6 space-y-4">
+
+    <div class="flex items-start gap-3">
+
+      <div class="w-10 h-10 rounded-xl bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/30 flex items-center justify-center shrink-0">
+
+        <lucide-icon [img]="shareIcon" class="w-5 h-5 text-[var(--color-primary-soft)]" />
+
+      </div>
+
+      <div>
+
+        <h2 class="text-[var(--color-text)] font-semibold">Seu link</h2>
+
+        <p class="text-xs text-[var(--color-text-muted)] mt-1">
+
+          Formato oficial wa.me — compartilhe em site, QR Code ou materiais de divulgacao.
+
+        </p>
+
+      </div>
+
+    </div>
+
+
+
+    <div class="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-base)] px-4 py-3">
+
+      @if (linkGerado()) {
+
+        <p class="text-sm text-[var(--color-text)] break-all font-mono leading-relaxed">{{ linkGerado() }}</p>
+
+      } @else {
+
+        <p class="text-sm text-[var(--color-text-muted)]">Conecte o WhatsApp para gerar o link.</p>
+
+      }
+
+    </div>
+
+
+
+    <div class="flex flex-wrap gap-2">
+
+      <button
+
+        type="button"
+
+        (click)="copiarLink()"
+
+        [disabled]="!linkGerado()"
+
+        class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[var(--color-primary)] text-[var(--color-bg-base)] text-sm font-semibold hover:brightness-110 disabled:opacity-50"
+
+      >
+
+        @if (linkCopiado()) {
+
+          <lucide-icon [img]="checkIcon" class="w-4 h-4" />
+
+          Copiado
+
+        } @else {
+
+          <lucide-icon [img]="copyIcon" class="w-4 h-4" />
+
+          Copiar link
+
+        }
+
+      </button>
+
+
+
+      <button
+
+        type="button"
+
+        (click)="abrirLink()"
+
+        [disabled]="!linkGerado()"
+
+        class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[var(--color-border)] text-sm font-semibold text-[var(--color-text-muted)] hover:text-[var(--color-text)] disabled:opacity-50"
+
+      >
+
+        <lucide-icon [img]="externalIcon" class="w-4 h-4" />
+
+        Testar link
+
+      </button>
+
+    </div>
+
+
+
+    <div class="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-muted)]/30 px-4 py-3 text-xs text-[var(--color-text-muted)] leading-relaxed space-y-2">
+
+      <p>
+
+        <strong class="text-[var(--color-text)]">Como usar:</strong> publique o link em formulários, site ou QR Code.
+
+        Quando o contato abrir e enviar a mensagem, a conversa entra na plataforma e libera o envio pela API.
+
+      </p>
+
+      <p>
+
+        Links personalizados <code class="text-[var(--color-text)]">w.app/...</code> sao criados no
+
+        <a href="https://business.facebook.com/latest/whatsapp_manager/message_links" target="_blank" rel="noopener noreferrer" class="text-[var(--color-primary-soft)] hover:underline">WhatsApp Manager</a>.
+
+        Aqui geramos o link direto <code class="text-[var(--color-text)]">wa.me</code> com o seu numero conectado.
+
+      </p>
+
+    </div>
+
+  </section>
+
+</div>

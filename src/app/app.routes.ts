@@ -52,6 +52,15 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'whatsapp/link',
+        canActivate: [roleGuard],
+        data: { roles: ['ADMIN', 'USER'] },
+        loadComponent: () =>
+          import('./features/whatsapp-link-gerador/whatsapp-link-gerador.component').then(
+            (m) => m.WhatsappLinkGeradorComponent,
+          ),
+      },
+      {
         path: 'notificacoes',
         redirectTo: 'whatsapp',
         pathMatch: 'full',
