@@ -71,15 +71,10 @@ function corrigirOitavoInseridoIndevidamente(digits: string): string {
     return digits.slice(0, 5) + digits.slice(6);
   }
 
-  const candidatoDozeDigitos = digits.slice(0, 5) + digits.slice(6);
-  if (
-    candidatoDozeDigitos.length === 12
-    && candidatoDozeDigitos.charAt(4) === '9'
-    && candidatoDozeDigitos.charAt(5) === '2'
-    && digits.charAt(6) !== '8'
-  ) {
-    const reproduzido = aplicarRegraAntigaNonoDeslocado(candidatoDozeDigitos);
-    if (reproduzido === digits) {
+  if (digits.charAt(6) === '2' && digits.charAt(7) === '8') {
+    const dozeDigitos = digits.slice(0, 5) + digits.slice(6);
+    const saidaBugada = aplicarRegraAntigaNonoDeslocado(dozeDigitos);
+    if (saidaBugada === digits) {
       return digits.slice(0, 5) + '9' + digits.slice(6);
     }
   }

@@ -24,7 +24,7 @@ import { WhatsappConversasService } from '../../core/services/whatsapp-conversas
 import { WhatsappService } from '../../core/services/whatsapp.service';
 import { formatDateTimePtBr, formatRelativeTimePtBr } from '../../shared/helper/date.utils';
 import { usePaginatedTable } from '../../shared/helper/paginated-table.state';
-import { formatPhone, formatPhoneNationalDigits } from '../../shared/helper/phone.utils';
+import { formatPhone, formatPhoneNationalDigits, normalizeBrazilWhatsappMobile } from '../../shared/helper/phone.utils';
 import { WhatsappConversaAba, WhatsappConversaResponse, WhatsappConversaStatus, WhatsappMensagemDirecao, WhatsappMensagemResponse } from '../../shared/types/dtos';
 import { ehWhatsappConectado } from '../whatsapp/whatsapp.helpers';
 
@@ -339,7 +339,6 @@ export class WhatsappConversasComponent implements OnInit, OnDestroy {
     this.conversasService.sincronizarHistorico(telefone).subscribe({
       next: () => {
         this.carregarMensagens(telefone, false);
-        this.carregar();
         this.sincronizandoHistorico.set(false);
       },
       error: () => {
@@ -366,11 +365,9 @@ export class WhatsappConversasComponent implements OnInit, OnDestroy {
   }
 
   private mesmoTelefone(a: string, b: string): boolean {
-    const digitosA = a.replace(/\D/g, '');
-    const digitosB = b.replace(/\D/g, '');
-    return digitosA === digitosB
-      || digitosA.endsWith(digitosB)
-      || digitosB.endsWith(digitosA);
+    const canonicoA = normalizeBrazilWhatsappMobile(a);
+    const canonicoB = normalizeBrazilWhatsappMobile(b);
+    return Boolean(canonicoA && canonicoB && canonicoA === canonicoB);
   }
 
   temFiltrosAtivos(): boolean {
