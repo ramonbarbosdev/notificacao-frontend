@@ -210,13 +210,23 @@ export type WhatsappEventoTipo =
 
 export type WhatsappConversaStatus = 'LIBERADO' | 'PENDENTE' | 'BLOQUEADO';
 
+export type WhatsappMensagemDirecao = 'INBOUND' | 'OUTBOUND';
+
+export type WhatsappConversaOrigem = 'INBOX' | 'SESSAO' | 'SINCRONIZADA';
+
+export type WhatsappConversaAba = 'INBOX' | 'SESSAO';
+
 export interface WhatsappConversaResponse {
-  idConversa: number;
+  idConversa: number | null;
   idContato: number | null;
   telefone: string;
   nmContato: string;
   ultimaMensagem: string | null;
   tipoUltimaMensagem: string | null;
+  ultimaDirecaoMensagem: WhatsappMensagemDirecao | null;
+  origem: WhatsappConversaOrigem | null;
+  registradaNaApi: boolean;
+  visivelNaSessaoGateway: boolean;
   status: WhatsappConversaStatus;
   naoLida: boolean;
   dtUltimaMensagem: string;

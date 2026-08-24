@@ -1,272 +1,749 @@
-<div class="mb-8 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-  <div>
-    <h1 class="text-2xl font-bold text-[var(--color-text)]">Conversas WhatsApp</h1>
-    <p class="text-[var(--color-text-muted)] text-sm mt-1">
-      Conversas com <strong class="font-semibold text-[var(--color-text)]">tctoken</strong> na sessao WhatsApp
-      (prontas para a API enviar mensagem). Isso e diferente do consentimento da organizacao.
-    </p>
-  </div>
-
-  <button
-    type="button"
-    (click)="carregar()"
-    [disabled]="table.loading()"
-    class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[var(--color-border)] text-sm font-semibold text-[var(--color-text)] hover:bg-[var(--color-surface-muted)] disabled:opacity-50"
-  >
-    <lucide-icon [img]="refreshIcon" class="w-4 h-4" [class.animate-spin]="table.loading()" />
-    Atualizar
-  </button>
-</div>
-
-@if (mensagemSucesso()) {
-  <div class="mb-6 rounded-xl border border-[var(--color-success-border)] bg-[var(--color-success-bg)] px-4 py-3">
-    <p class="text-[var(--color-success)] text-sm m-0">{{ mensagemSucesso() }}</p>
-  </div>
-}
-
-@if (erro()) {
-  <div class="mb-6 rounded-xl border border-[var(--color-danger-border)] bg-[var(--color-danger-bg)] px-4 py-3">
-    <p class="text-[var(--color-danger)] text-sm m-0">{{ erro() }}</p>
-  </div>
-}
-
-<div class="mb-6 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-5 space-y-4">
-  <div class="flex flex-col xl:flex-row xl:items-end gap-3">
-    <div class="flex-1 min-w-0">
-      <label class="block text-xs font-medium text-[var(--color-text-muted)] mb-1.5">Buscar</label>
-      <div class="relative">
-        <lucide-icon
-          [img]="searchIcon"
-          class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-faint)]"
-        />
-        <input
-          type="text"
-          [value]="filtroBusca()"
-          (input)="atualizarFiltroBusca($event)"
-          (keydown)="buscarPorEnter($event)"
-          placeholder="Nome, telefone ou mensagem"
-          class="w-full bg-[var(--color-bg-base)] border border-[var(--color-border-strong)] rounded-xl pl-10 pr-4 py-2.5 text-sm text-[var(--color-text)] placeholder:text-[var(--color-text-subtle)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
-        />
-      </div>
-    </div>
-
-    <div class="w-full xl:w-48">
-      <label class="block text-xs font-medium text-[var(--color-text-muted)] mb-1.5">WhatsApp</label>
-      <select
-        [value]="filtroProntoWhatsapp()"
-        (change)="atualizarFiltroProntoWhatsapp($event)"
-        class="w-full bg-[var(--color-bg-base)] border border-[var(--color-border-strong)] rounded-xl px-3 py-2.5 text-sm text-[var(--color-text)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
-      >
-        <option value="">Todos</option>
-        <option value="true">Pronto no WhatsApp</option>
-        <option value="false">Sem tctoken</option>
-      </select>
-    </div>
-
-    @if (exigirConsentimento()) {
-    <div class="w-full xl:w-44">
-      <label class="block text-xs font-medium text-[var(--color-text-muted)] mb-1.5">Consentimento</label>
-      <select
-        [value]="filtroStatus()"
-        (change)="atualizarFiltroStatus($event)"
-        class="w-full bg-[var(--color-bg-base)] border border-[var(--color-border-strong)] rounded-xl px-3 py-2.5 text-sm text-[var(--color-text)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
-      >
-        <option value="">Todos</option>
-        <option value="PENDENTE">Pendente</option>
-        <option value="LIBERADO">Liberado</option>
-        <option value="BLOQUEADO">Bloqueado</option>
-      </select>
-    </div>
-    }
-
-    <div class="w-full xl:w-40">
-      <label class="block text-xs font-medium text-[var(--color-text-muted)] mb-1.5">Leitura</label>
-      <select
-        [value]="filtroNaoLida()"
-        (change)="atualizarFiltroNaoLida($event)"
-        class="w-full bg-[var(--color-bg-base)] border border-[var(--color-border-strong)] rounded-xl px-3 py-2.5 text-sm text-[var(--color-text)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
-      >
-        <option value="">Todas</option>
-        <option value="true">Nao lidas</option>
-      </select>
-    </div>
-
-    <div class="flex gap-2">
-      <button
-        type="button"
-        (click)="aplicarFiltros()"
-        class="px-4 py-2.5 rounded-xl bg-[var(--color-primary)] text-[var(--color-bg-base)] text-sm font-semibold hover:brightness-110"
-      >
-        Filtrar
-      </button>
-      @if (temFiltrosAtivos()) {
-        <button
-          type="button"
-          (click)="limparFiltros()"
-          class="px-4 py-2.5 rounded-xl border border-[var(--color-border)] text-sm font-semibold text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
-        >
-          Limpar
-        </button>
-      }
-    </div>
-  </div>
-</div>
-
-<div class="mb-4 flex flex-wrap gap-2 text-xs text-[var(--color-text-muted)]">
-  <span class="px-3 py-1 rounded-full border border-[var(--color-border)]">
-    {{ table.totalElementos() }} conversa(s)
-  </span>
-  <span class="px-3 py-1 rounded-full border border-[var(--color-success-border)] text-[var(--color-success)]">
-    {{ totalProntasPagina() }} pronta(s) nesta pagina
-  </span>
-</div>
-
-<div class="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl overflow-hidden">
-  @if (table.loading() && conversas().length === 0) {
-    <div class="flex items-center justify-center gap-2 py-16 text-[var(--color-text-muted)]">
-      <lucide-icon [img]="loaderIcon" class="w-5 h-5 animate-spin" />
-      Carregando conversas...
-    </div>
-  } @else if (conversas().length === 0) {
-    <div class="py-16 px-6 text-center">
-      <lucide-icon [img]="messageIcon" class="w-10 h-10 mx-auto mb-3 text-[var(--color-text-subtle)]" />
-      <p class="text-[var(--color-text)] font-medium">Nenhuma conversa encontrada</p>
-      <p class="text-[var(--color-text-muted)] text-sm mt-1 max-w-md mx-auto">
-        @if (temFiltrosAtivos()) {
-          Nenhum resultado para os filtros aplicados.
-        } @else {
-          Nenhuma conversa com tctoken na sessao conectada. Aguarde o sync do Baileys ou peca uma mensagem de texto.
-        }
-      </p>
-      <a
-        routerLink="/app/whatsapp"
-        class="inline-block mt-4 text-sm font-semibold text-[var(--color-primary-soft)] hover:underline"
-      >
-        Ir para conexao WhatsApp
-      </a>
-    </div>
-  } @else {
-    <ul class="divide-y divide-[var(--color-border)]">
-      @for (conversa of conversas(); track conversa.telefone) {
-        <li
-          class="px-4 sm:px-6 py-4 flex flex-col sm:flex-row sm:items-center gap-4 hover:bg-[var(--color-surface-muted)]/40 transition-colors"
-          [class.bg-[var(--color-surface-muted)]/20]="conversa.naoLida"
-        >
-          <div class="flex-1 min-w-0">
-            <div class="flex items-center gap-2 flex-wrap">
-              <p class="font-semibold text-[var(--color-text)] truncate">
-                {{ conversa.nmContato }}
-              </p>
-              <span
-                class="text-[10px] uppercase tracking-wide font-bold px-2 py-0.5 rounded-full border"
-                [ngClass]="classeWhatsapp(conversa)"
-              >
-                {{ labelWhatsapp(conversa) }}
-              </span>
-              @if (conversa.exigirConsentimento) {
-              <span
-                class="text-[10px] uppercase tracking-wide font-bold px-2 py-0.5 rounded-full border"
-                [ngClass]="classeStatus(conversa.status)"
-              >
-                {{ labelStatus(conversa.status) }}
-              </span>
-              }
-              @if (conversa.naoLida) {
-                <span class="w-2 h-2 rounded-full bg-[var(--color-primary)]" title="Nao lida"></span>
-              }
-            </div>
-
-            <p class="text-xs text-[var(--color-text-subtle)] mt-0.5">
-              {{ formatarTelefone(conversa.telefone) }}
-            </p>
-
-            <p class="text-sm text-[var(--color-text-muted)] mt-2 truncate">
-              {{ previewMensagem(conversa) }}
-            </p>
-
-            <p class="text-xs text-[var(--color-text-faint)] mt-1">
-              {{ formatarData(conversa.dtUltimaMensagem) }}
-            </p>
-          </div>
-
-          <div class="shrink-0 flex items-center gap-2">
-            @if (conversa.status === 'PENDENTE' && conversa.exigirConsentimento) {
-              <button
-                type="button"
-                (click)="liberar(conversa)"
-                [disabled]="acaoTelefone() === conversa.telefone"
-                class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[var(--color-primary)] text-[var(--color-bg-base)] text-sm font-semibold hover:brightness-110 disabled:opacity-50"
-              >
-                @if (acaoTelefone() === conversa.telefone) {
-                  <lucide-icon [img]="loaderIcon" class="w-4 h-4 animate-spin" />
-                } @else {
-                  <lucide-icon [img]="checkIcon" class="w-4 h-4" />
-                }
-                Liberar
-              </button>
-            } @else if (conversa.status === 'LIBERADO') {
-              <span class="text-xs text-[var(--color-success)] font-medium">
-                {{ conversa.exigirConsentimento ? 'Pronto para notificar' : 'Mensagem recebida' }}
-              </span>
-            }
-
-            <button
-              type="button"
-              (click)="excluir(conversa)"
-              [disabled]="acaoTelefone() === conversa.telefone"
-              title="Remover da caixa de entrada"
-              class="inline-flex items-center justify-center w-10 h-10 rounded-xl border border-[var(--color-border)] text-[var(--color-text-muted)] hover:text-[var(--color-danger)] hover:border-[var(--color-danger-border)] hover:bg-[var(--color-danger-bg)] disabled:opacity-50"
-            >
-              @if (acaoTelefone() === conversa.telefone) {
-                <lucide-icon [img]="loaderIcon" class="w-4 h-4 animate-spin" />
-              } @else {
-                <lucide-icon [img]="trashIcon" class="w-4 h-4" />
-              }
-            </button>
-          </div>
-        </li>
-      }
-    </ul>
-
-    <div class="px-4 sm:px-6 py-4 border-t border-[var(--color-border)] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-      <div class="flex items-center gap-3 text-sm text-[var(--color-text-muted)]">
-        <span>
-          Pagina {{ table.paginaAtual() + 1 }} de {{ table.totalPaginas() || 1 }}
-        </span>
-        <select
-          [value]="table.tamanhoPagina()"
-          (change)="alterarTamanhoPagina($event)"
-          class="bg-[var(--color-bg-base)] border border-[var(--color-border-strong)] rounded-lg px-2 py-1.5 text-sm text-[var(--color-text)]"
-        >
-          <option [value]="5">5</option>
-          <option [value]="10">10</option>
-          <option [value]="20">20</option>
-          <option [value]="50">50</option>
-        </select>
-        <span>por pagina</span>
-      </div>
-
-      <div class="flex items-center gap-2">
-        <button
-          type="button"
-          (click)="paginaAnterior()"
-          [disabled]="table.paginaAtual() <= 0 || table.loading()"
-          class="inline-flex items-center gap-1 px-3 py-2 rounded-xl border border-[var(--color-border)] text-sm text-[var(--color-text-muted)] hover:text-[var(--color-text)] disabled:opacity-50"
-        >
-          <lucide-icon [img]="chevronLeftIcon" class="w-4 h-4" />
-          Anterior
-        </button>
-        <button
-          type="button"
-          (click)="proximaPagina()"
-          [disabled]="table.paginaAtual() + 1 >= table.totalPaginas() || table.loading()"
-          class="inline-flex items-center gap-1 px-3 py-2 rounded-xl border border-[var(--color-border)] text-sm text-[var(--color-text-muted)] hover:text-[var(--color-text)] disabled:opacity-50"
-        >
-          Proxima
-          <lucide-icon [img]="chevronRightIcon" class="w-4 h-4" />
-        </button>
-      </div>
-    </div>
-  }
-</div>
-
+<div class="mb-8 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+
+  <div>
+
+    <h1 class="text-2xl font-bold text-[var(--color-text)]">Conversas WhatsApp</h1>
+
+    <p class="text-[var(--color-text-muted)] text-sm mt-1 max-w-3xl">
+
+      Acompanhe quem ja tem historico na plataforma e quem esta pronto para envio na sessao WhatsApp conectada.
+
+    </p>
+
+  </div>
+
+
+
+  <button
+
+    type="button"
+
+    (click)="carregar()"
+
+    [disabled]="table.loading()"
+
+    class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[var(--color-border)] text-sm font-semibold text-[var(--color-text)] hover:bg-[var(--color-surface-muted)] disabled:opacity-50"
+
+  >
+
+    <lucide-icon [img]="refreshIcon" class="w-4 h-4" [class.animate-spin]="table.loading()" />
+
+    Atualizar
+
+  </button>
+
+</div>
+
+
+
+@if (mensagemSucesso()) {
+
+  <div class="mb-6 rounded-xl border border-[var(--color-success-border)] bg-[var(--color-success-bg)] px-4 py-3">
+
+    <p class="text-[var(--color-success)] text-sm m-0">{{ mensagemSucesso() }}</p>
+
+  </div>
+
+}
+
+
+
+@if (erro()) {
+
+  <div class="mb-6 rounded-xl border border-[var(--color-danger-border)] bg-[var(--color-danger-bg)] px-4 py-3">
+
+    <p class="text-[var(--color-danger)] text-sm m-0">{{ erro() }}</p>
+
+  </div>
+
+}
+
+
+
+<div class="mb-6">
+
+  <div class="flex flex-wrap gap-2">
+
+    @for (item of abas; track item.id) {
+
+      <button
+
+        type="button"
+
+        (click)="selecionarAba(item.id)"
+
+        class="px-4 py-2.5 rounded-xl border text-sm font-semibold transition-colors"
+
+        [class.bg-[var(--color-primary)]]="abaAtiva() === item.id"
+
+        [class.text-[var(--color-bg-base)]]="abaAtiva() === item.id"
+
+        [class.border-[var(--color-primary)]]="abaAtiva() === item.id"
+
+        [class.border-[var(--color-border)]]="abaAtiva() !== item.id"
+
+        [class.text-[var(--color-text-muted)]]="abaAtiva() !== item.id"
+
+        [class.hover:text-[var(--color-text)]]="abaAtiva() !== item.id"
+
+      >
+
+        {{ item.label }}
+
+      </button>
+
+    }
+
+  </div>
+
+  <p class="text-xs text-[var(--color-text-muted)] mt-2 max-w-3xl">{{ abaDescricao() }}</p>
+
+</div>
+
+
+
+<div class="mb-6 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-5 space-y-4">
+
+  <div class="flex flex-col xl:flex-row xl:items-end gap-3">
+
+    <div class="flex-1 min-w-0">
+
+      <label class="block text-xs font-medium text-[var(--color-text-muted)] mb-1.5">Buscar</label>
+
+      <div class="relative">
+
+        <lucide-icon
+
+          [img]="searchIcon"
+
+          class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-faint)]"
+
+        />
+
+        <input
+
+          type="text"
+
+          [value]="filtroBusca()"
+
+          (input)="atualizarFiltroBusca($event)"
+
+          (keydown)="buscarPorEnter($event)"
+
+          placeholder="Nome, telefone ou mensagem"
+
+          class="w-full bg-[var(--color-bg-base)] border border-[var(--color-border-strong)] rounded-xl pl-10 pr-4 py-2.5 text-sm text-[var(--color-text)] placeholder:text-[var(--color-text-subtle)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+
+        />
+
+      </div>
+
+    </div>
+
+
+
+    <div class="w-full xl:w-48">
+
+      <label class="block text-xs font-medium text-[var(--color-text-muted)] mb-1.5">WhatsApp</label>
+
+      <select
+
+        [value]="filtroProntoWhatsapp()"
+
+        (change)="atualizarFiltroProntoWhatsapp($event)"
+
+        class="w-full bg-[var(--color-bg-base)] border border-[var(--color-border-strong)] rounded-xl px-3 py-2.5 text-sm text-[var(--color-text)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+
+      >
+
+        <option value="">Todos</option>
+
+        <option value="true">Pronto no WhatsApp</option>
+
+        <option value="false">Sem tctoken</option>
+
+      </select>
+
+    </div>
+
+
+
+    @if (exigirConsentimento()) {
+
+    <div class="w-full xl:w-44">
+
+      <label class="block text-xs font-medium text-[var(--color-text-muted)] mb-1.5">Consentimento</label>
+
+      <select
+
+        [value]="filtroStatus()"
+
+        (change)="atualizarFiltroStatus($event)"
+
+        class="w-full bg-[var(--color-bg-base)] border border-[var(--color-border-strong)] rounded-xl px-3 py-2.5 text-sm text-[var(--color-text)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+
+      >
+
+        <option value="">Todos</option>
+
+        <option value="PENDENTE">Pendente</option>
+
+        <option value="LIBERADO">Liberado</option>
+
+        <option value="BLOQUEADO">Bloqueado</option>
+
+      </select>
+
+    </div>
+
+    }
+
+
+
+    <div class="w-full xl:w-40">
+
+      <label class="block text-xs font-medium text-[var(--color-text-muted)] mb-1.5">Leitura</label>
+
+      <select
+
+        [value]="filtroNaoLida()"
+
+        (change)="atualizarFiltroNaoLida($event)"
+
+        class="w-full bg-[var(--color-bg-base)] border border-[var(--color-border-strong)] rounded-xl px-3 py-2.5 text-sm text-[var(--color-text)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+
+      >
+
+        <option value="">Todas</option>
+
+        <option value="true">Nao lidas</option>
+
+      </select>
+
+    </div>
+
+
+
+    <div class="w-full xl:w-44">
+
+      <label class="block text-xs font-medium text-[var(--color-text-muted)] mb-1.5">Ultima mensagem</label>
+
+      <select
+
+        [value]="filtroUltimaDirecao()"
+
+        (change)="atualizarFiltroUltimaDirecao($event)"
+
+        class="w-full bg-[var(--color-bg-base)] border border-[var(--color-border-strong)] rounded-xl px-3 py-2.5 text-sm text-[var(--color-text)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+
+      >
+
+        <option value="">Todas</option>
+
+        <option value="INBOUND">Recebidas</option>
+
+        <option value="OUTBOUND">Enviadas</option>
+
+      </select>
+
+    </div>
+
+
+
+    <div class="flex gap-2">
+
+      <button
+
+        type="button"
+
+        (click)="aplicarFiltros()"
+
+        class="px-4 py-2.5 rounded-xl bg-[var(--color-primary)] text-[var(--color-bg-base)] text-sm font-semibold hover:brightness-110"
+
+      >
+
+        Filtrar
+
+      </button>
+
+      @if (temFiltrosAtivos()) {
+
+        <button
+
+          type="button"
+
+          (click)="limparFiltros()"
+
+          class="px-4 py-2.5 rounded-xl border border-[var(--color-border)] text-sm font-semibold text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
+
+        >
+
+          Limpar
+
+        </button>
+
+      }
+
+    </div>
+
+  </div>
+
+</div>
+
+
+
+<div class="mb-4 flex flex-wrap gap-2 text-xs text-[var(--color-text-muted)]">
+
+  <span class="px-3 py-1 rounded-full border border-[var(--color-border)]">
+
+    {{ table.totalElementos() }} conversa(s)
+
+  </span>
+
+  @if (abaAtiva() === 'SESSAO') {
+
+    <span class="px-3 py-1 rounded-full border border-[var(--color-success-border)] text-[var(--color-success)]">
+
+      {{ totalProntasPagina() }} pronta(s) nesta pagina
+
+    </span>
+
+    <span class="px-3 py-1 rounded-full border border-sky-500/30 text-sky-400">
+
+      {{ resumoOrigem().sessao }} so na sessao
+
+    </span>
+
+  } @else {
+
+    <span class="px-3 py-1 rounded-full border border-violet-500/30 text-violet-300">
+
+      {{ resumoOrigem().inbox }} so na inbox
+
+    </span>
+
+    <span class="px-3 py-1 rounded-full border border-[var(--color-success-border)] text-[var(--color-success)]">
+
+      {{ resumoOrigem().sincronizada }} sincronizada(s)
+
+    </span>
+
+  }
+
+</div>
+
+
+
+<div class="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl overflow-hidden">
+
+  @if (table.loading() && conversas().length === 0) {
+
+    <div class="flex items-center justify-center gap-2 py-16 text-[var(--color-text-muted)]">
+
+      <lucide-icon [img]="loaderIcon" class="w-5 h-5 animate-spin" />
+
+      Carregando conversas...
+
+    </div>
+
+  } @else if (conversas().length === 0) {
+
+    <div class="py-16 px-6 text-center">
+
+      <lucide-icon [img]="messageIcon" class="w-10 h-10 mx-auto mb-3 text-[var(--color-text-subtle)]" />
+
+      <p class="text-[var(--color-text)] font-medium">Nenhuma conversa encontrada</p>
+
+      <p class="text-[var(--color-text-muted)] text-sm mt-1 max-w-lg mx-auto">
+
+        @if (temFiltrosAtivos()) {
+
+          Nenhum resultado para os filtros aplicados.
+
+        } @else if (abaAtiva() === 'INBOX') {
+
+          Ainda nao ha mensagens salvas na plataforma. Quando alguem enviar uma mensagem de texto ou midia pelo WhatsApp conectado, ela aparecera aqui.
+
+        } @else {
+
+          Nenhum contato pronto na sessao WhatsApp. E necessario uma mensagem de texto — ligacoes nao abrem conversa nem geram tctoken.
+
+        }
+
+      </p>
+
+      <div class="mt-5 flex flex-col sm:flex-row items-center justify-center gap-3">
+
+        <a
+
+          routerLink="/app/whatsapp"
+
+          class="inline-flex items-center justify-center px-4 py-2.5 rounded-xl bg-[var(--color-primary)] text-[var(--color-bg-base)] text-sm font-semibold hover:brightness-110"
+
+        >
+
+          Conectar ou verificar WhatsApp
+
+        </a>
+
+        <button
+
+          type="button"
+
+          (click)="carregar()"
+
+          class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[var(--color-border)] text-sm font-semibold text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
+
+        >
+
+          <lucide-icon [img]="refreshIcon" class="w-4 h-4" />
+
+          Atualizar lista
+
+        </button>
+
+      </div>
+
+      <p class="text-xs text-[var(--color-text-faint)] mt-4 max-w-md mx-auto">
+
+        Dica: peca ao contato enviar <strong class="font-semibold text-[var(--color-text-muted)]">uma mensagem de texto</strong> pelo WhatsApp. Audio, imagem e documento tambem contam; ligacao nao.
+
+      </p>
+
+    </div>
+
+  } @else {
+
+    <ul class="divide-y divide-[var(--color-border)]">
+
+      @for (conversa of conversas(); track conversa.telefone) {
+
+        <li
+
+          class="px-4 sm:px-6 py-4 flex flex-col sm:flex-row sm:items-center gap-4 hover:bg-[var(--color-surface-muted)]/40 transition-colors"
+
+          [class.bg-[var(--color-surface-muted)]/20]="conversa.naoLida"
+
+        >
+
+          <div class="flex-1 min-w-0">
+
+            <div class="flex items-center gap-2 flex-wrap">
+
+              <p class="font-semibold text-[var(--color-text)] truncate">
+
+                {{ conversa.nmContato }}
+
+              </p>
+
+              <span
+
+                class="text-[10px] uppercase tracking-wide font-bold px-2 py-0.5 rounded-full border"
+
+                [ngClass]="classeWhatsapp(conversa)"
+
+              >
+
+                {{ labelWhatsapp(conversa) }}
+
+              </span>
+
+              @if (conversa.origem) {
+
+              <span
+
+                class="text-[10px] uppercase tracking-wide font-bold px-2 py-0.5 rounded-full border"
+
+                [ngClass]="classeOrigem(conversa)"
+
+                [title]="descricaoOrigem(conversa)"
+
+              >
+
+                {{ labelOrigem(conversa) }}
+
+              </span>
+
+              }
+
+              @if (conversa.exigirConsentimento) {
+
+              <span
+
+                class="text-[10px] uppercase tracking-wide font-bold px-2 py-0.5 rounded-full border"
+
+                [ngClass]="classeStatus(conversa.status)"
+
+              >
+
+                {{ labelStatus(conversa.status) }}
+
+              </span>
+
+              }
+
+              @if (conversa.naoLida) {
+
+                <span class="w-2 h-2 rounded-full bg-[var(--color-primary)]" title="Nao lida"></span>
+
+              }
+
+              @if (conversa.ultimaDirecaoMensagem) {
+
+              <span
+
+                class="inline-flex items-center gap-1 text-[10px] uppercase tracking-wide font-bold px-2 py-0.5 rounded-full border"
+
+                [ngClass]="classeUltimaDirecao(conversa)"
+
+              >
+
+                @if (conversa.ultimaDirecaoMensagem === 'OUTBOUND') {
+
+                  <lucide-icon [img]="outboundIcon" class="w-3 h-3" />
+
+                } @else {
+
+                  <lucide-icon [img]="inboundIcon" class="w-3 h-3" />
+
+                }
+
+                {{ labelUltimaDirecao(conversa) }}
+
+              </span>
+
+              }
+
+            </div>
+
+
+
+            <p class="text-xs text-[var(--color-text-subtle)] mt-0.5">
+
+              {{ formatarTelefone(conversa.telefone) }}
+
+            </p>
+
+
+
+            <p class="text-sm text-[var(--color-text-muted)] mt-2 truncate">
+
+              {{ previewMensagem(conversa) }}
+
+            </p>
+
+
+
+            <p class="text-xs text-[var(--color-text-faint)] mt-1">
+
+              {{ formatarData(conversa.dtUltimaMensagem) }}
+
+            </p>
+
+            @if (explicacaoSemHistoricoInbox(conversa)) {
+
+              <p class="text-xs text-sky-400/90 mt-2 leading-relaxed max-w-2xl">
+
+                {{ explicacaoSemHistoricoInbox(conversa) }}
+
+              </p>
+
+            }
+
+          </div>
+
+
+
+          <div class="shrink-0 flex items-center gap-2 flex-wrap sm:justify-end">
+
+            @if (podeSincronizarInbox(conversa)) {
+
+              <button
+
+                type="button"
+
+                (click)="sincronizarInbox(conversa)"
+
+                [disabled]="acaoTelefone() === conversa.telefone"
+
+                title="Importar ultima mensagem da sessao para a inbox da plataforma"
+
+                class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-sky-500/40 text-sky-400 text-sm font-semibold hover:bg-sky-500/10 disabled:opacity-50"
+
+              >
+
+                @if (acaoTelefone() === conversa.telefone) {
+
+                  <lucide-icon [img]="loaderIcon" class="w-4 h-4 animate-spin" />
+
+                } @else {
+
+                  <lucide-icon [img]="syncIcon" class="w-4 h-4" />
+
+                }
+
+                Importar inbox
+
+              </button>
+
+            }
+
+            @if (conversa.status === 'PENDENTE' && conversa.exigirConsentimento) {
+
+              <button
+
+                type="button"
+
+                (click)="liberar(conversa)"
+
+                [disabled]="acaoTelefone() === conversa.telefone"
+
+                class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[var(--color-primary)] text-[var(--color-bg-base)] text-sm font-semibold hover:brightness-110 disabled:opacity-50"
+
+              >
+
+                @if (acaoTelefone() === conversa.telefone) {
+
+                  <lucide-icon [img]="loaderIcon" class="w-4 h-4 animate-spin" />
+
+                } @else {
+
+                  <lucide-icon [img]="checkIcon" class="w-4 h-4" />
+
+                }
+
+                Liberar
+
+              </button>
+
+            } @else if (conversa.status === 'LIBERADO') {
+
+              <span class="text-xs text-[var(--color-success)] font-medium">
+
+                {{ conversa.exigirConsentimento ? 'Pronto para notificar' : 'Mensagem recebida' }}
+
+              </span>
+
+            }
+
+
+
+            <button
+
+              type="button"
+
+              (click)="excluir(conversa)"
+
+              [disabled]="acaoTelefone() === conversa.telefone"
+
+              title="Remover da caixa de entrada"
+
+              class="inline-flex items-center justify-center w-10 h-10 rounded-xl border border-[var(--color-border)] text-[var(--color-text-muted)] hover:text-[var(--color-danger)] hover:border-[var(--color-danger-border)] hover:bg-[var(--color-danger-bg)] disabled:opacity-50"
+
+            >
+
+              @if (acaoTelefone() === conversa.telefone) {
+
+                <lucide-icon [img]="loaderIcon" class="w-4 h-4 animate-spin" />
+
+              } @else {
+
+                <lucide-icon [img]="trashIcon" class="w-4 h-4" />
+
+              }
+
+            </button>
+
+          </div>
+
+        </li>
+
+      }
+
+    </ul>
+
+
+
+    <div class="px-4 sm:px-6 py-4 border-t border-[var(--color-border)] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+
+      <div class="flex items-center gap-3 text-sm text-[var(--color-text-muted)]">
+
+        <span>
+
+          Pagina {{ table.paginaAtual() + 1 }} de {{ table.totalPaginas() || 1 }}
+
+        </span>
+
+        <select
+
+          [value]="table.tamanhoPagina()"
+
+          (change)="alterarTamanhoPagina($event)"
+
+          class="bg-[var(--color-bg-base)] border border-[var(--color-border-strong)] rounded-lg px-2 py-1.5 text-sm text-[var(--color-text)]"
+
+        >
+
+          <option [value]="5">5</option>
+
+          <option [value]="10">10</option>
+
+          <option [value]="20">20</option>
+
+          <option [value]="50">50</option>
+
+        </select>
+
+        <span>por pagina</span>
+
+      </div>
+
+
+
+      <div class="flex items-center gap-2">
+
+        <button
+
+          type="button"
+
+          (click)="paginaAnterior()"
+
+          [disabled]="table.paginaAtual() <= 0 || table.loading()"
+
+          class="inline-flex items-center gap-1 px-3 py-2 rounded-xl border border-[var(--color-border)] text-sm text-[var(--color-text-muted)] hover:text-[var(--color-text)] disabled:opacity-50"
+
+        >
+
+          <lucide-icon [img]="chevronLeftIcon" class="w-4 h-4" />
+
+          Anterior
+
+        </button>
+
+        <button
+
+          type="button"
+
+          (click)="proximaPagina()"
+
+          [disabled]="table.paginaAtual() + 1 >= table.totalPaginas() || table.loading()"
+
+          class="inline-flex items-center gap-1 px-3 py-2 rounded-xl border border-[var(--color-border)] text-sm text-[var(--color-text-muted)] hover:text-[var(--color-text)] disabled:opacity-50"
+
+        >
+
+          Proxima
+
+          <lucide-icon [img]="chevronRightIcon" class="w-4 h-4" />
+
+        </button>
+
+      </div>
+
+    </div>
+
+  }
+
+</div>
+
+
