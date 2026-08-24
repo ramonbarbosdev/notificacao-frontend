@@ -4,6 +4,7 @@ import { FormBuilder } from '@angular/forms';
 import { catchError, concatMap, from, map, of, toArray } from 'rxjs';
 
 import { ContatoService } from '../../core/services/contato.service';
+import { CommandDialogService } from '../../core/services/command-dialog.service';
 import { DataTableColumn } from '../../shared/components/data-table/data-table.types';
 import { usePaginatedTable } from '../../shared/helper/paginated-table.state';
 import { CanalNotificacao, ContatoRequestDTO, ContatoResponseDTO } from '../../shared/types/dtos';
@@ -53,6 +54,7 @@ interface ResultadoImportacao {
 })
 export class ContatosComponent implements OnInit {
   private readonly contatoService = inject(ContatoService);
+  private readonly commandDialog = inject(CommandDialogService);
   private readonly fb = inject(FormBuilder);
 
   readonly table = usePaginatedTable(10);
@@ -273,11 +275,18 @@ export class ContatosComponent implements OnInit {
     this.executar('bloqueio', dados);
   }
 
-  excluirContato(contato: ContatoResponseDTO): void {
+  async excluirContato(contato: ContatoResponseDTO): Promise<void> {
     if (this.acaoAtual()) return;
 
     const nome = contato.nmContato?.trim() || contato.destinatario;
-    if (!confirm(`Excluir o contato "${nome}"? Esta acao nao pode ser desfeita.`)) {
+    const confirmado = await this.commandDialog.confirm({
+      title: 'Excluir contato',
+      message: `Excluir o contato "${nome}"? Esta acao nao pode ser desfeita.`,
+      confirmLabel: 'Excluir',
+      variant: 'danger',
+    });
+
+    if (!confirmado) {
       return;
     }
 

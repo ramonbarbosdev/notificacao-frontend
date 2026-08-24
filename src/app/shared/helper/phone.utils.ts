@@ -76,7 +76,14 @@ export function normalizeBrazilWhatsappMobile(value: string): string {
 
   // 13 digitos com DDI: ja completo
   if (digits.startsWith('55') && digits.length === 13) {
-    return digits;
+    if (digits.charAt(4) === '9') {
+      return digits;
+    }
+
+    const reprocessado = normalizeBrazilWhatsappMobile(digits.slice(2));
+    if (reprocessado.length === 13 && reprocessado.startsWith('55') && reprocessado.charAt(4) === '9') {
+      return reprocessado;
+    }
   }
 
   // 12 digitos com DDI: falta o 9 apos o DDD (ex: 557181180200)

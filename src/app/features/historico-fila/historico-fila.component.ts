@@ -14,6 +14,7 @@ import {
 import { Subscription, timer } from 'rxjs';
 
 import { NotificacaoService } from '../../core/services/notificacao.service';
+import { CommandDialogService } from '../../core/services/command-dialog.service';
 import { NotificacaoFilaEventsService } from '../../core/http/notificacao-fila-events.service';
 import { AuthService } from '../../core/auth/auth.service';
 import { EmptyStateComponent } from '../../shared/components/empty-state/empty-state.component';
@@ -41,6 +42,7 @@ import { CanalNotificacao, FilaNotificacaoItemDTO, FilaResumoResponseDTO, Status
 })
 export class HistoricoFilaComponent implements OnInit, OnDestroy {
   private readonly notificacaoService = inject(NotificacaoService);
+  private readonly commandDialog = inject(CommandDialogService);
   private readonly filaEventsService = inject(NotificacaoFilaEventsService);
   private readonly authService = inject(AuthService);
 
@@ -384,8 +386,13 @@ export class HistoricoFilaComponent implements OnInit, OnDestroy {
     return status === 'FALHOU' || status === 'BLOQUEADA' || status === 'CANCELADA';
   }
 
-  reenviar(item: FilaNotificacaoItemDTO): void {
-    if (!confirm(`Reenviar notificação #${item.idNotificacao}?`)) return;
+  async reenviar(item: FilaNotificacaoItemDTO): Promise<void> {
+    const confirmado = await this.commandDialog.confirm({
+      title: 'Reenviar notificacao',
+      message: `Reenviar notificacao #${item.idNotificacao}?`,
+      confirmLabel: 'Reenviar',
+    });
+    if (!confirmado) return;
     this.reenviandoId.set(item.idNotificacao);
     this.notificacaoService.reenviar(item.idNotificacao).subscribe({
       next: () => {

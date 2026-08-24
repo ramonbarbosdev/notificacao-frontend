@@ -43,6 +43,15 @@ export const routes: Routes = [
           import('./features/whatsapp/whatsapp.component').then((m) => m.WhatsappComponent),
       },
       {
+        path: 'whatsapp/conversas',
+        canActivate: [roleGuard],
+        data: { roles: ['ADMIN', 'USER'] },
+        loadComponent: () =>
+          import('./features/whatsapp-conversas/whatsapp-conversas.component').then(
+            (m) => m.WhatsappConversasComponent,
+          ),
+      },
+      {
         path: 'notificacoes',
         redirectTo: 'whatsapp',
         pathMatch: 'full',

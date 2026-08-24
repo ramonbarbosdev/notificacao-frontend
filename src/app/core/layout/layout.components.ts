@@ -124,6 +124,14 @@ export class SidebarComponent {
       recurso: 'WHATSAPP',
     },
     {
+      label: 'Conversas',
+      rota: '/app/whatsapp/conversas',
+      icon: MessageSquareText,
+      scope: 'ORG',
+      roles: ['ADMIN', 'USER'],
+      recurso: 'WHATSAPP',
+    },
+    {
       label: 'Notificações',
       rota: '/app/notificacoes',
       icon: Send,

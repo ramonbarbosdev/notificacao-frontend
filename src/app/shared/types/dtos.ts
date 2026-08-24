@@ -203,16 +203,35 @@ export type WhatsappEventoTipo =
   | 'TENTATIVA_BLOQUEADA'
   | 'STATUS_ATUALIZADO'
   | 'CONEXAO_LIBERADA'
-  | 'CONEXAO_CANCELADA';
+  | 'CONEXAO_CANCELADA'
+  | 'MENSAGEM_RECEBIDA'
+  | 'CONVERSA_ATUALIZADA'
+  | 'CONVERSA_EXCLUIDA';
+
+export type WhatsappConversaStatus = 'LIBERADO' | 'PENDENTE' | 'BLOQUEADO';
+
+export interface WhatsappConversaResponse {
+  idConversa: number;
+  idContato: number | null;
+  telefone: string;
+  nmContato: string;
+  ultimaMensagem: string | null;
+  tipoUltimaMensagem: string | null;
+  status: WhatsappConversaStatus;
+  naoLida: boolean;
+  dtUltimaMensagem: string;
+  exigirConsentimento: boolean;
+}
 
 export interface WhatsappEvento {
   idOrganizacao: number;
   tipo: WhatsappEventoTipo;
   status: WhatsappStatus | null;
-  podeConectar: boolean;
-  segundosRestantes: number;
+  podeConectar?: boolean;
+  segundosRestantes?: number;
   mensagem: string;
   dataHora: string;
+  conversa?: WhatsappConversaResponse;
 }
 
 export interface EnviarMensagemRequest {

@@ -13,6 +13,7 @@ import {
 } from 'lucide-angular';
 
 import { AdminNotificacaoService } from '../../../core/services/admin-notificacao.service';
+import { CommandDialogService } from '../../../core/services/command-dialog.service';
 import { AdminService } from '../../../core/http/admin.service';
 import { SidePanelComponent } from '../../../shared/components/side-panel/side-panel.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
@@ -51,6 +52,7 @@ type FiltroRapido = '' | 'REATIVAR' | 'CONTATO_463';
 export class HistoricoEnviosAdminComponent implements OnInit {
   private readonly adminNotificacaoService = inject(AdminNotificacaoService);
   private readonly adminService = inject(AdminService);
+  private readonly commandDialog = inject(CommandDialogService);
 
   protected readonly loaderIcon = LoaderCircle;
   protected readonly refreshIcon = RefreshCw;
@@ -207,20 +209,37 @@ export class HistoricoEnviosAdminComponent implements OnInit {
     });
   }
 
-  reenviar(item: AdminNotificacaoFilaItem | AdminNotificacaoDetalhe): void {
-    if (!confirm(`Reenviar notificação #${item.idNotificacao}?`)) return;
+  async reenviar(item: AdminNotificacaoFilaItem | AdminNotificacaoDetalhe): Promise<void> {
+    const confirmado = await this.commandDialog.confirm({
+      title: 'Reenviar notificacao',
+      message: `Reenviar notificacao #${item.idNotificacao}?`,
+      confirmLabel: 'Reenviar',
+    });
+    if (!confirmado) return;
     this.executarAcao(() => this.adminNotificacaoService.reenviar(item.idNotificacao));
   }
 
-  cancelar(detalhe: AdminNotificacaoDetalhe): void {
-    if (!confirm(`Cancelar notificação #${detalhe.idNotificacao}?`)) return;
+  async cancelar(detalhe: AdminNotificacaoDetalhe): Promise<void> {
+    const confirmado = await this.commandDialog.confirm({
+      title: 'Cancelar notificacao',
+      message: `Cancelar notificacao #${detalhe.idNotificacao}?`,
+      confirmLabel: 'Cancelar envio',
+      variant: 'danger',
+    });
+    if (!confirmado) return;
     this.executarAcao(() =>
       this.adminNotificacaoService.cancelar(detalhe.idNotificacao, this.motivoCancelamento)
     );
   }
 
-  cancelarItem(item: AdminNotificacaoFilaItem): void {
-    if (!confirm(`Cancelar notificação #${item.idNotificacao}?`)) return;
+  async cancelarItem(item: AdminNotificacaoFilaItem): Promise<void> {
+    const confirmado = await this.commandDialog.confirm({
+      title: 'Cancelar notificacao',
+      message: `Cancelar notificacao #${item.idNotificacao}?`,
+      confirmLabel: 'Cancelar envio',
+      variant: 'danger',
+    });
+    if (!confirmado) return;
     this.acaoLoading.set(true);
     this.adminNotificacaoService.cancelar(item.idNotificacao, this.motivoCancelamento).subscribe({
       next: () => {
@@ -235,10 +254,17 @@ export class HistoricoEnviosAdminComponent implements OnInit {
     });
   }
 
-  cancelarSelecionados(): void {
+  async cancelarSelecionados(): Promise<void> {
     const ids = [...this.selecionados()];
     if (ids.length === 0) return;
-    if (!confirm(`Cancelar ${ids.length} notificação(ões) selecionada(s)?`)) return;
+
+    const confirmado = await this.commandDialog.confirm({
+      title: 'Cancelar selecionadas',
+      message: `Cancelar ${ids.length} notificacao(oes) selecionada(s)?`,
+      confirmLabel: 'Cancelar envios',
+      variant: 'danger',
+    });
+    if (!confirmado) return;
 
     this.acaoLoading.set(true);
     this.adminNotificacaoService
@@ -262,11 +288,18 @@ export class HistoricoEnviosAdminComponent implements OnInit {
       });
   }
 
-  cancelarTodosCancelaveisOrganizacao(): void {
+  async cancelarTodosCancelaveisOrganizacao(): Promise<void> {
     if (!this.filtroOrganizacao) return;
     const org = this.organizacoes().find((o) => o.idOrganizacao === this.filtroOrganizacao);
     const nome = org?.nmOrganizacao ?? `org #${this.filtroOrganizacao}`;
-    if (!confirm(`Cancelar todos os envios canceláveis de ${nome}?`)) return;
+
+    const confirmado = await this.commandDialog.confirm({
+      title: 'Cancelar envios',
+      message: `Cancelar todos os envios cancelaveis de ${nome}?`,
+      confirmLabel: 'Cancelar envios',
+      variant: 'danger',
+    });
+    if (!confirmado) return;
 
     this.acaoLoading.set(true);
     this.adminNotificacaoService
@@ -294,8 +327,15 @@ export class HistoricoEnviosAdminComponent implements OnInit {
       });
   }
 
-  reativarWhatsapp(org: AdminOrganizacaoOperacionalResumo | AdminNotificacaoDetalhe | AdminNotificacaoFilaItem): void {
-    if (!confirm(`Cancelar a pausa e retomar os envios da organização ${org.nmOrganizacao}?`)) return;
+  async reativarWhatsapp(
+    org: AdminOrganizacaoOperacionalResumo | AdminNotificacaoDetalhe | AdminNotificacaoFilaItem,
+  ): Promise<void> {
+    const confirmado = await this.commandDialog.confirm({
+      title: 'Retomar envios WhatsApp',
+      message: `Cancelar a pausa e retomar os envios da organizacao ${org.nmOrganizacao}?`,
+      confirmLabel: 'Retomar envios',
+    });
+    if (!confirmado) return;
     this.acaoLoading.set(true);
     this.adminNotificacaoService.reativarWhatsappOrganizacao(org.idOrganizacao).subscribe({
       next: () => {

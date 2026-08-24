@@ -4,6 +4,7 @@ import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormBuilder, FormControl, ReactiveFormsModule } from '@angular/forms';
 import { CheckCircle2, LoaderCircle, LucideAngularModule, Trash2, UserPlus } from 'lucide-angular';
 import { AdminService } from '../../../core/http/admin.service';
+import { CommandDialogService } from '../../../core/services/command-dialog.service';
 import { SidePanelComponent } from '../../../shared/components/side-panel/side-panel.component';
 import { FormInputComponent } from '../../../shared/components/forms/text-input/app-text-input';
 import { FormSelectComponent } from '../../../shared/components/forms/select-input/form-select.component';
@@ -37,6 +38,7 @@ import {
 export class UsuariosOrganizacaoComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly adminService = inject(AdminService);
+  private readonly commandDialog = inject(CommandDialogService);
 
   protected readonly userPlusIcon = UserPlus;
   protected readonly loaderIcon = LoaderCircle;
@@ -218,13 +220,17 @@ export class UsuariosOrganizacaoComponent implements OnInit {
     this.inativarUsuario(usuario);
   }
 
-  inativarUsuario(usuario: UsuarioOrganizacaoResponse): void {
+  async inativarUsuario(usuario: UsuarioOrganizacaoResponse): Promise<void> {
     const idOrganizacao = this.idOrganizacaoSelecionada();
     if (!idOrganizacao || !usuario.flAtivo || this.excluindoUsuarioId()) return;
 
-    const confirmado = confirm(
-      `Inativar o usuario ${usuario.nmUsuario} da organizacao ${usuario.nmOrganizacao}?`
-    );
+    const confirmado = await this.commandDialog.confirm({
+      title: 'Inativar usuario',
+      message: `Inativar o usuario ${usuario.nmUsuario} da organizacao ${usuario.nmOrganizacao}?`,
+      confirmLabel: 'Inativar',
+      variant: 'danger',
+    });
+
     if (!confirmado) return;
 
     this.excluindoUsuarioId.set(usuario.idUsuario);
@@ -297,15 +303,20 @@ export class UsuariosOrganizacaoComponent implements OnInit {
     });
   }
 
-  excluirUsuarioPermanentemente(usuario: UsuarioOrganizacaoResponse): void {
+  async excluirUsuarioPermanentemente(usuario: UsuarioOrganizacaoResponse): Promise<void> {
     const idOrganizacao = this.idOrganizacaoSelecionada();
     if (!idOrganizacao || this.excluindoUsuarioId()) return;
 
-    const confirmado = confirm(
-      `ATENCAO: remover permanentemente ${usuario.nmUsuario} do banco?\n\n` +
-        'O vinculo com a organizacao sera apagado. Se o usuario nao pertencer a outra organizacao, ' +
-        'a conta tambem sera removida. Esta acao nao pode ser desfeita.'
-    );
+    const confirmado = await this.commandDialog.confirm({
+      title: 'Remover permanentemente',
+      message:
+        `ATENCAO: remover permanentemente ${usuario.nmUsuario} do banco?\n\n`
+        + 'O vinculo com a organizacao sera apagado. Se o usuario nao pertencer a outra organizacao, '
+        + 'a conta tambem sera removida. Esta acao nao pode ser desfeita.',
+      confirmLabel: 'Remover permanentemente',
+      variant: 'danger',
+    });
+
     if (!confirmado) return;
 
     this.excluindoUsuarioId.set(usuario.idUsuario);

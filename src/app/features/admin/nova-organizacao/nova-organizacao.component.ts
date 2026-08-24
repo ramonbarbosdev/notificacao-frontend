@@ -13,6 +13,7 @@ import {
   UserPlus,
 } from 'lucide-angular';
 import { AdminService } from '../../../core/http/admin.service';
+import { CommandDialogService } from '../../../core/services/command-dialog.service';
 import { AdminNotificacaoService } from '../../../core/services/admin-notificacao.service';
 import { SidePanelComponent } from '../../../shared/components/side-panel/side-panel.component';
 import { FormInputComponent } from '../../../shared/components/forms/text-input/app-text-input';
@@ -58,6 +59,7 @@ export class NovaOrganizacaoComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly adminService = inject(AdminService);
   private readonly adminNotificacaoService = inject(AdminNotificacaoService);
+  private readonly commandDialog = inject(CommandDialogService);
 
   protected readonly buildingIcon = Building2;
   protected readonly userPlusIcon = UserPlus;
@@ -132,15 +134,18 @@ export class NovaOrganizacaoComponent implements OnInit {
     return this.resumoOperacionalPorOrg()[org.idOrganizacao]?.podeCancelarPausa ?? false;
   }
 
-  cancelarPausaOrganizacao(org: OrganizacaoAdminResponse): void {
+  async cancelarPausaOrganizacao(org: OrganizacaoAdminResponse): Promise<void> {
     if (!this.podeCancelarPausa(org) || this.cancelandoPausaId()) return;
 
-    if (
-      !confirm(
-        `Cancelar a pausa da organizacao ${org.nmOrganizacao} (#${org.idOrganizacao})?\n\n` +
-          'Os envios WhatsApp desta org poderao retomar imediatamente.'
-      )
-    ) {
+    const confirmado = await this.commandDialog.confirm({
+      title: 'Cancelar pausa',
+      message:
+        `Cancelar a pausa da organizacao ${org.nmOrganizacao} (#${org.idOrganizacao})?\n\n`
+        + 'Os envios WhatsApp desta org poderao retomar imediatamente.',
+      confirmLabel: 'Cancelar pausa',
+    });
+
+    if (!confirmado) {
       return;
     }
 
@@ -301,12 +306,17 @@ export class NovaOrganizacaoComponent implements OnInit {
     this.inativarOrganizacao(org);
   }
 
-  inativarOrganizacao(org: OrganizacaoAdminResponse): void {
+  async inativarOrganizacao(org: OrganizacaoAdminResponse): Promise<void> {
     if (!org.flAtivo || this.excluindoOrganizacaoId()) return;
 
-    const confirmado = confirm(
-      `Inativar a organizacao ${org.nmOrganizacao}? Os usuarios vinculados tambem serao inativados.`
-    );
+    const confirmado = await this.commandDialog.confirm({
+      title: 'Inativar organizacao',
+      message:
+        `Inativar a organizacao ${org.nmOrganizacao}? Os usuarios vinculados tambem serao inativados.`,
+      confirmLabel: 'Inativar',
+      variant: 'danger',
+    });
+
     if (!confirmado) return;
 
     this.executarAcaoOrganizacao(org.idOrganizacao, () =>
@@ -388,15 +398,18 @@ export class NovaOrganizacaoComponent implements OnInit {
     this.executarGateway(org.idOrganizacao, null);
   }
 
-  migrarSessaoGateway(): void {
+  async migrarSessaoGateway(): Promise<void> {
     const org = this.gatewayPanel.item();
     if (!org || !this.idSessaoMigracao) return;
 
-    if (
-      !confirm(
-        `Migrar a sessao org-${this.idSessaoMigracao} para a organizacao #${org.idOrganizacao} (${org.nmOrganizacao})?`
-      )
-    ) {
+    const confirmado = await this.commandDialog.confirm({
+      title: 'Migrar sessao',
+      message:
+        `Migrar a sessao org-${this.idSessaoMigracao} para a organizacao #${org.idOrganizacao} (${org.nmOrganizacao})?`,
+      confirmLabel: 'Migrar',
+    });
+
+    if (!confirmado) {
       return;
     }
 
@@ -431,14 +444,19 @@ export class NovaOrganizacaoComponent implements OnInit {
     });
   }
 
-  excluirOrganizacaoPermanentemente(org: OrganizacaoAdminResponse): void {
+  async excluirOrganizacaoPermanentemente(org: OrganizacaoAdminResponse): Promise<void> {
     if (this.excluindoOrganizacaoId()) return;
 
-    const confirmado = confirm(
-      `ATENCAO: remover permanentemente ${org.nmOrganizacao} do banco?\n\n` +
-        'Todos os contatos, notificacoes, templates e configuracoes desta organizacao serao apagados. ' +
-        'Esta acao nao pode ser desfeita.'
-    );
+    const confirmado = await this.commandDialog.confirm({
+      title: 'Remover permanentemente',
+      message:
+        `ATENCAO: remover permanentemente ${org.nmOrganizacao} do banco?\n\n`
+        + 'Todos os contatos, notificacoes, templates e configuracoes desta organizacao serao apagados. '
+        + 'Esta acao nao pode ser desfeita.',
+      confirmLabel: 'Remover permanentemente',
+      variant: 'danger',
+    });
+
     if (!confirmado) return;
 
     this.excluindoOrganizacaoId.set(org.idOrganizacao);

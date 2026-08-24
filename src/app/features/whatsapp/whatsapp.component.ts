@@ -757,8 +757,12 @@ export class WhatsappComponent implements OnInit, OnDestroy {
     if (!this.eventoPertenceOrganizacaoAtual(evento)) return;
 
     this.mensagemEvento.set(evento.mensagem);
-    this.podeConectar.set(evento.podeConectar);
-    this.segundosRestantes.set(evento.segundosRestantes ?? 0);
+    if (evento.podeConectar != null) {
+      this.podeConectar.set(evento.podeConectar);
+    }
+    if (evento.segundosRestantes != null) {
+      this.segundosRestantes.set(evento.segundosRestantes);
+    }
 
     if (evento.status) {
       this.atualizarStatusLocal(evento.status);
