@@ -25,6 +25,12 @@ export const routes: Routes = [
   },
 
   {
+    path: 'privacy-policy',
+    loadComponent: () =>
+      import('./features/legal/privacy-policy.component').then((m) => m.PrivacyPolicyComponent),
+  },
+
+  {
     path: 'app',
     canActivate: [authGuard, organizationGuard],
     loadComponent: () =>
