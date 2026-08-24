@@ -335,7 +335,7 @@ export class HistoricoFilaComponent implements OnInit, OnDestroy {
     return formatCanal(canal);
   }
 
-  formatarData(valor: string | null | undefined): string {
+  formatarData(valor: string | Date | null | undefined): string {
     return formatDateTimePtBr(valor);
   }
 

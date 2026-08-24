@@ -14,7 +14,7 @@
     }
     @if (ultimaAtualizacao()) {
       <p class="text-[var(--color-text-faint)] text-xs mt-1 m-0">
-        Atualizado {{ formatarData(ultimaAtualizacao()!.toISOString()) }}
+        Atualizado {{ formatarData(ultimaAtualizacao()) }}
         @if (aoVivo()) {
           · <span class="inline-flex items-center gap-1 app-text-success">
             <lucide-icon [img]="aoVivoIcon" class="w-3 h-3" />

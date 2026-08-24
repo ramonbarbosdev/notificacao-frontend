@@ -308,7 +308,7 @@
             </div>
           } @else {
             <div class="flex flex-col gap-2">
-              @for (mensagem of mensagens(); track mensagem.idMensagem) {
+              @for (mensagem of mensagens(); track trackMensagem($index, mensagem)) {
                 <div
                   class="flex"
                   [class.justify-end]="mensagem.direcao === 'OUTBOUND'"

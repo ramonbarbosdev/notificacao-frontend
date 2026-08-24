@@ -1,30 +1,71 @@
-export function formatDateTimePtBr(value: string | null | undefined): string {
-  if (!value) return '-';
+/** Fuso usado pela API ao serializar LocalDateTime (sem offset no JSON). */
+const API_TIMEZONE_OFFSET = '-03:00';
 
-  const data = new Date(value);
+const NAIVE_ISO_DATETIME =
+  /^(\d{4}-\d{2}-\d{2})[T ](\d{2}:\d{2}(?::\d{2}(?:\.\d{1,9})?)?)$/;
+
+function hasExplicitTimezone(value: string): boolean {
+  return /[Zz]$|[+-]\d{2}:?\d{2}$/.test(value);
+}
+
+export function parseApiDateTime(value: string | Date | null | undefined): Date {
+  if (value == null) {
+    return new Date(NaN);
+  }
+
+  if (value instanceof Date) {
+    return value;
+  }
+
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return new Date(NaN);
+  }
+
+  if (hasExplicitTimezone(trimmed)) {
+    return new Date(trimmed);
+  }
+
+  const normalized = trimmed.replace(' ', 'T');
+  const match = normalized.match(NAIVE_ISO_DATETIME);
+  if (match) {
+    return new Date(`${match[1]}T${match[2]}${API_TIMEZONE_OFFSET}`);
+  }
+
+  return new Date(trimmed);
+}
+
+export function formatDateTimePtBr(value: string | Date | null | undefined): string {
+  if (value == null) return '-';
+
+  const data = parseApiDateTime(value);
 
   if (Number.isNaN(data.getTime())) return '-';
 
   return new Intl.DateTimeFormat('pt-BR', {
     dateStyle: 'short',
     timeStyle: 'short',
+    timeZone: 'America/Bahia',
   }).format(data);
 }
 
-export function formatDatePtBr(value: string | null | undefined): string {
-  if (!value) return '-';
+export function formatDatePtBr(value: string | Date | null | undefined): string {
+  if (value == null) return '-';
 
-  const data = new Date(value);
+  const data = parseApiDateTime(value);
 
   if (Number.isNaN(data.getTime())) return '-';
 
-  return new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short' }).format(data);
+  return new Intl.DateTimeFormat('pt-BR', {
+    dateStyle: 'short',
+    timeZone: 'America/Bahia',
+  }).format(data);
 }
 
-export function formatRelativeTimePtBr(value: string | null | undefined): string {
-  if (!value) return '-';
+export function formatRelativeTimePtBr(value: string | Date | null | undefined): string {
+  if (value == null) return '-';
 
-  const data = new Date(value);
+  const data = parseApiDateTime(value);
 
   if (Number.isNaN(data.getTime())) return '-';
 
@@ -55,5 +96,5 @@ export function formatRelativeTimePtBr(value: string | null | undefined): string
     return `ha ${dias} dias`;
   }
 
-  return formatDateTimePtBr(value);
+  return formatDateTimePtBr(data);
 }

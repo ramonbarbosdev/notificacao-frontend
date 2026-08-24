@@ -149,22 +149,23 @@ export class WhatsappConversasService {
 
 
 
-  listarMensagens(telefone: string, page = 0, size = 100): Observable<PageResult<WhatsappMensagemResponse>> {
-
+  listarMensagens(
+    telefone: string,
+    page = 0,
+    size = 100,
+    direcao?: 'INBOUND' | 'OUTBOUND',
+  ): Observable<PageResult<WhatsappMensagemResponse>> {
     return this.http
-
       .get<ApiResponseDTO<WhatsappMensagemResponse[]>>(
-
         `${this.base}/${encodeURIComponent(telefone)}/mensagens`,
-
         {
-
-          params: { page, size },
-
+          params: {
+            page,
+            size,
+            ...(direcao ? { direcao } : {}),
+          },
           observe: 'response',
-
         },
-
       )
 
       .pipe(

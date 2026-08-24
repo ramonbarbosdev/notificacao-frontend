@@ -303,11 +303,17 @@ export class WhatsappConversasComponent implements OnInit, OnDestroy {
       return mensagem.conteudo;
     }
 
-    if (mensagem.tipo && mensagem.tipo !== 'texto') {
+    const tipo = mensagem.tipo?.toLowerCase();
+    if (tipo && tipo !== 'texto' && tipo !== 'text') {
       return `[${mensagem.tipo}]`;
     }
 
     return mensagem.direcao === 'OUTBOUND' ? 'Mensagem enviada' : 'Mensagem recebida';
+  }
+
+  trackMensagem(index: number, mensagem: WhatsappMensagemResponse): string {
+    return mensagem.idExterno
+      ?? `${mensagem.direcao}-${mensagem.dtEnvio ?? mensagem.dtCriacao}-${index}`;
   }
 
   dataMensagem(mensagem: WhatsappMensagemResponse): string {
@@ -333,7 +339,7 @@ export class WhatsappConversasComponent implements OnInit, OnDestroy {
         this.sincronizandoHistorico.set(false);
       },
       error: (err: HttpErrorResponse) => {
-        this.erro.set(err.error?.message || 'Nao foi possivel carregar as mensagens.');
+        this.erro.set(err.error?.message ?? err.error?.mensagem ?? 'Nao foi possivel carregar as mensagens.');
         this.carregandoMensagens.set(false);
         this.sincronizandoHistorico.set(false);
       },
