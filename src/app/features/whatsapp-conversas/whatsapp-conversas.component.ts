@@ -205,7 +205,6 @@ export class WhatsappConversasComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.carregarStatusSessao();
-    this.carregar();
     this.conectarEventos();
   }
 
@@ -459,6 +458,8 @@ export class WhatsappConversasComponent implements OnInit, OnDestroy {
         this.sessaoConectada.set(conectada);
         if (!conectada) {
           this.limparConversasLocais();
+        } else {
+          this.carregar();
         }
         this.carregandoStatus.set(false);
       },
