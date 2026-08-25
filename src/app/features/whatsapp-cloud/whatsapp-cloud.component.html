@@ -39,12 +39,24 @@
 
       @if (config(); as atual) {
         <div class="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-base)]/50 px-4 py-3 text-sm space-y-2">
-          <p class="m-0">
-            <span class="text-[var(--color-text-muted)]">Status:</span>
-            <strong [class.text-[var(--color-success)]]="atual.active" [class.text-[var(--color-warning)]]="!atual.active">
-              {{ atual.active ? 'Ativo' : 'Inativo' }}
-            </strong>
-          </p>
+          <div class="flex items-start justify-between gap-3">
+            <p class="m-0">
+              <span class="text-[var(--color-text-muted)]">Status:</span>
+              <strong [class.text-[var(--color-success)]]="atual.active" [class.text-[var(--color-warning)]]="!atual.active">
+                {{ atual.active ? 'Conectado' : 'Inativo' }}
+              </strong>
+            </p>
+            @if (isAdmin()) {
+              <button
+                type="button"
+                (click)="desconectar()"
+                class="shrink-0 inline-flex items-center gap-1.5 text-xs font-semibold text-[var(--color-danger)]"
+              >
+                <lucide-icon [img]="disconnectIcon" class="w-3.5 h-3.5" />
+                Desconectar
+              </button>
+            }
+          </div>
           <p class="m-0"><span class="text-[var(--color-text-muted)]">Phone Number ID:</span> {{ atual.phoneNumberId }}</p>
           @if (atual.wabaId) {
             <p class="m-0"><span class="text-[var(--color-text-muted)]">WABA ID:</span> {{ atual.wabaId }}</p>
@@ -82,24 +94,18 @@
       </div>
 
       @if (configExiste()) {
-        <div class="flex flex-wrap gap-3">
-          <button
-            type="button"
-            (click)="testar()"
-            [disabled]="testando() || !isAdmin()"
-            class="px-4 py-2.5 rounded-xl border border-[var(--color-border)] text-sm"
-          >
-            {{ testando() ? 'Testando...' : 'Testar conexao' }}
-          </button>
-          <button
-            type="button"
-            (click)="desativar()"
-            [disabled]="!isAdmin()"
-            class="px-4 py-2.5 rounded-xl border border-[var(--color-danger-border)] text-sm text-[var(--color-danger)]"
-          >
-            Desativar
-          </button>
-        </div>
+        <button
+          type="button"
+          (click)="testar()"
+          [disabled]="testando() || !isAdmin()"
+          class="px-4 py-2.5 rounded-xl border border-[var(--color-border)] text-sm"
+        >
+          {{ testando() ? 'Testando...' : 'Testar conexao' }}
+        </button>
+      } @else if (isAdmin()) {
+        <p class="text-xs text-[var(--color-text-faint)] m-0">
+          Nenhuma conexao salva nesta organizacao. Use Conectar WhatsApp ou a configuracao manual.
+        </p>
       }
     </section>
 

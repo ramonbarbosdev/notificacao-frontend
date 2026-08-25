@@ -2,9 +2,10 @@ import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
-import { Check, Cloud, LoaderCircle, LucideAngularModule, Settings2 } from 'lucide-angular';
+import { Check, Cloud, LoaderCircle, LucideAngularModule, Settings2, Unplug } from 'lucide-angular';
 
 import { AuthService } from '../../core/auth/auth.service';
+import { CommandDialogService } from '../../core/services/command-dialog.service';
 import { WhatsappCloudConfigService } from '../../core/services/whatsapp-cloud-config.service';
 import { ToastService } from '../../core/services/toast.service';
 import { FormFieldComponent } from '../../shared/components/forms/form-field/app-form-field';
@@ -43,6 +44,7 @@ export class WhatsappCloudComponent implements OnInit, OnDestroy {
   private readonly fb = inject(FormBuilder);
   private readonly cloudService = inject(WhatsappCloudConfigService);
   private readonly authService = inject(AuthService);
+  private readonly commandDialog = inject(CommandDialogService);
   private readonly toast = inject(ToastService);
 
   private messageListener?: (event: MessageEvent) => void;
@@ -53,6 +55,7 @@ export class WhatsappCloudComponent implements OnInit, OnDestroy {
   protected readonly loaderIcon = LoaderCircle;
   protected readonly checkIcon = Check;
   protected readonly settingsIcon = Settings2;
+  protected readonly disconnectIcon = Unplug;
 
   readonly carregando = signal(true);
   readonly conectando = signal(false);
@@ -217,17 +220,27 @@ export class WhatsappCloudComponent implements OnInit, OnDestroy {
     });
   }
 
-  desativar(): void {
+  async desconectar(): Promise<void> {
     if (!this.isAdmin() || !this.configExiste()) return;
+
+    const confirmado = await this.commandDialog.confirm({
+      title: 'Desconectar WhatsApp Cloud',
+      message:
+        'Isso desativa o envio pela Meta nesta organizacao. Voce podera conectar novamente depois. A vinculacao na Meta nao e removida automaticamente.',
+      confirmLabel: 'Desconectar',
+      variant: 'danger',
+    });
+    if (!confirmado) return;
+
     this.cloudService.desativar().subscribe({
       next: () => {
         this.configExiste.set(false);
         this.config.set(null);
-        this.toast.success('WhatsApp Cloud desativado');
+        this.toast.success('WhatsApp Cloud desconectado');
         this.carregarConfig();
       },
       error: (err: HttpErrorResponse) => {
-        this.erro.set(extrairMensagemErroHttp(err, 'Erro ao desativar WhatsApp Cloud.'));
+        this.erro.set(extrairMensagemErroHttp(err, 'Erro ao desconectar WhatsApp Cloud.'));
       },
     });
   }
