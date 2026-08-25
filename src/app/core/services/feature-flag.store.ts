@@ -5,6 +5,20 @@ import { catchError, map, tap } from 'rxjs/operators';
 import { FeatureFlag, RecursoFeature } from '../../shared/types/dtos';
 import { FeatureFlagService } from './feature-flag.service';
 
+type MotorWhatsapp = 'none' | 'WHATSAPP_GATEWAY' | 'WHATSAPP_META_CLOUD';
+
+const PADROES: Partial<Record<RecursoFeature, boolean>> = {
+  WHATSAPP: false,
+  WHATSAPP_GATEWAY: true,
+  WHATSAPP_META_CLOUD: false,
+  EMAIL: false,
+  TELEGRAM: false,
+  WEBHOOK: true,
+  TEMPLATES: true,
+  API_PUBLICA: false,
+  ANALYTICS: false,
+};
+
 @Injectable({ providedIn: 'root' })
 export class FeatureFlagStore {
   private readonly featureFlagService = inject(FeatureFlagService);
@@ -27,21 +41,25 @@ export class FeatureFlagStore {
     );
   }
 
-  habilitado(recurso: RecursoFeature): boolean {
+  motorWhatsapp(): MotorWhatsapp {
     const flags = this._flags();
+    if (flags.WHATSAPP_META_CLOUD) return 'WHATSAPP_META_CLOUD';
+    if (flags.WHATSAPP_GATEWAY) return 'WHATSAPP_GATEWAY';
+    if (flags.WHATSAPP) return 'WHATSAPP_GATEWAY';
+    return 'none';
+  }
 
-    if (recurso === 'WHATSAPP_GATEWAY' || recurso === 'WHATSAPP_META_CLOUD') {
-      const especifico = flags[recurso];
-      if (especifico !== undefined) {
-        return especifico;
-      }
-      const legado = flags['WHATSAPP'];
-      if (legado !== undefined) {
-        return legado;
-      }
+  habilitado(recurso: RecursoFeature): boolean {
+    if (recurso === 'WHATSAPP') {
+      return this.motorWhatsapp() !== 'none';
     }
 
-    return flags[recurso] ?? true;
+    if (recurso === 'WHATSAPP_GATEWAY' || recurso === 'WHATSAPP_META_CLOUD') {
+      return this.motorWhatsapp() === recurso;
+    }
+
+    const flags = this._flags();
+    return flags[recurso] ?? PADROES[recurso] ?? false;
   }
 
   limpar(): void {

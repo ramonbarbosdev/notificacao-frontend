@@ -68,7 +68,7 @@
 <app-side-panel
   [open]="panel.aberto()"
   [title]="'Features — ' + (organizacaoAtual()?.nmOrganizacao ?? '')"
-  description="Habilite ou desabilite recursos para esta organizacao."
+  description="Escolha um motor WhatsApp e habilite os demais recursos da organizacao."
   size="lg"
   (closed)="fecharPainel()"
 >
@@ -78,33 +78,73 @@
       Carregando features...
     </div>
   } @else {
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-      @for (recurso of recursos; track recurso) {
-        <button
-          type="button"
-          (click)="alternar(recurso)"
-          class="border rounded-2xl p-5 text-left transition-colors"
-          [class.border-[var(--color-success-border)]]="features()[recurso]"
-          [class.bg-[var(--color-success-bg)]]="features()[recurso]"
-          [class.border-[var(--color-border)]]="!features()[recurso]"
-          [class.bg-[var(--color-surface-muted)]]="!features()[recurso]"
-        >
-          <div class="flex items-center justify-between gap-3">
-            <div class="flex items-center gap-3">
-              <lucide-icon [img]="flagIcon" class="w-5 h-5 text-[var(--color-primary-soft)]" />
-              <span class="text-[var(--color-text)] font-semibold">{{ recurso }}</span>
+    <section class="mb-8">
+      <h2 class="text-sm font-semibold text-[var(--color-text)] mb-1">Motor WhatsApp</h2>
+      <p class="text-xs text-[var(--color-text-muted)] mb-4">
+        Apenas um motor pode estar ativo por organizacao.
+      </p>
+
+      <div class="grid grid-cols-1 gap-3">
+        @for (opcao of motoresWhatsapp; track opcao.valor) {
+          <button
+            type="button"
+            (click)="definirMotorWhatsapp(opcao.valor)"
+            class="border rounded-2xl p-4 text-left transition-colors"
+            [class.border-[var(--color-primary)]]="motorWhatsapp() === opcao.valor"
+            [class.bg-[var(--color-primary)]/10]="motorWhatsapp() === opcao.valor"
+            [class.border-[var(--color-border)]]="motorWhatsapp() !== opcao.valor"
+            [class.bg-[var(--color-surface-muted)]]="motorWhatsapp() !== opcao.valor"
+          >
+            <div class="flex items-start gap-3">
+              <span
+                class="mt-0.5 w-4 h-4 rounded-full border-2 shrink-0"
+                [class.border-[var(--color-primary)]]="motorWhatsapp() === opcao.valor"
+                [class.bg-[var(--color-primary)]]="motorWhatsapp() === opcao.valor"
+                [class.border-[var(--color-border)]]="motorWhatsapp() !== opcao.valor"
+              ></span>
+              <div>
+                <p class="text-[var(--color-text)] font-semibold text-sm">{{ opcao.label }}</p>
+                <p class="text-[var(--color-text-muted)] text-xs mt-1">{{ opcao.descricao }}</p>
+              </div>
             </div>
-            <span
-              class="text-xs font-semibold"
-              [class.text-[var(--color-success)]]="features()[recurso]"
-              [class.text-[var(--color-text-muted)]]="!features()[recurso]"
-            >
-              {{ features()[recurso] ? 'Habilitado' : 'Desabilitado' }}
-            </span>
-          </div>
-        </button>
-      }
-    </div>
+          </button>
+        }
+      </div>
+    </section>
+
+    <section>
+      <h2 class="text-sm font-semibold text-[var(--color-text)] mb-4">Outros recursos</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        @for (item of recursosGerais; track item.recurso) {
+          <button
+            type="button"
+            (click)="alternar(item.recurso)"
+            class="border rounded-2xl p-5 text-left transition-colors"
+            [class.border-[var(--color-success-border)]]="features()[item.recurso]"
+            [class.bg-[var(--color-success-bg)]]="features()[item.recurso]"
+            [class.border-[var(--color-border)]]="!features()[item.recurso]"
+            [class.bg-[var(--color-surface-muted)]]="!features()[item.recurso]"
+          >
+            <div class="flex items-center justify-between gap-3">
+              <div class="flex items-start gap-3">
+                <lucide-icon [img]="flagIcon" class="w-5 h-5 text-[var(--color-primary-soft)] shrink-0 mt-0.5" />
+                <div>
+                  <span class="text-[var(--color-text)] font-semibold block">{{ item.label }}</span>
+                  <span class="text-[var(--color-text-muted)] text-xs">{{ item.descricao }}</span>
+                </div>
+              </div>
+              <span
+                class="text-xs font-semibold shrink-0"
+                [class.text-[var(--color-success)]]="features()[item.recurso]"
+                [class.text-[var(--color-text-muted)]]="!features()[item.recurso]"
+              >
+                {{ features()[item.recurso] ? 'On' : 'Off' }}
+              </span>
+            </div>
+          </button>
+        }
+      </div>
+    </section>
 
     @if (erro()) {
       <div class="mt-6 bg-[var(--color-danger-bg)] border border-[var(--color-danger-border)] rounded-xl px-4 py-3">
