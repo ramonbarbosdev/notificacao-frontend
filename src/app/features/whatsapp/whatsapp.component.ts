@@ -12,7 +12,6 @@ import { NotificacaoFilaEventsService } from '../../core/http/notificacao-fila-e
 import { NotificacaoService } from '../../core/services/notificacao.service';
 import { WhatsappEventsService } from '../../core/http/whatsapp-events.service';
 import { WhatsappService } from '../../core/services/whatsapp.service';
-import { WhatsappCloudConfigService } from '../../core/services/whatsapp-cloud-config.service';
 
 import {
   EnviarMensagemResponse,
@@ -78,7 +77,6 @@ type ModoEnvioWhatsapp = 'unitario' | 'lote';
 })
 export class WhatsappComponent implements OnInit, OnDestroy {
   private readonly whatsappService = inject(WhatsappService);
-  private readonly metaCloudService = inject(WhatsappCloudConfigService);
   private readonly whatsappEventsService = inject(WhatsappEventsService);
   private readonly notificacaoService = inject(NotificacaoService);
   private readonly filaEventsService = inject(NotificacaoFilaEventsService);
@@ -122,7 +120,6 @@ export class WhatsappComponent implements OnInit, OnDestroy {
   readonly acaoOperacionalCarregando = signal(false);
   readonly acompanhandoEnvio = signal(false);
   readonly avisoProvisionamento = signal<string | null>(null);
-  readonly metaCloudAtivo = signal(false);
   readonly diagnosticoContato = signal<WhatsappDiagnosticoContatoResponse | null>(null);
   readonly carregandoDiagnostico = signal(false);
   readonly erroDiagnostico = signal<string | null>(null);
@@ -207,15 +204,7 @@ export class WhatsappComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.conectarEventosDaOrganizacao();
     this.conectarEventosFila();
-    this.carregarMetaCloudStatus();
     this.provisionarCanalWhatsapp();
-  }
-
-  private carregarMetaCloudStatus(): void {
-    this.metaCloudService.buscar().subscribe({
-      next: (config) => this.metaCloudAtivo.set(!!config.active),
-      error: () => this.metaCloudAtivo.set(false),
-    });
   }
 
   private provisionarCanalWhatsapp(): void {

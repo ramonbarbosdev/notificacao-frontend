@@ -6,6 +6,8 @@ import {
   WhatsappCloudConfigRequest,
   WhatsappCloudConfigResponse,
   WhatsappCloudConfigTestResponse,
+  WhatsappEmbeddedSignupCallbackRequest,
+  WhatsappEmbeddedSignupConfigResponse,
 } from '../../shared/types/dtos';
 
 @Injectable({ providedIn: 'root' })
@@ -35,5 +37,20 @@ export class WhatsappCloudConfigService {
 
   webhookUrl(): string {
     return `${environment.apiUrl}/webhooks/whatsapp/meta`;
+  }
+
+  embeddedSignupConfig(): Observable<WhatsappEmbeddedSignupConfigResponse> {
+    return this.http.get<WhatsappEmbeddedSignupConfigResponse>(
+      `${environment.apiUrl}/app/whatsapp-cloud/embedded-signup/config`,
+    );
+  }
+
+  concluirEmbeddedSignup(
+    payload: WhatsappEmbeddedSignupCallbackRequest,
+  ): Observable<WhatsappCloudConfigResponse> {
+    return this.http.post<WhatsappCloudConfigResponse>(
+      `${environment.apiUrl}/app/whatsapp-cloud/embedded-signup/callback`,
+      payload,
+    );
   }
 }

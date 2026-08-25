@@ -100,6 +100,20 @@ export interface WhatsappCloudConfigTestResponse {
   message: string;
 }
 
+export interface WhatsappEmbeddedSignupConfigResponse {
+  habilitado: boolean;
+  appId: string | null;
+  configId: string | null;
+  webhookUrl: string;
+}
+
+export interface WhatsappEmbeddedSignupCallbackRequest {
+  code: string;
+  phoneNumberId?: string | null;
+  wabaId?: string | null;
+  apiVersion?: string | null;
+}
+
 export interface WhatsappDiagnosticoChecklistItem {
   id: string;
   ok: boolean;
@@ -602,6 +616,8 @@ export interface UsuarioOrganizacaoResponse {
 
 export type RecursoFeature =
   | 'WHATSAPP'
+  | 'WHATSAPP_GATEWAY'
+  | 'WHATSAPP_META_CLOUD'
   | 'EMAIL'
   | 'TELEGRAM'
   | 'WEBHOOK'

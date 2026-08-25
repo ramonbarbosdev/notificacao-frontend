@@ -42,6 +42,13 @@ export const routes: Routes = [
           import('./features/dashboard/dashboard.component').then((m) => m.DashboardComponent),
       },
       {
+        path: 'whatsapp-cloud',
+        canActivate: [roleGuard],
+        data: { roles: ['ADMIN'] },
+        loadComponent: () =>
+          import('./features/whatsapp-cloud/whatsapp-cloud.component').then((m) => m.WhatsappCloudComponent),
+      },
+      {
         path: 'whatsapp',
         canActivate: [roleGuard],
         data: { roles: ['ADMIN', 'USER'] },
@@ -205,6 +212,7 @@ export const routes: Routes = [
   },
 
   { path: 'dashboard', redirectTo: '/app/dashboard' },
+  { path: 'whatsapp-cloud', redirectTo: '/app/whatsapp-cloud' },
   { path: 'whatsapp', redirectTo: '/app/whatsapp' },
   { path: 'notificacoes', redirectTo: '/app/whatsapp' },
   { path: 'templates', redirectTo: '/app/templates' },

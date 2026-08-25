@@ -5,6 +5,7 @@ import {
   BookOpen,
   Building2,
   ClipboardList,
+  Cloud,
   Flag,
   History,
   LayoutDashboard,
@@ -117,12 +118,20 @@ export class SidebarComponent {
       roles: ['ADMIN', 'USER'],
     },
     {
-      label: 'WhatsApp',
+      label: 'WhatsApp Sessão',
       rota: '/app/whatsapp',
       icon: MessageCircle,
       scope: 'ORG',
       roles: ['ADMIN', 'USER'],
-      recurso: 'WHATSAPP',
+      recurso: 'WHATSAPP_GATEWAY',
+    },
+    {
+      label: 'WhatsApp Cloud',
+      rota: '/app/whatsapp-cloud',
+      icon: Cloud,
+      scope: 'ORG',
+      roles: ['ADMIN'],
+      recurso: 'WHATSAPP_META_CLOUD',
     },
     {
       label: 'Conversas',
@@ -130,7 +139,7 @@ export class SidebarComponent {
       icon: MessageSquareText,
       scope: 'ORG',
       roles: ['ADMIN', 'USER'],
-      recurso: 'WHATSAPP',
+      recurso: 'WHATSAPP_GATEWAY',
     },
     {
       label: 'Link WhatsApp',
@@ -138,7 +147,7 @@ export class SidebarComponent {
       icon: Share2,
       scope: 'ORG',
       roles: ['ADMIN', 'USER'],
-      recurso: 'WHATSAPP',
+      recurso: 'WHATSAPP_GATEWAY',
     },
     {
       label: 'Notificações',

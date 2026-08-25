@@ -23,7 +23,17 @@ export class FeatureFlagsComponent implements OnInit {
   protected readonly loaderIcon = LoaderCircle;
   protected readonly checkIcon = Check;
 
-  readonly recursos: RecursoFeature[] = ['WHATSAPP', 'EMAIL', 'TELEGRAM', 'WEBHOOK', 'TEMPLATES', 'API_PUBLICA', 'ANALYTICS'];
+  readonly recursos: RecursoFeature[] = [
+    'WHATSAPP',
+    'WHATSAPP_GATEWAY',
+    'WHATSAPP_META_CLOUD',
+    'EMAIL',
+    'TELEGRAM',
+    'WEBHOOK',
+    'TEMPLATES',
+    'API_PUBLICA',
+    'ANALYTICS',
+  ];
   readonly panel = useSidePanel<OrganizacaoAdminResponse>();
   readonly organizacoes = signal<OrganizacaoAdminResponse[]>([]);
   readonly features = signal<Partial<Record<RecursoFeature, boolean>>>({});

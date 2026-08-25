@@ -28,7 +28,20 @@ export class FeatureFlagStore {
   }
 
   habilitado(recurso: RecursoFeature): boolean {
-    return this._flags()[recurso] ?? true;
+    const flags = this._flags();
+
+    if (recurso === 'WHATSAPP_GATEWAY' || recurso === 'WHATSAPP_META_CLOUD') {
+      const especifico = flags[recurso];
+      if (especifico !== undefined) {
+        return especifico;
+      }
+      const legado = flags['WHATSAPP'];
+      if (legado !== undefined) {
+        return legado;
+      }
+    }
+
+    return flags[recurso] ?? true;
   }
 
   limpar(): void {
