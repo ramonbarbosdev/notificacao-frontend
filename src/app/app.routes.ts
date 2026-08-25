@@ -31,6 +31,14 @@ export const routes: Routes = [
   },
 
   {
+    path: 'whatsapp-cloud/callback',
+    loadComponent: () =>
+      import('./features/whatsapp-cloud/whatsapp-cloud-callback.component').then(
+        (m) => m.WhatsappCloudCallbackComponent,
+      ),
+  },
+
+  {
     path: 'app',
     canActivate: [authGuard, organizationGuard],
     loadComponent: () =>
@@ -213,6 +221,7 @@ export const routes: Routes = [
 
   { path: 'dashboard', redirectTo: '/app/dashboard' },
   { path: 'whatsapp-cloud', redirectTo: '/app/whatsapp-cloud' },
+  { path: 'whatsapp-cloud/callback', redirectTo: '/whatsapp-cloud/callback' },
   { path: 'whatsapp', redirectTo: '/app/whatsapp' },
   { path: 'notificacoes', redirectTo: '/app/whatsapp' },
   { path: 'templates', redirectTo: '/app/templates' },

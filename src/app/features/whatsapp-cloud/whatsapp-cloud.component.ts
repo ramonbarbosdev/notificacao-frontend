@@ -108,8 +108,10 @@ export class WhatsappCloudComponent implements OnInit, OnDestroy {
     }
 
     const embedded = this.embeddedSignup();
-    if (!embedded?.habilitado || !embedded.appId || !embedded.configId) {
-      this.erro.set('Embedded Signup nao configurado no servidor (META_APP_ID / META_EMBEDDED_SIGNUP_CONFIG_ID).');
+    if (!embedded?.habilitado || !embedded.appId || !embedded.configId || !embedded.oauthRedirectUri) {
+      this.erro.set(
+        'Embedded Signup nao configurado no servidor (META_APP_ID / META_EMBEDDED_SIGNUP_CONFIG_ID / META_OAUTH_REDIRECT_URI).',
+      );
       this.mostrarConfigManual.set(true);
       return;
     }
@@ -138,6 +140,7 @@ export class WhatsappCloudComponent implements OnInit, OnDestroy {
           config_id: embedded.configId,
           response_type: 'code',
           override_default_response_type: true,
+          redirect_uri: embedded.oauthRedirectUri,
           extras: {
             setup: {},
             featureType: '',
@@ -270,6 +273,24 @@ export class WhatsappCloudComponent implements OnInit, OnDestroy {
 
   private registrarListenerEmbeddedSignup(): void {
     this.messageListener = (event: MessageEvent) => {
+      if (event.origin === window.location.origin) {
+        const oauth = event.data as {
+          type?: string;
+          code?: string | null;
+          error?: string | null;
+        };
+        if (oauth?.type === 'WA_EMBEDDED_SIGNUP_OAUTH') {
+          if (oauth.code) {
+            this.pendingSignupCode = oauth.code;
+            this.tentarConcluirEmbeddedSignup();
+          } else {
+            this.conectando.set(false);
+            this.erro.set(oauth.error ?? 'Conexao cancelada ou nao autorizada na Meta.');
+          }
+        }
+        return;
+      }
+
       if (event.origin !== 'https://www.facebook.com' && event.origin !== 'https://web.facebook.com') {
         return;
       }

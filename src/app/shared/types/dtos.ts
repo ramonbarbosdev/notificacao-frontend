@@ -104,6 +104,7 @@ export interface WhatsappEmbeddedSignupConfigResponse {
   habilitado: boolean;
   appId: string | null;
   configId: string | null;
+  oauthRedirectUri: string | null;
   webhookUrl: string;
 }
 
