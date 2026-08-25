@@ -181,13 +181,21 @@ export class WhatsappCloudComponent implements OnInit, OnDestroy {
     });
   }
 
+  limparErro(): void {
+    this.erro.set(null);
+  }
+
+  limparSucesso(): void {
+    this.sucesso.set(null);
+  }
+
   async desconectar(): Promise<void> {
     if (!this.isAdmin() || !this.configExiste()) return;
 
     const confirmado = await this.commandDialog.confirm({
       title: 'Desconectar WhatsApp Cloud',
       message:
-        'Isso desativa o envio pela Meta nesta organizacao. Voce podera conectar novamente depois. A vinculacao na Meta nao e removida automaticamente.',
+        'Isso remove a configuracao WhatsApp Cloud desta organizacao no sistema. Voce podera conectar novamente depois. A vinculacao na Meta nao e removida automaticamente.',
       confirmLabel: 'Desconectar',
       variant: 'danger',
     });
@@ -195,10 +203,21 @@ export class WhatsappCloudComponent implements OnInit, OnDestroy {
 
     this.cloudService.desativar().subscribe({
       next: () => {
+        this.erro.set(null);
+        this.sucesso.set(null);
+        this.conectando.set(false);
+        this.pendingSignupCode = null;
+        this.sessionInfo = {};
         this.configExiste.set(false);
         this.config.set(null);
+        this.manualForm.reset({
+          phoneNumberId: '',
+          wabaId: '',
+          apiVersion: 'v21.0',
+          accessToken: '',
+          active: true,
+        });
         this.toast.success('WhatsApp Cloud desconectado');
-        this.carregarConfig();
       },
       error: (err: HttpErrorResponse) => {
         this.erro.set(extrairMensagemErroHttp(err, 'Erro ao desconectar WhatsApp Cloud.'));
@@ -234,6 +253,12 @@ export class WhatsappCloudComponent implements OnInit, OnDestroy {
   }
 
   private aplicarConfig(config: WhatsappCloudConfigResponse): void {
+    if (!config.active) {
+      this.configExiste.set(false);
+      this.config.set(null);
+      return;
+    }
+
     this.configExiste.set(true);
     this.config.set(config);
     this.manualForm.patchValue({
