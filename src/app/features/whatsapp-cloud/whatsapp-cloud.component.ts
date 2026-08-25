@@ -16,19 +16,6 @@ import {
   WhatsappEmbeddedSignupConfigResponse,
 } from '../../shared/types/dtos';
 
-declare global {
-  interface Window {
-    FB?: {
-      init(params: Record<string, unknown>): void;
-      login(
-        callback: (response: { authResponse?: { code?: string } }) => void,
-        params: Record<string, unknown>,
-      ): void;
-    };
-    fbAsyncInit?: () => void;
-  }
-}
-
 interface EmbeddedSignupSessionInfo {
   phoneNumberId?: string;
   wabaId?: string;
@@ -104,7 +91,7 @@ export class WhatsappCloudComponent implements OnInit, OnDestroy {
     );
   }
 
-  async conectarWhatsApp(): Promise<void> {
+  conectarWhatsApp(): void {
     if (!this.isAdmin()) {
       this.erro.set('Apenas administradores podem conectar o WhatsApp Cloud.');
       return;
@@ -125,35 +112,9 @@ export class WhatsappCloudComponent implements OnInit, OnDestroy {
     this.pendingSignupCode = null;
     this.sessionInfo = {};
 
-    try {
-      await this.carregarFacebookSdk(embedded.appId);
-
-      window.FB?.login(
-        (response) => {
-          if (!response.authResponse?.code) {
-            this.conectando.set(false);
-            this.erro.set('Conexao cancelada ou nao autorizada na Meta.');
-            return;
-          }
-
-          this.pendingSignupCode = response.authResponse.code;
-          this.tentarConcluirEmbeddedSignup();
-        },
-        {
-          config_id: embedded.configId,
-          response_type: 'code',
-          override_default_response_type: true,
-          redirect_uri: embedded.oauthRedirectUri,
-          extras: {
-            setup: {},
-            featureType: '',
-            sessionInfoVersion: '3',
-          },
-        },
-      );
-    } catch (err) {
+    if (!this.abrirPopupEmbeddedSignup(embedded)) {
       this.conectando.set(false);
-      this.erro.set(err instanceof Error ? err.message : 'Falha ao iniciar Embedded Signup.');
+      this.erro.set('Nao foi possivel abrir o popup da Meta. Verifique o bloqueador de popups.');
     }
   }
 
@@ -374,34 +335,25 @@ export class WhatsappCloudComponent implements OnInit, OnDestroy {
       });
   }
 
-  private carregarFacebookSdk(appId: string): Promise<void> {
-    if (window.FB) {
-      return Promise.resolve();
-    }
-
-    return new Promise((resolve, reject) => {
-      window.fbAsyncInit = () => {
-        window.FB?.init({
-          appId,
-          cookie: true,
-          xfbml: false,
-          version: 'v21.0',
-        });
-        resolve();
-      };
-
-      if (document.getElementById('facebook-jssdk')) {
-        return;
-      }
-
-      const script = document.createElement('script');
-      script.id = 'facebook-jssdk';
-      script.async = true;
-      script.defer = true;
-      script.crossOrigin = 'anonymous';
-      script.src = 'https://connect.facebook.net/pt_BR/sdk.js';
-      script.onerror = () => reject(new Error('Nao foi possivel carregar o SDK da Meta.'));
-      document.body.appendChild(script);
+  private abrirPopupEmbeddedSignup(embedded: WhatsappEmbeddedSignupConfigResponse): boolean {
+    const params = new URLSearchParams({
+      client_id: embedded.appId!,
+      redirect_uri: embedded.oauthRedirectUri!,
+      response_type: 'code',
+      config_id: embedded.configId!,
     });
+
+    const url = `https://www.facebook.com/v21.0/dialog/oauth?${params.toString()}`;
+    const width = 620;
+    const height = 760;
+    const left = Math.max(0, window.screenX + (window.outerWidth - width) / 2);
+    const top = Math.max(0, window.screenY + (window.outerHeight - height) / 2);
+    const popup = window.open(
+      url,
+      'metaEmbeddedSignup',
+      `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes`,
+    );
+
+    return popup != null;
   }
 }
