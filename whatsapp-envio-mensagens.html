@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nova mensagem · Conversas WhatsApp</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #0a0e14;
+    --panel: #10151f;
+    --panel-2: #161c28;
+    --border: #232a38;
+    --border-soft: #1a2029;
+    --text: #e7eaf0;
+    --text-muted: #8b93a3;
+    --text-faint: #5a6273;
+    --accent: #34d399;
+    --accent-dim: #16302a;
+    --accent-line: #235240;
+    --amber: #f0b458;
+    --amber-dim: #332813;
+    --danger: #ef7676;
+    --radius: 14px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:
+      radial-gradient(1200px 600px at 15% -10%, rgba(52,211,153,0.06), transparent 60%),
+      var(--bg);
+    color:var(--text);
+    font-family:'Inter',sans-serif;
+    padding:32px;
+    min-height:100vh;
+  }
+  .mono{font-family:'JetBrains Mono',monospace;}
+  .display{font-family:'Space Grotesk',sans-serif;}
+
+  .wrap{max-width:1180px;margin:0 auto;}
+
+  .topbar{
+    display:flex; align-items:center; justify-content:space-between;
+    margin-bottom:22px;
+  }
+  .topbar h1{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:20px; font-weight:600; margin:0;
+    display:flex; align-items:center; gap:10px;
+  }
+  .topbar .back{color:var(--text-faint); font-size:14px; font-weight:400;}
+  .session-chip{
+    display:flex; align-items:center; gap:8px;
+    padding:7px 14px; border:1px solid var(--border); border-radius:999px;
+    font-size:13px; color:var(--text-muted); background:var(--panel);
+  }
+  .dot{width:7px; height:7px; border-radius:50%; background:var(--accent); box-shadow:0 0 0 3px var(--accent-dim);}
+
+  .grid{
+    display:grid;
+    grid-template-columns: 300px 1fr 300px;
+    gap:18px;
+    align-items:start;
+  }
+  .card{
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    overflow:hidden;
+  }
+  .card-head{
+    padding:16px 18px 12px;
+    border-bottom:1px solid var(--border-soft);
+  }
+  .card-head .eyebrow{
+    font-family:'JetBrains Mono',monospace;
+    font-size:10.5px; letter-spacing:.08em; text-transform:uppercase;
+    color:var(--text-faint); margin-bottom:4px; display:block;
+  }
+  .card-head h2{margin:0; font-size:15px; font-weight:600; font-family:'Space Grotesk',sans-serif;}
+  .card-body{padding:16px 18px;}
+
+  /* --- Audience column --- */
+  .mode-toggle{
+    display:flex; background:var(--panel-2); border:1px solid var(--border-soft);
+    border-radius:10px; padding:3px; margin-bottom:14px;
+  }
+  .mode-toggle button{
+    flex:1; border:none; background:transparent; color:var(--text-muted);
+    font-family:'Inter',sans-serif; font-size:12.5px; font-weight:500;
+    padding:8px 0; border-radius:8px; cursor:pointer;
+  }
+  .mode-toggle button.active{background:var(--accent-dim); color:var(--accent); box-shadow:inset 0 0 0 1px var(--accent-line);}
+
+  .search-mini{
+    width:100%; background:var(--panel-2); border:1px solid var(--border-soft);
+    border-radius:9px; padding:9px 12px; color:var(--text); font-size:12.5px;
+    margin-bottom:12px; font-family:'Inter',sans-serif;
+  }
+  .search-mini::placeholder{color:var(--text-faint);}
+
+  .contact-row{
+    display:flex; align-items:center; gap:10px;
+    padding:9px 8px; border-radius:9px; cursor:pointer;
+  }
+  .contact-row:hover{background:var(--panel-2);}
+  .checkbox{
+    width:17px; height:17px; border-radius:5px; border:1.5px solid var(--border);
+    display:flex; align-items:center; justify-content:center; flex-shrink:0;
+  }
+  .checkbox.checked{background:var(--accent); border-color:var(--accent);}
+  .checkbox.checked svg{width:11px; height:11px;}
+  .badge{
+    width:26px; height:26px; border-radius:50%; background:var(--accent-dim);
+    color:var(--accent); font-size:10px; font-weight:600; font-family:'JetBrains Mono',monospace;
+    display:flex; align-items:center; justify-content:center; flex-shrink:0;
+  }
+  .contact-info{min-width:0;}
+  .contact-info .name{font-size:12.5px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .contact-info .num{font-size:11px; color:var(--text-faint); font-family:'JetBrains Mono',monospace;}
+
+  .divider-label{
+    font-size:10.5px; color:var(--text-faint); text-transform:uppercase; letter-spacing:.06em;
+    margin:14px 0 8px; font-family:'JetBrains Mono',monospace;
+  }
+  .csv-drop{
+    border:1.5px dashed var(--border); border-radius:10px; padding:16px 12px;
+    text-align:center; color:var(--text-faint); font-size:11.5px; line-height:1.5;
+  }
+  .csv-drop strong{color:var(--text-muted); font-weight:500;}
+
+  .count-footer{
+    padding:12px 18px; border-top:1px solid var(--border-soft);
+    display:flex; justify-content:space-between; align-items:center;
+    font-size:12px; color:var(--text-muted);
+  }
+  .count-footer b{color:var(--accent); font-family:'JetBrains Mono',monospace;}
+
+  /* --- Composer column --- */
+  .var-chip{
+    display:inline-flex; align-items:center; gap:4px;
+    background:var(--accent-dim); color:var(--accent); border:1px solid var(--accent-line);
+    border-radius:6px; padding:3px 8px; font-size:11px; font-family:'JetBrains Mono',monospace;
+    margin-right:6px; margin-bottom:6px; cursor:pointer;
+  }
+  textarea{
+    width:100%; min-height:130px; background:var(--panel-2); border:1px solid var(--border-soft);
+    border-radius:10px; padding:12px 14px; color:var(--text); font-family:'Inter',sans-serif;
+    font-size:13.5px; line-height:1.6; resize:vertical;
+  }
+  textarea::placeholder{color:var(--text-faint);}
+
+  .preview-label{font-size:10.5px; color:var(--text-faint); text-transform:uppercase; letter-spacing:.06em; margin:16px 0 8px; font-family:'JetBrains Mono',monospace;}
+  .bubble-wrap{background:#0d1219; border:1px solid var(--border-soft); border-radius:10px; padding:16px;}
+  .bubble{
+    background:var(--panel-2); border-radius:10px 10px 10px 2px;
+    padding:10px 12px; font-size:13px; line-height:1.55; max-width:88%;
+    color:var(--text); position:relative;
+  }
+  .bubble .hl{color:var(--accent); font-weight:500;}
+  .bubble-time{font-size:10px; color:var(--text-faint); margin-top:6px; font-family:'JetBrains Mono',monospace;}
+
+  .send-row{display:flex; gap:10px; margin-top:16px;}
+  .btn{
+    border:none; border-radius:10px; padding:11px 18px; font-size:13px; font-weight:600;
+    cursor:pointer; font-family:'Inter',sans-serif; display:flex; align-items:center; gap:7px;
+  }
+  .btn-primary{background:var(--accent); color:#06140e; flex:1; justify-content:center;}
+  .btn-ghost{background:var(--panel-2); color:var(--text-muted); border:1px solid var(--border-soft);}
+
+  /* --- Delivery / rate column --- */
+  .field{margin-bottom:16px;}
+  .field label{
+    display:block; font-size:11.5px; color:var(--text-muted); margin-bottom:7px; font-weight:500;
+  }
+  .interval-row{display:flex; align-items:center; gap:8px;}
+  .interval-row input{
+    width:52px; background:var(--panel-2); border:1px solid var(--border-soft); border-radius:8px;
+    padding:7px 8px; color:var(--text); font-family:'JetBrains Mono',monospace; font-size:12.5px; text-align:center;
+  }
+  .interval-row span{color:var(--text-faint); font-size:12px;}
+  .hint{font-size:11px; color:var(--text-faint); margin-top:8px; line-height:1.5;}
+
+  .queue-strip{display:flex; gap:5px; align-items:flex-end; height:36px; margin-top:6px;}
+  .queue-tick{
+    flex:1; background:var(--border-soft); border-radius:3px; height:10px;
+    transition: background .3s, height .3s;
+  }
+  .queue-tick.sent{background:var(--accent); height:26px;}
+  .queue-tick.current{background:var(--amber); height:18px; animation:pulse 1s infinite ease-in-out;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.45;}}
+
+  .status-row{display:flex; justify-content:space-between; font-size:11.5px; margin-top:10px; color:var(--text-muted);}
+  .status-row .n{font-family:'JetBrains Mono',monospace; font-weight:500;}
+  .status-row .ok .n{color:var(--accent);}
+  .status-row .wait .n{color:var(--amber);}
+
+  @media (max-width: 920px){
+    .grid{grid-template-columns:1fr;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="topbar">
+    <h1><span class="back">‹</span> Nova mensagem</h1>
+    <div class="session-chip"><span class="dot"></span> +55 (71) 9972-9330 conectado</div>
+  </div>
+
+  <div class="grid">
+
+    <!-- AUDIENCE -->
+    <div class="card">
+      <div class="card-head">
+        <span class="eyebrow">Destinatários</span>
+        <h2>Quem recebe</h2>
+      </div>
+      <div class="card-body">
+        <div class="mode-toggle">
+          <button class="active">Individual</button>
+          <button>Em lote</button>
+        </div>
+        <input class="search-mini" placeholder="Buscar nome, telefone ou tag…">
+
+        <div class="contact-row">
+          <div class="checkbox checked"><svg viewBox="0 0 12 12" fill="none"><path d="M2 6l2.5 2.5L10 3" stroke="#06140e" stroke-width="2" stroke-linecap="round"/></svg></div>
+          <div class="badge">55</div>
+          <div class="contact-info"><div class="name">71999580785</div><div class="num">responsável · Kanban</div></div>
+        </div>
+        <div class="contact-row">
+          <div class="checkbox checked"><svg viewBox="0 0 12 12" fill="none"><path d="M2 6l2.5 2.5L10 3" stroke="#06140e" stroke-width="2" stroke-linecap="round"/></svg></div>
+          <div class="badge">55</div>
+          <div class="contact-info"><div class="name">73982229717</div><div class="num">responsável · Comissão</div></div>
+        </div>
+        <div class="contact-row">
+          <div class="checkbox"></div>
+          <div class="badge">55</div>
+          <div class="contact-info"><div class="name">71992864312</div><div class="num">sem tag</div></div>
+        </div>
+
+        <div class="divider-label">ou importar lista</div>
+        <div class="csv-drop"><strong>Arraste um .csv</strong><br>nome, telefone, variáveis</div>
+      </div>
+      <div class="count-footer">
+        <span>Selecionados</span>
+        <span><b>2</b> de 3</span>
+      </div>
+    </div>
+
+    <!-- COMPOSER -->
+    <div class="card">
+      <div class="card-head">
+        <span class="eyebrow">Conteúdo</span>
+        <h2>Mensagem</h2>
+      </div>
+      <div class="card-body">
+        <div>
+          <span class="var-chip">＋ {{nome}}</span>
+          <span class="var-chip">＋ {{tarefa}}</span>
+          <span class="var-chip">＋ {{prazo}}</span>
+        </div>
+        <textarea placeholder="Digite a mensagem…">Olá {{nome}}, a tarefa *{{tarefa}}* foi aprovada e já está liberada para a próxima etapa. Prazo de retorno: {{prazo}}.</textarea>
+
+        <div class="preview-label">Pré-visualização · 71999580785</div>
+        <div class="bubble-wrap">
+          <div class="bubble">
+            Olá <span class="hl">João</span>, a tarefa *<span class="hl">Correção Adição Membro Comissão</span>* foi aprovada e já está liberada para a próxima etapa. Prazo de retorno: <span class="hl">28/08</span>.
+            <div class="bubble-time">09:41 ✓✓</div>
+          </div>
+        </div>
+
+        <div class="send-row">
+          <button class="btn btn-ghost">Salvar rascunho</button>
+          <button class="btn btn-primary">Enviar para 2 contatos →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- DELIVERY / QUEUE -->
+    <div class="card">
+      <div class="card-head">
+        <span class="eyebrow">Disparo</span>
+        <h2>Fila de envio</h2>
+      </div>
+      <div class="card-body">
+        <div class="field">
+          <label>Intervalo entre mensagens</label>
+          <div class="interval-row">
+            <input type="text" value="3" class="mono"> <span>a</span>
+            <input type="text" value="8" class="mono"> <span>segundos, aleatório</span>
+          </div>
+          <div class="hint">Evita picos de envio que podem sinalizar o número como spam na sessão do WhatsApp.</div>
+        </div>
+
+        <div class="field">
+          <label>Progresso simulado</label>
+          <div class="queue-strip" id="queueStrip"></div>
+          <div class="status-row">
+            <span class="ok">enviados <span class="n" id="sentCount">0</span></span>
+            <span class="wait">na fila <span class="n" id="waitCount">2</span></span>
+          </div>
+        </div>
+
+        <div class="hint">Falhas de entrega (número inválido, sem WhatsApp) aparecem aqui com opção de reenviar individualmente.</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  const total = 14;
+  const strip = document.getElementById('queueStrip');
+  const ticks = [];
+  for(let i=0;i<total;i++){
+    const t = document.createElement('div');
+    t.className = 'queue-tick';
+    strip.appendChild(t);
+    ticks.push(t);
+  }
+  let i = 0;
+  function step(){
+    if(i>0) ticks[i-1].className = 'queue-tick sent';
+    if(i<total){
+      ticks[i].className = 'queue-tick current';
+      i++;
+      setTimeout(step, 420 + Math.random()*500);
+    }
+  }
+  step();
+</script>
+</body>
+</html>

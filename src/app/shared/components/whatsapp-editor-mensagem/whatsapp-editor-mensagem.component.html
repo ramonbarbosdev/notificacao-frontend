@@ -1,0 +1,64 @@
+<div class="space-y-2">
+  <div class="flex flex-wrap items-center gap-1">
+    <button
+      type="button"
+      (click)="aplicarFormato('negrito')"
+      class="p-1.5 rounded-lg border border-[var(--color-border)] text-[var(--color-text-muted)] hover:bg-[var(--color-surface-muted)]"
+      title="Negrito (*texto*)"
+    >
+      <lucide-icon [img]="boldIcon" class="w-3.5 h-3.5" />
+    </button>
+    <button
+      type="button"
+      (click)="aplicarFormato('italico')"
+      class="p-1.5 rounded-lg border border-[var(--color-border)] text-[var(--color-text-muted)] hover:bg-[var(--color-surface-muted)]"
+      title="Italico (_texto_)"
+    >
+      <lucide-icon [img]="italicIcon" class="w-3.5 h-3.5" />
+    </button>
+    <button
+      type="button"
+      (click)="aplicarFormato('riscado')"
+      class="p-1.5 rounded-lg border border-[var(--color-border)] text-[var(--color-text-muted)] hover:bg-[var(--color-surface-muted)]"
+      title="Riscado (~texto~)"
+    >
+      <lucide-icon [img]="strikeIcon" class="w-3.5 h-3.5" />
+    </button>
+    <button
+      type="button"
+      (click)="aplicarFormato('monoespaco')"
+      class="p-1.5 rounded-lg border border-[var(--color-border)] text-[var(--color-text-muted)] hover:bg-[var(--color-surface-muted)]"
+      title="Monoespaco (```texto```)"
+    >
+      <lucide-icon [img]="codeIcon" class="w-3.5 h-3.5" />
+    </button>
+    @if (exibirPreview()) {
+      <button
+        type="button"
+        (click)="alternarPreview()"
+        class="ml-auto text-xs px-2 py-1 rounded-lg border border-[var(--color-border)] text-[var(--color-text-muted)] hover:bg-[var(--color-surface-muted)]"
+      >
+        {{ mostrarPreview() ? 'Ocultar preview' : 'Preview' }}
+      </button>
+    }
+  </div>
+
+  <textarea
+    #textarea
+    [formControl]="control()"
+    [rows]="rows()"
+    [placeholder]="placeholder()"
+    class="w-full bg-[var(--color-bg-base)] border border-[var(--color-border)] rounded-xl px-3 py-2 text-sm text-[var(--color-text)] placeholder:text-[var(--color-text-subtle)] resize-y min-h-[6rem] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] font-mono"
+  ></textarea>
+
+  <!-- <p class="text-[11px] text-[var(--color-text-faint)] m-0">
+    Formatacao WhatsApp: *negrito* · _italico_ · ~riscado~ · ```monoespaco```
+  </p> -->
+
+  @if (exibirPreview() && mostrarPreview()) {
+    <div class="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] px-3 py-2">
+      <p class="text-[11px] font-semibold text-[var(--color-text-muted)] m-0 mb-1">Preview</p>
+      <div class="text-sm text-[var(--color-text)] whitespace-pre-wrap break-words" [innerHTML]="previewHtml()"></div>
+    </div>
+  }
+</div>

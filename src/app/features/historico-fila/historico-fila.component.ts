@@ -5,19 +5,24 @@ import { RouterModule } from '@angular/router';
 import {
   ChevronDown,
   ChevronUp,
+  LayoutList,
+  LayoutPanelLeft,
   LoaderCircle,
   LucideAngularModule,
   Radio,
   RefreshCw,
   Search,
+  Users,
 } from 'lucide-angular';
 import { Subscription, timer } from 'rxjs';
 
 import { NotificacaoService } from '../../core/services/notificacao.service';
+import { OrganizacaoConfiguracaoService } from '../../core/services/organizacao-configuracao.service';
 import { CommandDialogService } from '../../core/services/command-dialog.service';
 import { NotificacaoFilaEventsService } from '../../core/http/notificacao-fila-events.service';
 import { AuthService } from '../../core/auth/auth.service';
 import { EmptyStateComponent } from '../../shared/components/empty-state/empty-state.component';
+import { FilaProgressoPainelComponent } from '../../shared/components/fila-progresso-painel/fila-progresso-painel.component';
 import { usePaginatedTable } from '../../shared/helper/paginated-table.state';
 import { formatCanal, canalUnicoUi } from '../../shared/helper/channel.utils';
 import { formatDateTimePtBr } from '../../shared/helper/date.utils';
@@ -34,14 +39,35 @@ import {
 } from '../../shared/labels/whatsapp-operacional.labels';
 import { CanalNotificacao, FilaNotificacaoItemDTO, FilaResumoResponseDTO, StatusNotificacao } from '../../shared/types/dtos';
 
+type ModoExibicaoFila = 'lista' | 'fila' | 'contatos';
+
+interface GrupoContatoFila {
+  chave: string;
+  canal: CanalNotificacao;
+  destinatario: string;
+  rotulo: string;
+  total: number;
+  pendentes: number;
+  falhas: number;
+  ultimoEnvio: string;
+  itens: FilaNotificacaoItemDTO[];
+}
+
 @Component({
   selector: 'app-historico-fila',
   standalone: true,
-  imports: [CommonModule, RouterModule, LucideAngularModule, EmptyStateComponent],
+  imports: [
+    CommonModule,
+    RouterModule,
+    LucideAngularModule,
+    EmptyStateComponent,
+    FilaProgressoPainelComponent,
+  ],
   templateUrl: './historico-fila.component.html',
 })
 export class HistoricoFilaComponent implements OnInit, OnDestroy {
   private readonly notificacaoService = inject(NotificacaoService);
+  private readonly orgConfigService = inject(OrganizacaoConfiguracaoService);
   private readonly commandDialog = inject(CommandDialogService);
   private readonly filaEventsService = inject(NotificacaoFilaEventsService);
   private readonly authService = inject(AuthService);
@@ -60,11 +86,19 @@ export class HistoricoFilaComponent implements OnInit, OnDestroy {
   protected readonly chevronDownIcon = ChevronDown;
   protected readonly chevronUpIcon = ChevronUp;
   protected readonly aoVivoIcon = Radio;
+  protected readonly listaIcon = LayoutList;
+  protected readonly filaIcon = LayoutPanelLeft;
+  protected readonly contatosIcon = Users;
+
+  readonly modoExibicao = signal<ModoExibicaoFila>('lista');
+  readonly delayMinSegundos = signal<number | null>(null);
+  readonly delayMaxSegundos = signal<number | null>(null);
 
   readonly table = usePaginatedTable(10);
   readonly itens = signal<FilaNotificacaoItemDTO[]>([]);
   readonly erro = signal<string | null>(null);
   readonly expandidos = signal<Set<number>>(new Set());
+  readonly gruposExpandidos = signal<Set<string>>(new Set());
 
   readonly canalUnico = canalUnicoUi();
   readonly filtroDestinatario = signal('');
@@ -137,6 +171,39 @@ export class HistoricoFilaComponent implements OnInit, OnDestroy {
     return this.itensFiltrados().slice(inicio, fim);
   });
 
+  readonly itensFilaAtivos = computed(() =>
+    this.itensFiltrados()
+      .filter((item) =>
+        ['PENDENTE', 'PROCESSANDO', 'FALHOU', 'BLOQUEADA'].includes(item.status),
+      )
+      .sort((a, b) => {
+        const peso = (status: StatusNotificacao) => {
+          if (status === 'PROCESSANDO') return 0;
+          if (status === 'PENDENTE') return 1;
+          return 2;
+        };
+        const diff = peso(a.status) - peso(b.status);
+        if (diff !== 0) {
+          return diff;
+        }
+        return new Date(b.criadoEm).getTime() - new Date(a.criadoEm).getTime();
+      }),
+  );
+
+  readonly gruposContato = computed(() => this.agruparPorContato(this.itensFiltrados()));
+
+  readonly totalGrupos = computed(() => this.gruposContato().length);
+
+  readonly totalPaginasGrupos = computed(() =>
+    Math.max(1, Math.ceil(this.totalGrupos() / this.table.tamanhoPagina())),
+  );
+
+  readonly gruposPaginados = computed(() => {
+    const inicio = this.table.paginaAtual() * this.table.tamanhoPagina();
+    const fim = inicio + this.table.tamanhoPagina();
+    return this.gruposContato().slice(inicio, fim);
+  });
+
   readonly resumoStatus = computed(() => {
     const contagem = new Map<StatusNotificacao, number>();
 
@@ -161,7 +228,15 @@ export class HistoricoFilaComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.carregarFila();
     this.carregarResumo();
+    this.carregarConfiguracaoEnvio();
     this.iniciarAoVivo();
+  }
+
+  selecionarModoExibicao(modo: ModoExibicaoFila): void {
+    this.modoExibicao.set(modo);
+    this.table.paginaAtual.set(0);
+    this.expandidos.set(new Set());
+    this.gruposExpandidos.set(new Set());
   }
 
   ngOnDestroy(): void {
@@ -214,6 +289,15 @@ export class HistoricoFilaComponent implements OnInit, OnDestroy {
   private carregarResumo(): void {
     this.notificacaoService.resumoFila().subscribe({
       next: (resumo) => this.resumoFila.set(resumo),
+    });
+  }
+
+  private carregarConfiguracaoEnvio(): void {
+    this.orgConfigService.buscar().subscribe({
+      next: (config) => {
+        this.delayMinSegundos.set(config.whatsappDelayMinSegundos);
+        this.delayMaxSegundos.set(config.whatsappDelayMaxSegundos);
+      },
     });
   }
 
@@ -297,8 +381,16 @@ export class HistoricoFilaComponent implements OnInit, OnDestroy {
     return Boolean(this.filtroDestinatario() || this.filtroCanal() || this.filtroStatus());
   }
 
+  totalPaginasExibicao(): number {
+    return this.modoExibicao() === 'contatos' ? this.totalPaginasGrupos() : this.totalPaginas();
+  }
+
+  totalElementosExibicao(): number {
+    return this.modoExibicao() === 'contatos' ? this.totalGrupos() : this.totalElementos();
+  }
+
   proximaPagina(): void {
-    if (this.table.paginaAtual() + 1 >= this.totalPaginas()) return;
+    if (this.table.paginaAtual() + 1 >= this.totalPaginasExibicao()) return;
     this.table.paginaAtual.update((page) => page + 1);
   }
 
@@ -327,6 +419,88 @@ export class HistoricoFilaComponent implements OnInit, OnDestroy {
 
   estaExpandido(id: number): boolean {
     return this.expandidos().has(id);
+  }
+
+  toggleGrupoContato(chave: string): void {
+    this.gruposExpandidos.update((atual) => {
+      const proximo = new Set(atual);
+      if (proximo.has(chave)) {
+        proximo.delete(chave);
+      } else {
+        proximo.add(chave);
+      }
+      return proximo;
+    });
+  }
+
+  grupoExpandido(chave: string): boolean {
+    return this.gruposExpandidos().has(chave);
+  }
+
+  iniciaisContato(rotulo: string): string {
+    const limpo = rotulo.replace(/\D/g, '');
+    if (limpo.length >= 2) {
+      return limpo.slice(-2);
+    }
+    return rotulo.slice(0, 2).toUpperCase() || '?';
+  }
+
+  private agruparPorContato(itens: FilaNotificacaoItemDTO[]): GrupoContatoFila[] {
+    const mapa = new Map<string, GrupoContatoFila>();
+
+    for (const item of itens) {
+      const destinatarioCanonico =
+        item.canal === 'WHATSAPP'
+          ? normalizeBrazilWhatsappMobile(item.destinatario)
+          : item.destinatario.trim().toLowerCase();
+      const chave = `${item.canal}:${destinatarioCanonico || item.destinatario}`;
+      const rotulo = formatDestinatario(item.canal, item.destinatario);
+      const existente = mapa.get(chave);
+
+      if (!existente) {
+        mapa.set(chave, {
+          chave,
+          canal: item.canal,
+          destinatario: item.destinatario,
+          rotulo,
+          total: 1,
+          pendentes: this.ehStatusAtivo(item.status) ? 1 : 0,
+          falhas: this.ehStatusFalha(item.status) ? 1 : 0,
+          ultimoEnvio: item.criadoEm,
+          itens: [item],
+        });
+        continue;
+      }
+
+      existente.total += 1;
+      if (this.ehStatusAtivo(item.status)) {
+        existente.pendentes += 1;
+      }
+      if (this.ehStatusFalha(item.status)) {
+        existente.falhas += 1;
+      }
+      if (new Date(item.criadoEm).getTime() > new Date(existente.ultimoEnvio).getTime()) {
+        existente.ultimoEnvio = item.criadoEm;
+      }
+      existente.itens.push(item);
+    }
+
+    return Array.from(mapa.values())
+      .map((grupo) => ({
+        ...grupo,
+        itens: [...grupo.itens].sort(
+          (a, b) => new Date(b.criadoEm).getTime() - new Date(a.criadoEm).getTime(),
+        ),
+      }))
+      .sort((a, b) => new Date(b.ultimoEnvio).getTime() - new Date(a.ultimoEnvio).getTime());
+  }
+
+  private ehStatusAtivo(status: StatusNotificacao): boolean {
+    return status === 'PENDENTE' || status === 'PROCESSANDO';
+  }
+
+  private ehStatusFalha(status: StatusNotificacao): boolean {
+    return status === 'FALHOU' || status === 'BLOQUEADA' || status === 'CANCELADA';
   }
 
   formatarDestinatario = formatDestinatario;

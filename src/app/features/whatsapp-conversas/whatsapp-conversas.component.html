@@ -43,6 +43,15 @@
     <div class="flex items-center gap-2 shrink-0">
       <button
         type="button"
+        (click)="abrirEnvioLote()"
+        [disabled]="!sessaoConectada()"
+        class="inline-flex items-center gap-1.5 text-[13px] px-3 py-1.5 rounded-[10px] border border-[var(--color-primary)] bg-[var(--color-primary)] text-[var(--color-bg-base)] hover:bg-[var(--color-primary-hover)] disabled:opacity-50 font-semibold"
+      >
+        <lucide-icon [img]="plusIcon" class="w-3.5 h-3.5" />
+        Envio em lote
+      </button>
+      <button
+        type="button"
         (click)="carregarStatusSessao()"
         [disabled]="carregandoStatus()"
         class="inline-flex items-center gap-1.5 text-[13px] px-3 py-1.5 rounded-[10px] border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] hover:bg-[var(--color-surface-muted)] disabled:opacity-50"
@@ -104,7 +113,7 @@
       </div>
 
       <!-- Filtros da lista -->
-      <div class="px-4 pb-2 flex flex-wrap gap-1.5 shrink-0">
+      <div class="px-4 pb-2 flex flex-wrap items-center gap-1.5 shrink-0">
         @for (filtro of filtrosPainel; track filtro.id) {
           <button
             type="button"
@@ -120,7 +129,32 @@
             {{ filtro.label }}
           </button>
         }
+        <button
+          type="button"
+          (click)="alternarModoSelecao()"
+          class="text-xs px-2.5 py-1 rounded-full border transition-colors ml-auto"
+          [class.bg-[var(--color-text)]]="modoSelecao()"
+          [class.text-[var(--color-bg-base)]]="modoSelecao()"
+          [class.border-[var(--color-text)]]="modoSelecao()"
+          [class.bg-[var(--color-surface)]]="!modoSelecao()"
+          [class.text-[var(--color-text-muted)]]="!modoSelecao()"
+          [class.border-[var(--color-border)]]="!modoSelecao()"
+        >
+          {{ modoSelecao() ? 'Cancelar selecao' : 'Selecionar' }}
+        </button>
       </div>
+
+      @if (modoSelecao() && totalSelecionados() > 0) {
+        <div class="px-4 pb-2 shrink-0">
+          <button
+            type="button"
+            (click)="acaoComSelecionados()"
+            class="w-full text-xs font-semibold px-3 py-2 rounded-xl bg-[var(--color-primary)] text-[var(--color-bg-base)] hover:bg-[var(--color-primary-hover)]"
+          >
+            {{ rotuloAcaoSelecionados() }}
+          </button>
+        </div>
+      }
 
       <!-- Lista de conversas -->
       <div class="flex-1 min-h-0 overflow-y-auto">
@@ -149,6 +183,17 @@
                   [class.bg-[var(--color-surface-muted)]]="conversaEstaSelecionada(conversa)"
                   [class.bg-[var(--color-surface-muted)]/30]="!conversaEstaSelecionada(conversa) && conversa.naoLida"
                 >
+                  @if (modoSelecao()) {
+                    <span
+                      class="shrink-0 text-[var(--color-primary-soft)]"
+                      (click)="$event.stopPropagation(); toggleSelecaoConversa(conversa)"
+                    >
+                      <lucide-icon
+                        [img]="conversaMarcada(conversa) ? checkSquareIcon : squareIcon"
+                        class="w-4 h-4"
+                      />
+                    </span>
+                  }
                   <div
                     class="w-9 h-9 rounded-full shrink-0 flex items-center justify-center text-[13px] font-semibold bg-[var(--color-success-bg)] text-[var(--color-success)]"
                     [class.bg-[var(--color-primary)]/10]="!conversa.prontoParaEnvioWhatsapp"
@@ -336,20 +381,39 @@
                 >
                   <div
                     class="max-w-[75%] rounded-2xl px-3 py-2 shadow-sm"
-                    [class.bg-[var(--color-primary)]]="mensagem.direcao === 'OUTBOUND'"
+                    [class.bg-[var(--color-primary)]]="mensagem.direcao === 'OUTBOUND' && !mensagemFalhouEnvio(mensagem)"
                     [class.text-white]="mensagem.direcao === 'OUTBOUND'"
                     [class.bg-[var(--color-surface)]]="mensagem.direcao === 'INBOUND'"
                     [class.text-[var(--color-text)]]="mensagem.direcao === 'INBOUND'"
                     [class.border]="mensagem.direcao === 'INBOUND'"
                     [class.border-[var(--color-border)]]="mensagem.direcao === 'INBOUND'"
+                    [class.opacity-85]="mensagemEmProcessamento(mensagem)"
+                    [class.ring-1]="mensagemEmProcessamento(mensagem)"
+                    [class.ring-white/30]="mensagemEmProcessamento(mensagem)"
+                    [class.bg-[var(--color-danger)]]="mensagemFalhouEnvio(mensagem)"
                   >
-                    <p class="text-sm m-0 whitespace-pre-wrap break-words">{{ conteudoMensagem(mensagem) }}</p>
+                    @if (mensagemExibeFormatacao(mensagem)) {
+                      <div
+                        class="text-sm m-0 break-words [&_strong]:font-semibold"
+                        [innerHTML]="conteudoMensagem(mensagem) | whatsappHtml: mensagem.direcao === 'OUTBOUND'"
+                      ></div>
+                    } @else {
+                      <p class="text-sm m-0 whitespace-pre-wrap break-words">{{ conteudoMensagem(mensagem) }}</p>
+                    }
                     <p
-                      class="text-[10px] m-0 mt-1 text-right"
-                      [class.text-white/70]="mensagem.direcao === 'OUTBOUND'"
+                      class="text-[10px] m-0 mt-1 text-right flex items-center justify-end gap-1"
+                      [class.text-white/70]="mensagem.direcao === 'OUTBOUND' && !mensagemFalhouEnvio(mensagem)"
+                      [class.text-white]="mensagemFalhouEnvio(mensagem)"
                       [class.text-[var(--color-text-faint)]]="mensagem.direcao === 'INBOUND'"
                     >
-                      {{ dataMensagem(mensagem) }}
+                      @if (mensagemEmProcessamento(mensagem)) {
+                        <lucide-icon [img]="clockIcon" class="w-3 h-3 animate-pulse" />
+                        <span>{{ rotuloStatusEnvio(mensagem) }}</span>
+                      } @else if (mensagemFalhouEnvio(mensagem)) {
+                        <span>{{ rotuloStatusEnvio(mensagem) }}</span>
+                      } @else {
+                        <span>{{ dataMensagem(mensagem) }}</span>
+                      }
                     </p>
                   </div>
                 </div>
@@ -357,12 +421,40 @@
             </div>
           }
         </div>
+
+        <!-- Composer individual -->
+        <div class="shrink-0 border-t border-[var(--color-border)] px-4 py-3 bg-[var(--color-surface)]">
+          @if (!sessaoConectada()) {
+            <p class="text-xs text-[var(--color-text-muted)] m-0 text-center">
+              Conecte o WhatsApp para enviar mensagens nesta conversa.
+            </p>
+          } @else {
+            <form [formGroup]="formChat" (ngSubmit)="enviarMensagemChat()" class="flex flex-col gap-2">
+              <app-whatsapp-editor-mensagem [control]="formChat.controls.mensagem" [rows]="3" />
+              <div class="flex justify-end">
+                <button
+                  type="submit"
+                  [disabled]="enviandoMensagem() || formChat.invalid"
+                  class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-xl bg-[var(--color-primary)] text-[var(--color-bg-base)] hover:bg-[var(--color-primary-hover)] disabled:opacity-50"
+                >
+                  @if (enviandoMensagem()) {
+                    <lucide-icon [img]="loaderIcon" class="w-4 h-4 animate-spin" />
+                    Enviando...
+                  } @else {
+                    <lucide-icon [img]="sendIcon" class="w-4 h-4" />
+                    Enviar
+                  }
+                </button>
+              </div>
+            </form>
+          }
+        </div>
       } @else {
         <div class="flex-1 flex flex-col items-center justify-center text-center px-6">
           <lucide-icon [img]="messageIcon" class="w-12 h-12 text-[var(--color-text-faint)] mb-3" />
           <p class="text-[15px] font-medium text-[var(--color-text)] m-0">Selecione uma conversa</p>
           <p class="text-[13px] text-[var(--color-text-muted)] m-0 mt-1 max-w-sm">
-            Escolha um contato na lista para ver o historico de mensagens recebidas e enviadas.
+            Escolha um contato na lista para ver o historico e enviar mensagens pelo chat.
           </p>
         </div>
       }
@@ -445,5 +537,14 @@
       }
     </div>
   </details>
+
+  <app-whatsapp-nova-mensagem-modal
+    [aberto]="modalNovaMensagemAberto()"
+    [sessaoConectada]="sessaoConectada()"
+    [conversasDisponiveis]="conversas()"
+    [destinatariosIniciais]="destinatariosModal()"
+    (fechado)="fecharNovaMensagem()"
+    (enviado)="onLoteEnviado($event)"
+  />
 
 </div>

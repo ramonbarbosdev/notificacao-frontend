@@ -1,32 +1,45 @@
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import {
   ArrowLeft,
   Check,
+  CheckSquare,
   ChevronLeft,
   ChevronRight,
+  Clock,
   CloudDownload,
   LoaderCircle,
   LucideAngularModule,
   MessageSquare,
+  Plus,
   RefreshCw,
   Search,
+  Send,
+  Square,
   Trash2,
 } from 'lucide-angular';
 import { Subscription } from 'rxjs';
 
 import { AuthService } from '../../core/auth/auth.service';
 import { WhatsappEventsService } from '../../core/http/whatsapp-events.service';
+import { NotificacaoFilaEventsService } from '../../core/http/notificacao-fila-events.service';
 import { CommandDialogService } from '../../core/services/command-dialog.service';
 import { WhatsappConversasService } from '../../core/services/whatsapp-conversas.service';
 import { WhatsappService } from '../../core/services/whatsapp.service';
 import { formatDateTimePtBr, formatRelativeTimePtBr } from '../../shared/helper/date.utils';
 import { usePaginatedTable } from '../../shared/helper/paginated-table.state';
 import { formatPhone, formatPhoneNationalDigits, normalizeBrazilWhatsappMobile } from '../../shared/helper/phone.utils';
-import { WhatsappConversaAba, WhatsappConversaResponse, WhatsappMensagemDirecao, WhatsappMensagemResponse } from '../../shared/types/dtos';
-import { ehWhatsappConectado } from '../whatsapp/whatsapp.helpers';
+import { WhatsappConversaAba, WhatsappConversaResponse, WhatsappMensagemDirecao, WhatsappMensagemResponse, StatusNotificacao, EnviarMensagemResponse } from '../../shared/types/dtos';
+import { WhatsappEditorMensagemComponent } from '../../shared/components/whatsapp-editor-mensagem/whatsapp-editor-mensagem.component';
+import { WhatsappHtmlPipe } from '../../shared/pipes/whatsapp-html.pipe';
+import { ehWhatsappConectado, extrairMensagemErro } from '../whatsapp/whatsapp.helpers';
+import {
+  DestinatarioNovaMensagem,
+  WhatsappNovaMensagemModalComponent,
+} from './whatsapp-nova-mensagem-modal/whatsapp-nova-mensagem-modal.component';
 
 type FiltroProntoWhatsapp = '' | 'true' | 'false';
 type FiltroNaoLida = '' | 'true';
@@ -34,6 +47,12 @@ type FiltroUltimaDirecao = '' | WhatsappMensagemDirecao;
 type FiltroPainel = 'todos' | 'pendente' | 'falha';
 type SituacaoConversa = 'ok' | 'pendente' | 'falha';
 type PainelMobile = 'lista' | 'chat';
+type StatusEnvioChat = 'ENFILEIRADA' | 'PROCESSANDO' | 'ENVIADA' | 'FALHOU';
+
+interface MensagemChatView extends WhatsappMensagemResponse {
+  idNotificacaoPendente?: number;
+  statusEnvioChat?: StatusEnvioChat;
+}
 
 interface AbaConversa {
   id: WhatsappConversaAba;
@@ -55,17 +74,28 @@ interface BadgeConversa {
 @Component({
   selector: 'app-whatsapp-conversas',
   standalone: true,
-  imports: [CommonModule, RouterModule, LucideAngularModule],
+  imports: [
+    CommonModule,
+    RouterModule,
+    ReactiveFormsModule,
+    LucideAngularModule,
+    WhatsappEditorMensagemComponent,
+    WhatsappHtmlPipe,
+    WhatsappNovaMensagemModalComponent,
+  ],
   templateUrl: './whatsapp-conversas.component.html',
 })
 export class WhatsappConversasComponent implements OnInit, OnDestroy {
+  private readonly fb = inject(FormBuilder);
   private readonly conversasService = inject(WhatsappConversasService);
   private readonly whatsappService = inject(WhatsappService);
   private readonly commandDialog = inject(CommandDialogService);
   private readonly whatsappEventsService = inject(WhatsappEventsService);
+  private readonly filaEventsService = inject(NotificacaoFilaEventsService);
   private readonly authService = inject(AuthService);
 
   private eventosSubscription: Subscription | null = null;
+  private filaEventsSubscription: Subscription | null = null;
 
   protected readonly refreshIcon = RefreshCw;
   protected readonly loaderIcon = LoaderCircle;
@@ -77,6 +107,15 @@ export class WhatsappConversasComponent implements OnInit, OnDestroy {
   protected readonly chevronRightIcon = ChevronRight;
   protected readonly syncIcon = CloudDownload;
   protected readonly arrowLeftIcon = ArrowLeft;
+  protected readonly plusIcon = Plus;
+  protected readonly sendIcon = Send;
+  protected readonly clockIcon = Clock;
+  protected readonly checkSquareIcon = CheckSquare;
+  protected readonly squareIcon = Square;
+
+  readonly formChat = this.fb.group({
+    mensagem: ['', [Validators.required, Validators.minLength(1)]],
+  });
 
   readonly filtrosPainel: FiltroPainelOpcao[] = [
     { id: 'todos', label: 'Todos' },
@@ -115,12 +154,17 @@ export class WhatsappConversasComponent implements OnInit, OnDestroy {
   readonly filtroUltimaDirecao = signal<FiltroUltimaDirecao>('');
 
   readonly conversaSelecionada = signal<WhatsappConversaResponse | null>(null);
-  readonly mensagens = signal<WhatsappMensagemResponse[]>([]);
+  readonly mensagens = signal<MensagemChatView[]>([]);
   readonly carregandoMensagens = signal(false);
   readonly carregandoMais = signal(false);
   readonly fimHistorico = signal(false);
   readonly sincronizandoHistorico = signal(false);
   readonly painelMobile = signal<PainelMobile>('lista');
+  readonly modalNovaMensagemAberto = signal(false);
+  readonly modoSelecao = signal(false);
+  readonly telefonesSelecionados = signal<Set<string>>(new Set());
+  readonly destinatariosModal = signal<DestinatarioNovaMensagem[]>([]);
+  readonly enviandoMensagem = signal(false);
 
   readonly abaDescricao = computed(
     () => this.abas.find((item) => item.id === this.abaAtiva())?.descricao ?? '',
@@ -206,10 +250,12 @@ export class WhatsappConversasComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.carregarStatusSessao();
     this.conectarEventos();
+    this.conectarFilaEventos();
   }
 
   ngOnDestroy(): void {
     this.eventosSubscription?.unsubscribe();
+    this.filaEventsSubscription?.unsubscribe();
   }
 
   carregar(): void {
@@ -266,11 +312,158 @@ export class WhatsappConversasComponent implements OnInit, OnDestroy {
   }
 
   selecionarConversa(conversa: WhatsappConversaResponse): void {
+    if (this.modoSelecao()) {
+      this.toggleSelecaoConversa(conversa);
+      return;
+    }
+
     this.conversaSelecionada.set(conversa);
     this.painelMobile.set('chat');
     this.mensagemSucesso.set(null);
     this.erro.set(null);
+    this.formChat.reset({ mensagem: '' });
     this.carregarThread(conversa.telefone);
+  }
+
+  enviarMensagemChat(event?: Event): void {
+    event?.preventDefault();
+    const conversa = this.conversaSelecionadaAtiva();
+    if (!conversa) {
+      return;
+    }
+
+    if (!this.sessaoConectada()) {
+      this.erro.set('Conecte o WhatsApp antes de enviar mensagens.');
+      return;
+    }
+
+    if (this.formChat.invalid) {
+      this.formChat.markAllAsTouched();
+      return;
+    }
+
+    const mensagem = this.formChat.controls.mensagem.value?.trim() ?? '';
+    if (!mensagem) {
+      return;
+    }
+
+    this.enviandoMensagem.set(true);
+    this.erro.set(null);
+
+    const mensagemPendente = this.criarMensagemEnfileirada(
+      conversa.telefone,
+      mensagem,
+      null,
+      'PROCESSANDO',
+    );
+    this.mensagens.update((lista) => [...lista, mensagemPendente]);
+    this.rolarParaFimTimeline();
+
+    this.whatsappService
+      .enviarMensagem({
+        telefone: normalizeBrazilWhatsappMobile(conversa.telefone),
+        mensagem,
+      })
+      .subscribe({
+        next: (resposta) => {
+          this.enviandoMensagem.set(false);
+          this.formChat.reset({ mensagem: '' });
+          this.confirmarMensagemEnfileirada(mensagemPendente, resposta);
+          this.mensagemSucesso.set('Mensagem enfileirada com sucesso.');
+          this.carregar();
+          this.rolarParaFimTimeline();
+        },
+        error: (err: HttpErrorResponse) => {
+          this.enviandoMensagem.set(false);
+          this.removerMensagemPendente(mensagemPendente);
+          this.erro.set(extrairMensagemErro(err, 'Nao foi possivel enfileirar a mensagem.'));
+        },
+      });
+  }
+
+  abrirEnvioLote(destinatarios: DestinatarioNovaMensagem[] = []): void {
+    if (!this.sessaoConectada()) {
+      this.erro.set('Conecte o WhatsApp antes de enviar mensagens.');
+      return;
+    }
+
+    this.destinatariosModal.set(destinatarios);
+    this.modalNovaMensagemAberto.set(true);
+    this.erro.set(null);
+  }
+
+  fecharNovaMensagem(): void {
+    this.modalNovaMensagemAberto.set(false);
+    this.destinatariosModal.set([]);
+  }
+
+  onLoteEnviado(total: number): void {
+    this.mensagemSucesso.set(`${total} mensagens enfileiradas com sucesso.`);
+    this.modoSelecao.set(false);
+    this.telefonesSelecionados.set(new Set());
+    this.carregar();
+  }
+
+  alternarModoSelecao(): void {
+    const ativo = !this.modoSelecao();
+    this.modoSelecao.set(ativo);
+    if (!ativo) {
+      this.telefonesSelecionados.set(new Set());
+    }
+  }
+
+  toggleSelecaoConversa(conversa: WhatsappConversaResponse): void {
+    const canonico = normalizeBrazilWhatsappMobile(conversa.telefone);
+    const atual = new Set(this.telefonesSelecionados());
+
+    if (atual.has(canonico)) {
+      atual.delete(canonico);
+    } else {
+      atual.add(canonico);
+    }
+
+    this.telefonesSelecionados.set(atual);
+  }
+
+  conversaMarcada(conversa: WhatsappConversaResponse): boolean {
+    return this.telefonesSelecionados().has(normalizeBrazilWhatsappMobile(conversa.telefone));
+  }
+
+  acaoComSelecionados(): void {
+    const selecionados = this.telefonesSelecionados();
+    const conversasSelecionadas = this.conversas().filter((c) =>
+      selecionados.has(normalizeBrazilWhatsappMobile(c.telefone)),
+    );
+
+    if (conversasSelecionadas.length === 0) {
+      this.erro.set('Selecione ao menos um contato.');
+      return;
+    }
+
+    if (conversasSelecionadas.length === 1) {
+      this.modoSelecao.set(false);
+      this.telefonesSelecionados.set(new Set());
+      this.selecionarConversa(conversasSelecionadas[0]);
+      return;
+    }
+
+    const destinatarios = conversasSelecionadas.map((c) => ({
+      telefone: c.telefone,
+      nmContato: c.nmContato,
+    }));
+    this.abrirEnvioLote(destinatarios);
+  }
+
+  rotuloAcaoSelecionados(): string {
+    const total = this.totalSelecionados();
+    if (total === 1) {
+      return 'Abrir conversa';
+    }
+    return `Envio em lote (${total})`;
+  }
+
+  totalSelecionados(): number {
+    return this.telefonesSelecionados().size;
   }
 
   fecharChat(): void {
@@ -278,6 +471,7 @@ export class WhatsappConversasComponent implements OnInit, OnDestroy {
     this.mensagens.set([]);
     this.fimHistorico.set(false);
     this.painelMobile.set('lista');
+    this.formChat.reset({ mensagem: '' });
   }
 
   voltarParaLista(): void {
@@ -313,11 +507,43 @@ export class WhatsappConversasComponent implements OnInit, OnDestroy {
     return mensagem.direcao === 'OUTBOUND' ? 'Mensagem enviada' : 'Mensagem recebida';
   }
 
-  trackMensagem(index: number, mensagem: WhatsappMensagemResponse): string {
+  mensagemExibeFormatacao(mensagem: WhatsappMensagemResponse): boolean {
+    return Boolean(mensagem.conteudo?.trim());
+  }
+
+  mensagemEmProcessamento(mensagem: MensagemChatView): boolean {
+    return (
+      mensagem.direcao === 'OUTBOUND' &&
+      (mensagem.statusEnvioChat === 'ENFILEIRADA' || mensagem.statusEnvioChat === 'PROCESSANDO')
+    );
+  }
+
+  mensagemFalhouEnvio(mensagem: MensagemChatView): boolean {
+    return mensagem.direcao === 'OUTBOUND' && mensagem.statusEnvioChat === 'FALHOU';
+  }
+
+  rotuloStatusEnvio(mensagem: MensagemChatView): string {
+    switch (mensagem.statusEnvioChat) {
+      case 'PROCESSANDO':
+        return 'Enviando...';
+      case 'ENFILEIRADA':
+        return 'Na fila';
+      case 'FALHOU':
+        return 'Falhou';
+      default:
+        return '';
+    }
+  }
+
+  trackMensagem(index: number, mensagem: MensagemChatView): string {
     return this.chaveMensagem(mensagem, index);
   }
 
-  private chaveMensagem(mensagem: WhatsappMensagemResponse, index = 0): string {
+  private chaveMensagem(mensagem: MensagemChatView, index = 0): string {
+    if (mensagem.idNotificacaoPendente != null) {
+      return `pending:${mensagem.idNotificacaoPendente}`;
+    }
+
     if (mensagem.idMensagem != null) {
       return `id:${mensagem.idMensagem}`;
     }
@@ -366,14 +592,16 @@ export class WhatsappConversasComponent implements OnInit, OnDestroy {
       50,
     ).subscribe({
       next: (resposta) => {
-        const existentes = new Set(mensagensAtuais.map((item, index) => this.chaveMensagem(item, index)));
+        const historicas = mensagensAtuais.filter((item) => item.idNotificacaoPendente == null);
+        const pendentes = mensagensAtuais.filter((item) => item.idNotificacaoPendente != null);
+        const existentes = new Set(historicas.map((item, index) => this.chaveMensagem(item, index)));
 
         const novas = resposta.mensagens.filter(
           (item, index) => !existentes.has(this.chaveMensagem(item, index)),
         );
 
         if (novas.length > 0) {
-          this.mensagens.set([...novas, ...mensagensAtuais]);
+          this.mensagens.set([...novas, ...historicas, ...pendentes]);
           queueMicrotask(() => {
             if (!elemento) {
               return;
@@ -412,10 +640,11 @@ export class WhatsappConversasComponent implements OnInit, OnDestroy {
 
     this.conversasService.listarMensagens(telefone, 0, 50).subscribe({
       next: (page) => {
-        this.mensagens.set(page.data);
+        this.mensagens.set(this.mesclarMensagensServidor(page.data));
         this.fimHistorico.set(page.data.length === 0 || page.data.length < page.pageSize);
         this.carregandoMensagens.set(false);
         this.sincronizandoHistorico.set(false);
+        this.rolarParaFimTimeline();
       },
       error: (err: HttpErrorResponse) => {
         this.erro.set(err.error?.message ?? err.error?.mensagem ?? 'Nao foi possivel carregar as mensagens.');
@@ -824,6 +1053,173 @@ export class WhatsappConversasComponent implements OnInit, OnDestroy {
     this.mensagens.set([]);
     this.conversaSelecionada.set(null);
     this.fimHistorico.set(true);
+  }
+
+  private conectarFilaEventos(): void {
+    const idOrganizacao = this.authService.idOrganizacaoAtual();
+    if (!idOrganizacao) {
+      return;
+    }
+
+    this.filaEventsSubscription?.unsubscribe();
+    this.filaEventsSubscription = this.filaEventsService.conectar(idOrganizacao).subscribe({
+      next: (evento) => {
+        if (!evento.idNotificacao || !evento.status) {
+          return;
+        }
+
+        this.atualizarStatusMensagemEnfileirada(evento.idNotificacao, evento.status);
+
+        const conversa = this.conversaSelecionadaAtiva();
+        if (!conversa) {
+          return;
+        }
+
+        if (['ENVIADA', 'ENTREGUE', 'LIDA'].includes(evento.status)) {
+          this.carregarMensagens(conversa.telefone, false);
+        }
+      },
+    });
+  }
+
+  private criarMensagemEnfileirada(
+    telefone: string,
+    conteudo: string,
+    idNotificacao: number | null,
+    statusEnvioChat: StatusEnvioChat,
+  ): MensagemChatView {
+    const agora = new Date().toISOString();
+    const idPendente = idNotificacao ?? -Date.now();
+
+    return {
+      idMensagem: null,
+      telefone,
+      direcao: 'OUTBOUND',
+      tipo: 'texto',
+      conteudo,
+      status: 'PENDING',
+      idExterno: idNotificacao ? `notif:${idNotificacao}` : `pending:${Math.abs(idPendente)}`,
+      dtEnvio: null,
+      dtCriacao: agora,
+      idNotificacaoPendente: idPendente,
+      statusEnvioChat,
+    };
+  }
+
+  private confirmarMensagemEnfileirada(
+    pendente: MensagemChatView,
+    resposta: EnviarMensagemResponse,
+  ): void {
+    const statusEnvio = this.mapearStatusFilaParaChat(resposta.status);
+
+    this.mensagens.update((lista) =>
+      lista.map((item) => {
+        if (item.idNotificacaoPendente !== pendente.idNotificacaoPendente) {
+          return item;
+        }
+
+        return {
+          ...item,
+          idNotificacaoPendente: resposta.idNotificacao,
+          idExterno: `notif:${resposta.idNotificacao}`,
+          statusEnvioChat: statusEnvio,
+        };
+      }),
+    );
+  }
+
+  private atualizarStatusMensagemEnfileirada(idNotificacao: number, status: StatusNotificacao): void {
+    const statusEnvio = this.mapearStatusFilaParaChat(status);
+    const concluida = ['ENVIADA', 'ENTREGUE', 'LIDA'].includes(status);
+    const falhou = ['FALHOU', 'BLOQUEADA', 'CANCELADA'].includes(status);
+
+    this.mensagens.update((lista) => {
+      const atualizada = lista.map((item) => {
+        if (item.idNotificacaoPendente !== idNotificacao) {
+          return item;
+        }
+
+        if (concluida) {
+          return item;
+        }
+
+        return {
+          ...item,
+          statusEnvioChat: falhou ? 'FALHOU' : statusEnvio,
+          status: falhou ? 'FAILED' : item.status,
+        };
+      });
+
+      if (concluida) {
+        return atualizada.filter((item) => item.idNotificacaoPendente !== idNotificacao);
+      }
+
+      return atualizada;
+    });
+  }
+
+  private removerMensagemPendente(pendente: MensagemChatView): void {
+    this.mensagens.update((lista) =>
+      lista.filter((item) => item.idNotificacaoPendente !== pendente.idNotificacaoPendente),
+    );
+  }
+
+  private mesclarMensagensServidor(servidor: WhatsappMensagemResponse[]): MensagemChatView[] {
+    const pendentes = this.mensagens().filter(
+      (item) =>
+        item.idNotificacaoPendente != null &&
+        !this.pendenteJaConfirmadoNoServidor(item, servidor),
+    );
+
+    return [...servidor, ...pendentes];
+  }
+
+  private pendenteJaConfirmadoNoServidor(
+    pendente: MensagemChatView,
+    servidor: WhatsappMensagemResponse[],
+  ): boolean {
+    if (!pendente.conteudo?.trim()) {
+      return false;
+    }
+
+    const conteudo = pendente.conteudo.trim();
+    const criadoEmPendente = new Date(pendente.dtCriacao).getTime();
+
+    return servidor.some((mensagem) => {
+      if (mensagem.direcao !== 'OUTBOUND' || mensagem.conteudo?.trim() !== conteudo) {
+        return false;
+      }
+
+      const criadoEmServidor = new Date(mensagem.dtCriacao).getTime();
+      return Math.abs(criadoEmServidor - criadoEmPendente) < 5 * 60 * 1000;
+    });
+  }
+
+  private mapearStatusFilaParaChat(status: StatusNotificacao): StatusEnvioChat {
+    if (status === 'PROCESSANDO') {
+      return 'PROCESSANDO';
+    }
+
+    if (['FALHOU', 'BLOQUEADA', 'CANCELADA'].includes(status)) {
+      return 'FALHOU';
+    }
+
+    if (['ENVIADA', 'ENTREGUE', 'LIDA'].includes(status)) {
+      return 'ENVIADA';
+    }
+
+    return 'ENFILEIRADA';
+  }
+
+  private rolarParaFimTimeline(): void {
+    queueMicrotask(() => {
+      const elemento = document.getElementById('whatsapp-timeline');
+      if (!elemento) {
+        return;
+      }
+
+      elemento.scrollTop = elemento.scrollHeight;
+    });
   }
 
   private conectarEventos(): void {

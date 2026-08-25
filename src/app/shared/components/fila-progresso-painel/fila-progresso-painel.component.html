@@ -1,0 +1,77 @@
+<div class="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-[14px] overflow-hidden h-full">
+  <div class="px-[18px] pt-4 pb-3 border-b border-[var(--color-border)]">
+    <span class="block font-mono text-[10.5px] uppercase tracking-[0.08em] text-[var(--color-text-faint)] mb-1">
+      Disparo
+    </span>
+    <div class="flex items-center justify-between gap-2">
+      <h2 class="m-0 text-[15px] font-semibold text-[var(--color-text)]">Fila de envio</h2>
+      @if (aoVivo()) {
+        <span class="inline-flex items-center gap-1 text-[11px] app-text-success font-medium">
+          <lucide-icon [img]="aoVivoIcon" class="w-3 h-3" />
+          ao vivo
+        </span>
+      }
+    </div>
+  </div>
+
+  <div class="px-[18px] py-4 space-y-4">
+    <div>
+      <label class="block text-[11.5px] text-[var(--color-text-muted)] font-medium mb-2">
+        Intervalo entre mensagens
+      </label>
+      <p class="m-0 text-xs text-[var(--color-text)] font-mono">{{ intervaloTexto() }}</p>
+      <p class="m-0 mt-2 text-[11px] text-[var(--color-text-faint)] leading-relaxed">
+        Evita picos de envio que podem sinalizar o numero como spam na sessao do WhatsApp.
+      </p>
+    </div>
+
+    @if (proximoEnvioTexto()) {
+      <div class="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-base)]/40 px-3 py-2.5">
+        <p class="m-0 text-[11px] text-[var(--color-text-faint)] uppercase tracking-wide">Proximo envio</p>
+        <p class="m-0 mt-1 text-sm font-medium app-text-warning">{{ proximoEnvioTexto() }}</p>
+        @if (proximoEnvioEm()) {
+          <p class="m-0 mt-1 text-xs text-[var(--color-text-muted)]">{{ proximoEnvioEm() }}</p>
+        }
+      </div>
+    }
+
+    <div>
+      <label class="block text-[11.5px] text-[var(--color-text-muted)] font-medium mb-2">
+        Progresso da fila
+      </label>
+
+      @if (ticks().length > 0) {
+        <div class="queue-strip" aria-hidden="true">
+          @for (tick of ticks(); track tick.id) {
+            <div [class]="classeTick(tick.estado)"></div>
+          }
+        </div>
+      } @else {
+        <div class="queue-strip" aria-hidden="true">
+          @for (placeholder of [1, 2, 3, 4, 5, 6, 7, 8]; track placeholder) {
+            <div class="queue-tick opacity-40"></div>
+          }
+        </div>
+        <p class="m-0 mt-2 text-[11px] text-[var(--color-text-faint)]">Nenhum item ativo na fila no momento.</p>
+      }
+
+      <div class="flex justify-between gap-3 mt-2.5 text-[11.5px] text-[var(--color-text-muted)]">
+        <span class="app-text-success">
+          enviados <span class="font-mono font-medium">{{ enviados() }}</span>
+        </span>
+        <span class="app-text-warning">
+          na fila <span class="font-mono font-medium">{{ naFila() }}</span>
+        </span>
+        @if (falhas() > 0) {
+          <span class="text-[var(--color-danger)]">
+            falhas <span class="font-mono font-medium">{{ falhas() }}</span>
+          </span>
+        }
+      </div>
+    </div>
+
+    <p class="m-0 text-[11px] text-[var(--color-text-faint)] leading-relaxed">
+      Falhas de entrega (numero invalido, sem WhatsApp) aparecem na lista com opcao de reenviar individualmente.
+    </p>
+  </div>
+</div>
