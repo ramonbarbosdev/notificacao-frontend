@@ -142,7 +142,12 @@
     </div>
 
     <p class="text-center text-[var(--color-text-faint)] text-xs mt-6">
-      © {{ ano }} {{ appNome }} · Todos os direitos reservados
+      © {{ ano }} {{ appNome }} ·
+      <a routerLink="/" class="hover:text-[var(--color-primary-soft)]">Início</a>
+      ·
+      <a routerLink="/privacy-policy" class="hover:text-[var(--color-primary-soft)]">Privacidade</a>
+      ·
+      <a routerLink="/termos-de-uso" class="hover:text-[var(--color-primary-soft)]">Termos</a>
     </p>
   </div>
 </div>

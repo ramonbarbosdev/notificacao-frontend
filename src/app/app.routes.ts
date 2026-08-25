@@ -8,7 +8,38 @@ import {
 } from './core/guards/guards';
 
 export const routes: Routes = [
-  { path: '', redirectTo: '/login', pathMatch: 'full' },
+  {
+    path: '',
+    loadComponent: () =>
+      import('./features/site/site-shell.component').then((m) => m.SiteShellComponent),
+    children: [
+      {
+        path: '',
+        loadComponent: () =>
+          import('./features/site/site-home.component').then((m) => m.SiteHomeComponent),
+      },
+      {
+        path: 'sobre',
+        loadComponent: () =>
+          import('./features/site/site-about.component').then((m) => m.SiteAboutComponent),
+      },
+      {
+        path: 'plataforma',
+        loadComponent: () =>
+          import('./features/site/site-platform.component').then((m) => m.SitePlatformComponent),
+      },
+      {
+        path: 'integracoes',
+        loadComponent: () =>
+          import('./features/site/site-integrations.component').then((m) => m.SiteIntegrationsComponent),
+      },
+      {
+        path: 'contato',
+        loadComponent: () =>
+          import('./features/site/site-contact.component').then((m) => m.SiteContactComponent),
+      },
+    ],
+  },
 
   {
     path: 'login',
@@ -28,6 +59,12 @@ export const routes: Routes = [
     path: 'privacy-policy',
     loadComponent: () =>
       import('./features/legal/privacy-policy.component').then((m) => m.PrivacyPolicyComponent),
+  },
+
+  {
+    path: 'termos-de-uso',
+    loadComponent: () =>
+      import('./features/legal/terms-of-use.component').then((m) => m.TermsOfUseComponent),
   },
 
   {
@@ -231,5 +268,5 @@ export const routes: Routes = [
   { path: 'fila', redirectTo: '/app/fila' },
   { path: 'configuracoes', redirectTo: '/app/configuracoes' },
 
-  { path: '**', redirectTo: '/login' },
+  { path: '**', redirectTo: '' },
 ];

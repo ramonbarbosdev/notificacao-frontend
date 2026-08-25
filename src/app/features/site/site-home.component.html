@@ -1,0 +1,52 @@
+<section class="site-page">
+  <div class="site-hero">
+    <span class="site-eyebrow">{{ empresaNome }}</span>
+    <h1 class="site-title">{{ appNome }}</h1>
+    <p class="site-lead">{{ tagline }}</p>
+
+    <div class="site-actions">
+      <a routerLink="/login" class="site-btn-primary">
+        Acessar plataforma
+        <lucide-icon [img]="arrowIcon" class="w-4 h-4 ml-2 inline-block" />
+      </a>
+      <a routerLink="/plataforma" class="site-btn-ghost">Conhecer recursos</a>
+    </div>
+  </div>
+
+  <div class="site-card-grid">
+    <article class="site-card">
+      <lucide-icon [img]="sendIcon" class="w-6 h-6 text-[var(--color-primary)] mb-3" />
+      <h3>Fila e envios</h3>
+      <p>Dispare notificações individuais ou em lote com controle de ritmo, retry e histórico.</p>
+    </article>
+
+    <article class="site-card">
+      <lucide-icon [img]="cloudIcon" class="w-6 h-6 text-[var(--color-primary)] mb-3" />
+      <h3>WhatsApp Cloud (Meta)</h3>
+      <p>Conecte cada organização ao WABA oficial com Embedded Signup e templates aprovados.</p>
+    </article>
+
+    <article class="site-card">
+      <lucide-icon [img]="layersIcon" class="w-6 h-6 text-[var(--color-primary)] mb-3" />
+      <h3>Multi-organização</h3>
+      <p>Isolamento por tenant, planos, feature flags e configurações independentes.</p>
+    </article>
+
+    <article class="site-card">
+      <lucide-icon [img]="shieldIcon" class="w-6 h-6 text-[var(--color-primary)] mb-3" />
+      <h3>API e segurança</h3>
+      <p>Integração por API key, auditoria e credenciais criptografadas no servidor.</p>
+    </article>
+  </div>
+
+  <div class="mt-12 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6 sm:p-8">
+    <h2 class="site-section-title">Pronto para começar?</h2>
+    <p class="site-lead">
+      Configure sua organização, conecte o WhatsApp e comece a enviar notificações em minutos.
+    </p>
+    <div class="site-actions">
+      <a routerLink="/integracoes" class="site-btn-ghost">Ver integrações</a>
+      <a routerLink="/contato" class="site-btn-primary">Falar com a equipe</a>
+    </div>
+  </div>
+</section>

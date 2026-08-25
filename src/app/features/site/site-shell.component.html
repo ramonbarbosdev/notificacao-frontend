@@ -1,0 +1,104 @@
+<div class="min-h-screen bg-[var(--color-bg-base)] text-[var(--color-text)] flex flex-col">
+  <header
+    class="sticky top-0 z-40 border-b border-[var(--color-border)] bg-[color-mix(in_srgb,var(--color-bg-base)_88%,transparent)] backdrop-blur-md"
+  >
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
+      <a routerLink="/" class="flex items-center gap-2.5 min-w-0" (click)="fecharMenu()">
+        <span
+          class="w-9 h-9 rounded-xl bg-[color-mix(in_srgb,var(--color-primary)_18%,transparent)] flex items-center justify-center shrink-0"
+        >
+          <lucide-icon [img]="brandIcon" class="w-5 h-5 text-[var(--color-primary)]" />
+        </span>
+        <span class="font-semibold text-sm sm:text-base truncate">{{ appNome }}</span>
+      </a>
+
+      <nav class="hidden lg:flex items-center gap-1">
+        @for (item of navItems; track item.path) {
+          <a
+            [routerLink]="item.path"
+            routerLinkActive="site-nav-active"
+            [routerLinkActiveOptions]="{ exact: item.path === '/' }"
+            class="site-nav-link"
+          >
+            {{ item.label }}
+          </a>
+        }
+      </nav>
+
+      <div class="hidden lg:flex items-center gap-3">
+        <a routerLink="/login" class="site-btn-ghost">Entrar</a>
+        <a routerLink="/login" class="site-btn-primary">Acessar plataforma</a>
+      </div>
+
+      <button
+        type="button"
+        class="lg:hidden p-2 rounded-lg border border-[var(--color-border)] text-[var(--color-text-muted)]"
+        (click)="alternarMenu()"
+        aria-label="Abrir menu"
+      >
+        <lucide-icon [img]="menuAberto() ? closeIcon : menuIcon" class="w-5 h-5" />
+      </button>
+    </div>
+
+    @if (menuAberto()) {
+      <div class="lg:hidden border-t border-[var(--color-border)] px-4 py-4 space-y-2">
+        @for (item of navItems; track item.path) {
+          <a
+            [routerLink]="item.path"
+            routerLinkActive="site-nav-active"
+            [routerLinkActiveOptions]="{ exact: item.path === '/' }"
+            class="site-nav-link block"
+            (click)="fecharMenu()"
+          >
+            {{ item.label }}
+          </a>
+        }
+        <div class="pt-3 flex flex-col gap-2">
+          <a routerLink="/login" class="site-btn-ghost text-center" (click)="fecharMenu()">Entrar</a>
+          <a routerLink="/login" class="site-btn-primary text-center" (click)="fecharMenu()">Acessar plataforma</a>
+        </div>
+      </div>
+    }
+  </header>
+
+  <main class="flex-1">
+    <router-outlet />
+  </main>
+
+  <footer class="border-t border-[var(--color-border)] bg-[var(--color-surface)]">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 py-10 grid grid-cols-1 md:grid-cols-3 gap-8">
+      <div>
+        <p class="font-semibold m-0">{{ empresaNome }}</p>
+        <p class="text-sm text-[var(--color-text-muted)] mt-2 m-0">
+          Envio de notificações WhatsApp com fila, templates, API e integração Meta Cloud.
+        </p>
+      </div>
+
+      <div>
+        <p class="text-xs uppercase tracking-wide text-[var(--color-text-faint)] m-0 mb-3">Navegação</p>
+        <ul class="space-y-2 m-0 p-0 list-none">
+          @for (item of navItems; track item.path) {
+            <li>
+              <a [routerLink]="item.path" class="site-footer-link">{{ item.label }}</a>
+            </li>
+          }
+        </ul>
+      </div>
+
+      <div>
+        <p class="text-xs uppercase tracking-wide text-[var(--color-text-faint)] m-0 mb-3">Legal</p>
+        <ul class="space-y-2 m-0 p-0 list-none">
+          @for (item of legalLinks; track item.path) {
+            <li>
+              <a [routerLink]="item.path" class="site-footer-link">{{ item.label }}</a>
+            </li>
+          }
+        </ul>
+      </div>
+    </div>
+
+    <div class="border-t border-[var(--color-border)] py-4 text-center text-xs text-[var(--color-text-faint)]">
+      © {{ ano }} {{ empresaNome }} · Todos os direitos reservados
+    </div>
+  </footer>
+</div>

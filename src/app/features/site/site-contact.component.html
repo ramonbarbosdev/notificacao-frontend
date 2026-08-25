@@ -1,0 +1,41 @@
+<section class="site-page">
+  <span class="site-eyebrow">Contato</span>
+  <h1 class="site-title">Fale com a {{ empresaNome }}</h1>
+  <p class="site-lead">
+    Tire dúvidas sobre planos, integração Meta Cloud, onboarding de organizações ou suporte técnico.
+  </p>
+
+  <div class="site-card-grid">
+    <article class="site-card">
+      <h3>E-mail</h3>
+      <p>
+        <a [href]="mailtoUrl" class="text-[var(--color-primary-soft)] hover:underline">{{ email }}</a>
+      </p>
+    </article>
+
+    <article class="site-card">
+      <h3>WhatsApp</h3>
+      <p>
+        <a [href]="whatsappUrl" target="_blank" rel="noopener noreferrer" class="text-[var(--color-primary-soft)] hover:underline">
+          Enviar mensagem
+        </a>
+      </p>
+    </article>
+
+    <article class="site-card">
+      <h3>Plataforma</h3>
+      <p>
+        Já é cliente?
+        <a routerLink="/login" class="text-[var(--color-primary-soft)] hover:underline">Acesse o painel</a>.
+      </p>
+    </article>
+  </div>
+
+  <div class="mt-8 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6">
+    <h2 class="site-section-title">Onboarding comercial</h2>
+    <p class="site-lead">
+      Para novas organizações, informe nome da empresa, volume estimado de mensagens/mês e se
+      pretende usar Gateway (QR) ou Meta Cloud API.
+    </p>
+  </div>
+</section>
