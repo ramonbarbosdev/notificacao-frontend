@@ -292,7 +292,27 @@
         </div>
 
         <!-- Timeline -->
-        <div class="flex-1 min-h-0 overflow-y-auto px-4 py-4 bg-[var(--color-bg-base)]/40">
+        <div
+          id="whatsapp-timeline"
+          class="flex-1 min-h-0 overflow-y-auto px-4 py-4 bg-[var(--color-bg-base)]/40"
+          (scroll)="onTimelineScroll($event)"
+        >
+          @if (carregandoMais()) {
+            <div class="flex items-center justify-center gap-2 py-3 text-[12px] text-[var(--color-text-muted)]">
+              <lucide-icon [img]="loaderIcon" class="w-3.5 h-3.5 animate-spin" />
+              Carregando mensagens anteriores...
+            </div>
+          } @else if (!fimHistorico() && mensagens().length > 0) {
+            <div class="flex justify-center py-2">
+              <button
+                type="button"
+                (click)="carregarMaisHistorico()"
+                class="text-[12px] text-[var(--color-primary-soft)] font-medium"
+              >
+                Carregar mensagens anteriores
+              </button>
+            </div>
+          }
           @if (carregandoMensagens() && mensagens().length === 0) {
             <div class="flex items-center justify-center gap-2 py-12 text-[13px] text-[var(--color-text-muted)]">
               <lucide-icon [img]="loaderIcon" class="w-4 h-4 animate-spin" />

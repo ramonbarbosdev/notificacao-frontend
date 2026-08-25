@@ -129,19 +129,18 @@ export function normalizeBrazilWhatsappMobile(value: string): string {
     return corrigirOitavoInseridoIndevidamente(digits.slice(0, 4) + '9' + digits.slice(4));
   }
 
-  // 12 digitos com 9 deslocado (ex: 557191180200 -> 5571981180200)
+  // 12 digitos com 9 apos DDI: insere o 9o movel apos o DDD (ex: 557191180200 -> 5571991180200)
   if (
     digits.startsWith('55')
     && digits.length === 12
     && digits.charAt(4) === '9'
     && digits.slice(4).length === 8
-    && !['7', '8', '9'].includes(digits.charAt(5))
   ) {
-    if (digits.charAt(5) === '2') {
-      return corrigirOitavoInseridoIndevidamente(digits.slice(0, 4) + '9' + digits.slice(4));
+    if (['7', '8', '9'].includes(digits.charAt(5))) {
+      return corrigirOitavoInseridoIndevidamente(digits);
     }
 
-    return corrigirOitavoInseridoIndevidamente(digits.slice(0, 4) + '98' + digits.slice(5));
+    return corrigirOitavoInseridoIndevidamente(digits.slice(0, 4) + '9' + digits.slice(4));
   }
 
   return corrigirOitavoInseridoIndevidamente(digits);
@@ -166,7 +165,7 @@ export function formatPhoneNationalDigits(value: string | null | undefined): str
   return digits;
 }
 
-/** Mascara progressiva para WhatsApp: +55 (71) 98118-0200 */
+/** Mascara progressiva para WhatsApp: +55 (71) 99118-0200 */
 export function maskPhoneInput(value: string): string {
   const digits = digitsParaMascaraWhatsapp(value);
 

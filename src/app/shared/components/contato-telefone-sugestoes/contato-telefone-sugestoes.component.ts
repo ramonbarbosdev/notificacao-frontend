@@ -34,7 +34,7 @@ export class ContatoTelefoneSugestoesComponent {
   private readonly busca$ = new Subject<string>();
 
   readonly control = input.required<FormControl<string | null>>();
-  readonly placeholder = input('+55 (71) 98118-0200');
+  readonly placeholder = input('+55 (71) 99118-0200');
   readonly compacto = input(false);
 
   readonly sugestoes = signal<SugestaoDestinatario[]>([]);

@@ -103,7 +103,7 @@ export class WhatsappConversasComponent implements OnInit, OnDestroy {
   readonly erro = signal<string | null>(null);
   readonly acaoTelefone = signal<string | null>(null);
   readonly mensagemSucesso = signal<string | null>(null);
-  readonly abaAtiva = signal<WhatsappConversaAba>('INBOX');
+  readonly abaAtiva = signal<WhatsappConversaAba>('SESSAO');
   readonly filtroPainel = signal<FiltroPainel>('todos');
   readonly telefoneSessao = signal<string | null>(null);
   readonly sessaoConectada = signal(false);
@@ -117,6 +117,8 @@ export class WhatsappConversasComponent implements OnInit, OnDestroy {
   readonly conversaSelecionada = signal<WhatsappConversaResponse | null>(null);
   readonly mensagens = signal<WhatsappMensagemResponse[]>([]);
   readonly carregandoMensagens = signal(false);
+  readonly carregandoMais = signal(false);
+  readonly fimHistorico = signal(false);
   readonly sincronizandoHistorico = signal(false);
   readonly painelMobile = signal<PainelMobile>('lista');
 
@@ -275,6 +277,7 @@ export class WhatsappConversasComponent implements OnInit, OnDestroy {
   fecharChat(): void {
     this.conversaSelecionada.set(null);
     this.mensagens.set([]);
+    this.fimHistorico.set(false);
     this.painelMobile.set('lista');
   }
 
@@ -312,8 +315,82 @@ export class WhatsappConversasComponent implements OnInit, OnDestroy {
   }
 
   trackMensagem(index: number, mensagem: WhatsappMensagemResponse): string {
-    return mensagem.idExterno
-      ?? `${mensagem.direcao}-${mensagem.dtEnvio ?? mensagem.dtCriacao}-${index}`;
+    return this.chaveMensagem(mensagem, index);
+  }
+
+  private chaveMensagem(mensagem: WhatsappMensagemResponse, index = 0): string {
+    if (mensagem.idMensagem != null) {
+      return `id:${mensagem.idMensagem}`;
+    }
+
+    if (mensagem.idExterno) {
+      return `ext:${mensagem.idExterno}`;
+    }
+
+    return `${mensagem.direcao}-${mensagem.dtEnvio ?? mensagem.dtCriacao}-${index}`;
+  }
+
+  onTimelineScroll(event: Event): void {
+    const elemento = event.target as HTMLElement;
+    if (elemento.scrollTop > 64 || this.carregandoMais() || this.fimHistorico() || this.carregandoMensagens()) {
+      return;
+    }
+
+    this.carregarMaisHistorico();
+  }
+
+  carregarMaisHistorico(): void {
+    const conversa = this.conversaSelecionadaAtiva();
+    const mensagensAtuais = this.mensagens();
+    const primeira = mensagensAtuais[0];
+
+    if (!conversa || this.carregandoMais()) {
+      return;
+    }
+
+    if (primeira?.idMensagem == null && !primeira?.idExterno) {
+      return;
+    }
+
+    const elemento = document.getElementById('whatsapp-timeline');
+    const alturaAnterior = elemento?.scrollHeight ?? 0;
+
+    this.carregandoMais.set(true);
+    this.erro.set(null);
+
+    this.conversasService.carregarMaisMensagens(
+      conversa.telefone,
+      {
+        idMensagem: primeira.idMensagem,
+        idExterno: primeira.idExterno,
+      },
+      50,
+    ).subscribe({
+      next: (resposta) => {
+        const existentes = new Set(mensagensAtuais.map((item, index) => this.chaveMensagem(item, index)));
+
+        const novas = resposta.mensagens.filter(
+          (item, index) => !existentes.has(this.chaveMensagem(item, index)),
+        );
+
+        if (novas.length > 0) {
+          this.mensagens.set([...novas, ...mensagensAtuais]);
+          queueMicrotask(() => {
+            if (!elemento) {
+              return;
+            }
+            elemento.scrollTop = elemento.scrollHeight - alturaAnterior;
+          });
+        }
+
+        this.fimHistorico.set(resposta.fimHistorico || novas.length === 0);
+        this.carregandoMais.set(false);
+      },
+      error: (err: HttpErrorResponse) => {
+        this.erro.set(err.error?.message ?? err.error?.mensagem ?? 'Nao foi possivel carregar mensagens anteriores.');
+        this.carregandoMais.set(false);
+      },
+    });
   }
 
   dataMensagem(mensagem: WhatsappMensagemResponse): string {
@@ -332,9 +409,12 @@ export class WhatsappConversasComponent implements OnInit, OnDestroy {
       this.carregandoMensagens.set(true);
     }
 
-    this.conversasService.listarMensagens(telefone, 0, 200).subscribe({
+    this.fimHistorico.set(false);
+
+    this.conversasService.listarMensagens(telefone, 0, 50).subscribe({
       next: (page) => {
         this.mensagens.set(page.data);
+        this.fimHistorico.set(page.data.length === 0 || page.data.length < page.pageSize);
         this.carregandoMensagens.set(false);
         this.sincronizandoHistorico.set(false);
       },
@@ -375,11 +455,16 @@ export class WhatsappConversasComponent implements OnInit, OnDestroy {
     this.whatsappService.status().subscribe({
       next: (status) => {
         this.telefoneSessao.set(status.telefone);
-        this.sessaoConectada.set(ehWhatsappConectado(status.status, status.conectado));
+        const conectada = ehWhatsappConectado(status.status, status.conectado);
+        this.sessaoConectada.set(conectada);
+        if (!conectada) {
+          this.limparConversasLocais();
+        }
         this.carregandoStatus.set(false);
       },
       error: () => {
         this.sessaoConectada.set(false);
+        this.limparConversasLocais();
         this.carregandoStatus.set(false);
       },
     });
@@ -733,6 +818,13 @@ export class WhatsappConversasComponent implements OnInit, OnDestroy {
     return undefined;
   }
 
+  private limparConversasLocais(): void {
+    this.conversas.set([]);
+    this.mensagens.set([]);
+    this.conversaSelecionada.set(null);
+    this.fimHistorico.set(true);
+  }
+
   private conectarEventos(): void {
     const idOrganizacao = this.authService.idOrganizacaoAtual();
     if (!idOrganizacao) {
@@ -741,6 +833,13 @@ export class WhatsappConversasComponent implements OnInit, OnDestroy {
 
     this.eventosSubscription = this.whatsappEventsService.conectar(idOrganizacao).subscribe({
       next: (evento) => {
+        if (evento.tipo === 'CONVERSAS_LIMPAS' || evento.tipo === 'CONEXAO_CANCELADA') {
+          this.sessaoConectada.set(false);
+          this.telefoneSessao.set(null);
+          this.limparConversasLocais();
+          return;
+        }
+
         if (evento.tipo === 'CONVERSA_EXCLUIDA') {
           const telefoneExcluido = evento.conversa?.telefone;
           if (telefoneExcluido && this.conversaSelecionada() && this.mesmoTelefone(telefoneExcluido, this.conversaSelecionada()!.telefone)) {

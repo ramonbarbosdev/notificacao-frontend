@@ -219,6 +219,7 @@ export type WhatsappEventoTipo =
   | 'STATUS_ATUALIZADO'
   | 'CONEXAO_LIBERADA'
   | 'CONEXAO_CANCELADA'
+  | 'CONVERSAS_LIMPAS'
   | 'MENSAGEM_RECEBIDA'
   | 'CONVERSA_ATUALIZADA'
   | 'CONVERSA_EXCLUIDA';
@@ -232,7 +233,7 @@ export type WhatsappConversaOrigem = 'INBOX' | 'SESSAO' | 'SINCRONIZADA';
 export type WhatsappConversaAba = 'INBOX' | 'SESSAO';
 
 export interface WhatsappMensagemResponse {
-  idMensagem: number;
+  idMensagem: number | null;
   telefone: string;
   direcao: WhatsappMensagemDirecao;
   tipo: string;
@@ -241,6 +242,12 @@ export interface WhatsappMensagemResponse {
   idExterno: string | null;
   dtEnvio: string | null;
   dtCriacao: string;
+}
+
+export interface WhatsappCarregarMaisMensagensResponse {
+  mensagens: WhatsappMensagemResponse[];
+  fimHistorico: boolean;
+  importadas: number;
 }
 
 export interface WhatsappConversaResponse {

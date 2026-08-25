@@ -20,6 +20,7 @@ import {
   WhatsappConversaAba,
   WhatsappMensagemDirecao,
   WhatsappMensagemResponse,
+  WhatsappCarregarMaisMensagensResponse,
 
 } from '../../shared/types/dtos';
 
@@ -200,6 +201,28 @@ export class WhatsappConversasService {
 
     );
 
+  }
+
+  carregarMaisMensagens(
+    telefone: string,
+    referencia: { idMensagem?: number | null; idExterno?: string | null },
+    limite = 50,
+  ): Observable<WhatsappCarregarMaisMensagensResponse> {
+    const params: Record<string, string | number> = { limite };
+
+    if (referencia.idMensagem != null) {
+      params['antesDeIdMensagem'] = referencia.idMensagem;
+    }
+
+    if (referencia.idExterno) {
+      params['antesDeIdExterno'] = referencia.idExterno;
+    }
+
+    return this.http.post<WhatsappCarregarMaisMensagensResponse>(
+      `${this.base}/${encodeURIComponent(telefone)}/mensagens/carregar-mais`,
+      {},
+      { params },
+    );
   }
 
 }
