@@ -747,14 +747,19 @@ export interface OrganizacaoConfiguracao {
   prioridadePadrao: string | null;
   expiracaoFilaHoras: number | null;
   auditoriaHabilitada: boolean;
+  webhookInboundUrl: string | null;
+  webhookInboundHabilitado: boolean;
+  webhookInboundSecretConfigurado: boolean;
   dtCriacao?: string | null;
   dtAtualizacao?: string | null;
 }
 
 export type OrganizacaoConfiguracaoRequest = Omit<
   OrganizacaoConfiguracao,
-  'idOrganizacaoConfiguracao' | 'idOrganizacao' | 'dtCriacao' | 'dtAtualizacao'
->;
+  'idOrganizacaoConfiguracao' | 'idOrganizacao' | 'dtCriacao' | 'dtAtualizacao' | 'webhookInboundSecretConfigurado'
+> & {
+  webhookInboundSecret?: string | null;
+};
 
 export interface AlertaOperacional {
   idAlerta: number;
@@ -815,6 +820,18 @@ export interface WebhookRequest {
   secret?: string | null;
   eventos: WebhookEvento[];
   ativo: boolean;
+}
+
+export interface WhatsappWebhookInboundConfig {
+  url: string | null;
+  habilitado: boolean;
+  secretConfigurado: boolean;
+}
+
+export interface WhatsappWebhookInboundRequest {
+  url: string | null;
+  secret?: string | null;
+  habilitado: boolean;
 }
 
 export interface AuditoriaEvento {

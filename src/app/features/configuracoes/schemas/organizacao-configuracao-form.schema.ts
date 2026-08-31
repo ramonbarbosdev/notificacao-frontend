@@ -69,6 +69,13 @@ export const orgConfigWhatsappBaseSchema = z.object({
   whatsappModoEnvio: z.enum(['SEGURO', 'BALANCEADO', 'AGRESSIVO'], {
     error: 'Selecione o modo de envio.',
   }),
+  webhookInboundHabilitado: z.boolean(),
+  webhookInboundUrl: z
+    .string()
+    .trim()
+    .optional()
+    .default(''),
+  webhookInboundSecret: z.string().optional().default(''),
 });
 
 export const orgConfigWhatsappSchema = orgConfigWhatsappBaseSchema.superRefine((value, ctx) => {
@@ -78,6 +85,22 @@ export const orgConfigWhatsappSchema = orgConfigWhatsappBaseSchema.superRefine((
       path: ['whatsappDelayMaxSegundos'],
       message: 'O delay maximo deve ser maior ou igual ao minimo.',
     });
+  }
+
+  if (value.webhookInboundHabilitado) {
+    if (!value.webhookInboundUrl) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['webhookInboundUrl'],
+        message: 'Informe a URL do webhook inbound.',
+      });
+    } else if (!z.string().url().safeParse(value.webhookInboundUrl).success) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['webhookInboundUrl'],
+        message: 'Informe uma URL valida para o webhook inbound.',
+      });
+    }
   }
 });
 
@@ -147,6 +170,9 @@ export const CAMPOS_POR_ABA_ORG: Record<AbaConfiguracaoOrganizacao, (keyof Organ
     'whatsappLimitePorMinuto',
     'whatsappLimitePorDia',
     'whatsappModoEnvio',
+    'webhookInboundHabilitado',
+    'webhookInboundUrl',
+    'webhookInboundSecret',
   ],
   templates: [
     'templatesVersionamento',
