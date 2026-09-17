@@ -330,6 +330,7 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
         this.githubGraphqlTokenConfigurado.set(!!config.githubGraphqlTokenConfigurado);
         this.githubAppPrivateKeyConfigurado.set(!!config.githubAppPrivateKeyConfigurado);
         this.form.patchValue(this.patchConfigForm(config));
+        this.githubTab?.bloquearCamposConexaoAvancada();
         if (!this.isAdmin()) this.form.disable();
         this.carregando.set(false);
       },
@@ -411,12 +412,10 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
       dados.dsGithubPrLoginsAvaliadores = (dados.dsGithubPrLoginsAvaliadores ?? '').trim() || null;
     }
 
-    const graphqlTokenDirty = this.form.controls.githubGraphqlToken.dirty;
     const appPrivateKeyDirty = this.form.controls.githubAppPrivateKey.dirty;
     const payload: OrganizacaoConfiguracaoRequest = {
       ...dados,
       webhookInboundSecret: dados.webhookInboundSecret?.trim() || null,
-      githubGraphqlToken: graphqlTokenDirty ? (dados.githubGraphqlToken?.trim() ?? '') : null,
       githubAppPrivateKey: appPrivateKeyDirty ? (dados.githubAppPrivateKey?.trim() ?? '') : null,
       ...(abaAtual === 'github'
         ? {
@@ -426,11 +425,6 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
               dados.githubInstallationId != null && dados.githubInstallationId > 0
                 ? dados.githubInstallationId
                 : 0,
-            githubGraphqlUrl: (dados.githubGraphqlUrl ?? '').trim() || null,
-            githubApiBaseUrl: (dados.githubApiBaseUrl ?? '').trim() || null,
-            githubHttpConnectTimeoutMs: dados.githubHttpConnectTimeoutMs ?? null,
-            githubHttpReadTimeoutMs: dados.githubHttpReadTimeoutMs ?? null,
-            githubInstallationTokenSkewSegundos: dados.githubInstallationTokenSkewSegundos ?? null,
           }
         : {}),
     };
@@ -444,6 +438,7 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
         this.githubGraphqlTokenConfigurado.set(!!config.githubGraphqlTokenConfigurado);
         this.githubAppPrivateKeyConfigurado.set(!!config.githubAppPrivateKeyConfigurado);
         this.form.patchValue(this.patchConfigForm(config));
+        this.githubTab?.bloquearCamposConexaoAvancada();
         this.sucesso.set('Configurações salvas.');
         this.toast.success('Configurações salvas');
         this.salvando.set(false);

@@ -76,12 +76,12 @@
               placeholder="4978839"
             />
           </app-form-field>
-          @if (appPrivateKeyConfigurado) {
+          @if (githubAppPrivateKeyConfigurado()) {
             <p class="text-xs text-[var(--color-success)]">Chave privada configurada. Deixe em branco para manter; envie vazio e salve para remover.</p>
           }
           <app-form-field
             label="Private key (PEM)"
-            [helper]="appPrivateKeyConfigurado ? 'Deixe em branco para manter a chave atual' : 'Cole o conteúdo do arquivo .pem'"
+            [helper]="githubAppPrivateKeyConfigurado() ? 'Deixe em branco para manter a chave atual' : 'Cole o conteúdo do arquivo .pem'"
             [error]="campoErro('githubAppPrivateKey')"
           >
             <textarea
@@ -106,9 +106,11 @@
           </app-form-field>
         </div>
 
-        <div class="border border-[var(--color-border)] rounded-xl p-4 space-y-3">
+        <div class="border border-[var(--color-border)] rounded-xl p-4 space-y-3 opacity-80">
           <h3 class="text-sm font-semibold text-[var(--color-text)]">API</h3>
-          <p class="text-xs text-[var(--color-text-muted)]">Campos vazios usam os defaults do GitHub.com na API.</p>
+          <p class="text-xs text-[var(--color-text-muted)]">
+            Somente leitura. A API usa os defaults do GitHub.com (ou valores já salvos).
+          </p>
           <app-form-field label="URL GraphQL" [error]="campoErro('githubGraphqlUrl')">
             <input
               formControlName="githubGraphqlUrl"
@@ -125,8 +127,9 @@
           </app-form-field>
         </div>
 
-        <div class="border border-[var(--color-border)] rounded-xl p-4 space-y-3">
+        <div class="border border-[var(--color-border)] rounded-xl p-4 space-y-3 opacity-80">
           <h3 class="text-sm font-semibold text-[var(--color-text)]">Timeouts</h3>
+          <p class="text-xs text-[var(--color-text-muted)]">Somente leitura.</p>
           <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <app-form-field
               label="Connect (ms)"
@@ -162,17 +165,17 @@
           </div>
         </div>
 
-        <div class="border border-[var(--color-border)] rounded-xl p-4 space-y-3">
+        <div class="border border-[var(--color-border)] rounded-xl p-4 space-y-3 opacity-80">
           <h3 class="text-sm font-semibold text-[var(--color-text)]">PAT opcional (fallback)</h3>
           <p class="text-xs text-[var(--color-text-muted)]">
-            Usado se o GitHub App não estiver configurado ou falhar. Enriquece Project v2 via <code>content_node_id</code> (<code>{{'{{url}}'}}</code>, <code>{{'{{numero}}'}}</code>, assignees).
+            Somente leitura. Com GitHub App ativo, o PAT não é necessário na interface.
           </p>
-          @if (graphqlTokenConfigurado) {
-            <p class="text-xs text-[var(--color-success)]">PAT configurado. Deixe em branco para manter; envie vazio e salve para remover.</p>
+          @if (graphqlTokenConfigurado()) {
+            <p class="text-xs text-[var(--color-text-muted)]">Há um PAT salvo no servidor (não exibido).</p>
           }
           <app-form-field
             label="Token GraphQL (PAT)"
-            [helper]="graphqlTokenConfigurado ? 'Deixe em branco para manter o token atual' : 'O token não é exibido após salvar'"
+            [helper]="graphqlTokenConfigurado() ? 'Deixe em branco para manter o token atual' : 'O token não é exibido após salvar'"
             [error]="campoErro('githubGraphqlToken')"
           >
             <input

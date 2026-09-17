@@ -312,11 +312,6 @@ export const CAMPOS_POR_ABA_ORG: Record<AbaConfiguracaoOrganizacao, (keyof Organ
     'githubAppId',
     'githubAppPrivateKey',
     'githubInstallationId',
-    'githubGraphqlUrl',
-    'githubApiBaseUrl',
-    'githubHttpConnectTimeoutMs',
-    'githubHttpReadTimeoutMs',
-    'githubInstallationTokenSkewSegundos',
     'dsGithubFraseAtivacaoWhatsapp',
     'dsGithubStatusDisparo',
     'dsGithubTemplateAssuntoWhatsapp',
@@ -335,7 +330,6 @@ export const CAMPOS_POR_ABA_ORG: Record<AbaConfiguracaoOrganizacao, (keyof Organ
     'githubPrAvisarAvaliadores',
     'dsGithubPrStatusDisparo',
     'dsGithubPrLoginsAvaliadores',
-    'githubGraphqlToken',
   ],
 };
 

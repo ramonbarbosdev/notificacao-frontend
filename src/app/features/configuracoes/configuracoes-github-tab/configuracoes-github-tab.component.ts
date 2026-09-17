@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input, OnInit, inject, signal } from '@angular/core';
+import { Component, Input, OnInit, inject, input, signal } from '@angular/core';
 import { FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { LoaderCircle, LucideAngularModule, PencilLine } from 'lucide-angular';
@@ -45,8 +45,8 @@ export class ConfiguracoesGithubTabComponent implements OnInit {
 
   @Input({ required: true }) form!: FormGroup;
   @Input({ required: true }) errosFormulario: OrganizacaoConfiguracaoFormErrors = {};
-  @Input() graphqlTokenConfigurado = false;
-  @Input() appPrivateKeyConfigurado = false;
+  readonly graphqlTokenConfigurado = input(false);
+  readonly githubAppPrivateKeyConfigurado = input(false);
 
   readonly githubDefaultGraphqlUrl = GITHUB_DEFAULT_GRAPHQL_URL;
   readonly githubDefaultApiBaseUrl = GITHUB_DEFAULT_API_BASE_URL;
@@ -71,12 +71,28 @@ export class ConfiguracoesGithubTabComponent implements OnInit {
     { id: 'mensagem', label: 'Mensagem' },
   ];
 
+  private static readonly CAMPOS_CONEXAO_SOMENTE_LEITURA: (keyof OrganizacaoConfiguracaoFormData)[] = [
+    'githubGraphqlUrl',
+    'githubApiBaseUrl',
+    'githubHttpConnectTimeoutMs',
+    'githubHttpReadTimeoutMs',
+    'githubInstallationTokenSkewSegundos',
+    'githubGraphqlToken',
+  ];
+
   ngOnInit(): void {
     const secao = this.route.snapshot.queryParamMap.get('githubSecao');
     if (secao === 'conexao' || secao === 'equipe' || secao === 'regras' || secao === 'mensagem') {
       this.githubSubAba.set(secao);
     }
+    this.bloquearCamposConexaoAvancada();
     this.carregarGithubIntegracao();
+  }
+
+  bloquearCamposConexaoAvancada(): void {
+    for (const campo of ConfiguracoesGithubTabComponent.CAMPOS_CONEXAO_SOMENTE_LEITURA) {
+      this.form.get(campo)?.disable({ emitEvent: false });
+    }
   }
 
   selecionarSubAba(id: GithubSubAba): void {
