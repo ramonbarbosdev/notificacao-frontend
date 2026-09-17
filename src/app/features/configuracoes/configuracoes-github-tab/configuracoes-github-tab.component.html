@@ -304,6 +304,85 @@
           }
         }
       </div>
+
+      <div class="border border-[var(--color-border)] rounded-xl p-4 space-y-4">
+        <div>
+          <h3 class="text-sm font-semibold text-[var(--color-text)]">Consulta GraphQL (esta organização)</h3>
+          <p class="text-xs text-[var(--color-text-muted)] mt-1">
+            Mesma chamada usada no webhook: token e URL da org, retorno organizado (assignees, título, URL).
+            Cole o <code class="text-[11px]">content_node_id</code> do payload do Project v2.
+          </p>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <app-form-field label="content_node_id">
+            <input
+              class="form-input-admin font-mono text-xs"
+              [value]="graphqlNodeId()"
+              (input)="graphqlNodeId.set($any($event.target).value)"
+              placeholder="I_kwDO…"
+            />
+          </app-form-field>
+          <app-form-field label="content_type (opcional)">
+            <input
+              class="form-input-admin"
+              [value]="graphqlContentType()"
+              (input)="graphqlContentType.set($any($event.target).value)"
+              placeholder="Issue"
+            />
+          </app-form-field>
+        </div>
+        <button
+          type="button"
+          class="px-3 py-2 rounded-xl border border-[var(--color-border)] text-sm"
+          [disabled]="carregandoGraphqlConsulta()"
+          (click)="consultarGraphqlOrganizacao()"
+        >
+          Consultar GraphQL
+        </button>
+
+        @if (carregandoGraphqlConsulta()) {
+          <div class="flex items-center gap-2 text-sm text-[var(--color-text-muted)]">
+            <lucide-icon [img]="loaderIcon" class="w-4 h-4 animate-spin" />
+            Consultando GitHub…
+          </div>
+        } @else if (graphqlConsulta(); as gql) {
+          <div class="bg-[var(--color-bg-base)]/50 rounded-xl p-4 space-y-3 text-sm">
+            <p class="text-xs text-[var(--color-text-muted)]">
+              Org #{{ gql.idOrganizacao }} · {{ gql.graphqlUrl }}
+              · Token: {{ gql.tokenDisponivel ? 'disponível' : 'indisponível' }}
+            </p>
+            @if (!gql.sucesso) {
+              <p class="text-[var(--color-danger)]">{{ gql.mensagemFalha || 'Consulta sem sucesso.' }}</p>
+              @if (gql.errosGraphql.length) {
+                <ul class="list-disc pl-5 text-[var(--color-text-muted)]">
+                  @for (erro of gql.errosGraphql; track erro) {
+                    <li>{{ erro }}</li>
+                  }
+                </ul>
+              }
+            } @else {
+              <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2">
+                <div><dt class="text-[var(--color-text-muted)]">Tipo</dt><dd class="font-mono">{{ gql.contentTypename }}</dd></div>
+                <div><dt class="text-[var(--color-text-muted)]">Número</dt><dd>{{ gql.numero ?? '—' }}</dd></div>
+                <div class="sm:col-span-2"><dt class="text-[var(--color-text-muted)]">Título</dt><dd>{{ gql.titulo || '—' }}</dd></div>
+                <div class="sm:col-span-2"><dt class="text-[var(--color-text-muted)]">URL</dt><dd class="break-all">{{ gql.url || '—' }}</dd></div>
+              </dl>
+              <div>
+                <p class="text-[var(--color-text-muted)] mb-1">Assignees (fonte padrão no webhook)</p>
+                @if (gql.assignees.length === 0) {
+                  <p class="text-[var(--color-text-muted)]">Nenhum assignee retornado.</p>
+                } @else {
+                  <ul class="space-y-1 font-mono">
+                    @for (a of gql.assignees; track a.login) {
+                      <li>{{ '@' + a.login }}@if (a.name) { <span class="text-[var(--color-text-muted)] font-sans">({{ a.name }})</span> }</li>
+                    }
+                  </ul>
+                }
+              </div>
+            }
+          </div>
+        }
+      </div>
     }
 
     @case ('regras') {

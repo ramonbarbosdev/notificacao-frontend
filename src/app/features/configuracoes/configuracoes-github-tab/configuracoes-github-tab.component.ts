@@ -6,7 +6,11 @@ import { LoaderCircle, LucideAngularModule, PencilLine } from 'lucide-angular';
 
 import { GithubIntegracaoService } from '../../../core/services/github-integracao.service';
 import { ToastService } from '../../../core/services/toast.service';
-import { GithubResponsavel, GithubWebhookIntegracaoResponse } from '../../../shared/types/dtos';
+import {
+  GithubGraphqlConsultaResponse,
+  GithubResponsavel,
+  GithubWebhookIntegracaoResponse,
+} from '../../../shared/types/dtos';
 import { formatDateTimePtBr } from '../../../shared/helper/date.utils';
 import { FormFieldComponent } from '../../../shared/components/forms/form-field/app-form-field';
 import {
@@ -64,6 +68,10 @@ export class ConfiguracoesGithubTabComponent implements OnInit {
   readonly responsaveisGithub = signal<GithubResponsavel[]>([]);
   readonly carregandoResponsaveis = signal(false);
   readonly erroResponsaveis = signal<string | null>(null);
+  readonly graphqlNodeId = signal('');
+  readonly graphqlContentType = signal('Issue');
+  readonly graphqlConsulta = signal<GithubGraphqlConsultaResponse | null>(null);
+  readonly carregandoGraphqlConsulta = signal(false);
   readonly modalTemplateGithubAberto = signal(false);
 
   readonly responsaveisHabilitados = computed(() =>
@@ -121,6 +129,33 @@ export class ConfiguracoesGithubTabComponent implements OnInit {
     if (id === 'habilitados') {
       this.carregarResponsaveisGithub();
     }
+  }
+
+  consultarGraphqlOrganizacao(): void {
+    const nodeId = this.graphqlNodeId().trim();
+    if (!nodeId) {
+      this.toast.error('Informe o content_node_id do card');
+      return;
+    }
+    this.carregandoGraphqlConsulta.set(true);
+    this.graphqlConsulta.set(null);
+    const contentType = this.graphqlContentType().trim();
+    this.githubIntegracaoService
+      .consultarGraphql({
+        nodeId,
+        contentType: contentType || null,
+      })
+      .subscribe({
+        next: (resposta) => {
+          this.graphqlConsulta.set(resposta);
+          this.carregandoGraphqlConsulta.set(false);
+        },
+        error: () => {
+          this.graphqlConsulta.set(null);
+          this.carregandoGraphqlConsulta.set(false);
+          this.toast.error('Falha ao consultar GraphQL');
+        },
+      });
   }
 
   carregarResponsaveisGithub(): void {

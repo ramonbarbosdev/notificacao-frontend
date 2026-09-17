@@ -4,6 +4,8 @@ import { Observable } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
 import {
+  GithubGraphqlConsultaRequest,
+  GithubGraphqlConsultaResponse,
   GithubResponsavel,
   GithubWebhookIntegracaoResponse,
   GithubWebhookTemplatePreviewRequest,
@@ -21,6 +23,10 @@ export class GithubIntegracaoService {
 
   listarResponsaveis(): Observable<GithubResponsavel[]> {
     return this.http.get<GithubResponsavel[]>(`${this.base}/responsaveis`);
+  }
+
+  consultarGraphql(body: GithubGraphqlConsultaRequest): Observable<GithubGraphqlConsultaResponse> {
+    return this.http.post<GithubGraphqlConsultaResponse>(`${this.base}/graphql/consulta`, body);
   }
 
   previewTemplate(

@@ -820,6 +820,27 @@ export interface GithubWebhookTemplatePreviewResponse {
   variaveisDesconhecidas: string[];
 }
 
+export interface GithubGraphqlConsultaRequest {
+  nodeId: string;
+  contentType?: string | null;
+}
+
+export interface GithubGraphqlConsultaResponse {
+  idOrganizacao: number;
+  graphqlUrl: string | null;
+  tokenDisponivel: boolean;
+  nodeId: string;
+  contentType: string | null;
+  sucesso: boolean;
+  mensagemFalha: string | null;
+  errosGraphql: string[];
+  contentTypename: string | null;
+  titulo: string | null;
+  url: string | null;
+  numero: number | null;
+  assignees: { login: string; name: string | null }[];
+}
+
 export interface GithubResponsavel {
   idGithubResponsavel: number;
   githubLogin: string | null;
