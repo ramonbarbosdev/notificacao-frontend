@@ -1,0 +1,158 @@
+@if (aberto()) {
+  <div
+    class="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/50"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="github-template-titulo"
+    (click)="fechar()"
+  >
+    <div
+      class="w-full max-w-6xl max-h-[92vh] overflow-hidden flex flex-col bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl shadow-xl"
+      (click)="$event.stopPropagation()"
+    >
+      <header class="flex items-center justify-between gap-3 px-5 py-4 border-b border-[var(--color-border)] shrink-0">
+        <div>
+          <h2 id="github-template-titulo" class="text-base font-semibold text-[var(--color-text)] m-0">
+            Editor — Template WhatsApp (GitHub)
+          </h2>
+          <p class="text-xs text-[var(--color-text-muted)] mt-0.5 m-0">
+            Use chaves ASCII <code class="text-[11px]">{{'{{variavel}}'}}</code>. Aplicar atualiza o formulário; salve as configurações na aba.
+          </p>
+        </div>
+        <button type="button" class="p-2 rounded-lg hover:bg-[var(--color-surface-muted)]" (click)="fechar()" aria-label="Fechar">
+          <lucide-icon [img]="closeIcon" class="w-5 h-5" />
+        </button>
+      </header>
+
+      <div class="flex-1 overflow-y-auto p-5 space-y-4">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+          <div class="space-y-4">
+            <div class="flex flex-wrap gap-2">
+              <button
+                type="button"
+                class="px-3 py-2 rounded-xl border border-[var(--color-border)] text-xs flex items-center gap-2"
+                [disabled]="!integracao()"
+                (click)="restaurarPadrao()"
+              >
+                <lucide-icon [img]="resetIcon" class="w-3.5 h-3.5" />
+                Restaurar padrão da API
+              </button>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-[var(--color-text-muted)] mb-2">Assunto (opcional)</label>
+              <input
+                #assuntoInput
+                type="text"
+                class="w-full form-input-admin font-mono text-sm"
+                [ngModel]="assunto()"
+                (ngModelChange)="onAssuntoInput($event)"
+                (focus)="marcarFoco('assunto')"
+                [placeholder]="integracao()?.templateAssuntoPadrao || 'GitHub: {{titulo}}'"
+              />
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-[var(--color-text-muted)] mb-2">Mensagem</label>
+              <textarea
+                #mensagemInput
+                rows="14"
+                class="w-full form-input-admin font-mono text-xs"
+                [ngModel]="mensagem()"
+                (ngModelChange)="onMensagemInput($event)"
+                (focus)="marcarFoco('mensagem')"
+                [placeholder]="integracao()?.templateMensagemPadrao ?? ''"
+              ></textarea>
+            </div>
+          </div>
+
+          <div class="space-y-3 flex flex-col min-h-[320px]">
+            <div class="relative">
+              <lucide-icon [img]="searchIcon" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)]" />
+              <input
+                type="search"
+                class="w-full form-input-admin pl-10 text-sm"
+                placeholder="Buscar variável..."
+                [ngModel]="buscaVariavel()"
+                (ngModelChange)="buscaVariavel.set($event)"
+              />
+            </div>
+
+            @if (carregandoIntegracao()) {
+              <p class="text-sm text-[var(--color-text-muted)]">Carregando catálogo...</p>
+            } @else if (!integracao()?.variaveisTemplateDetalhadas?.length) {
+              <p class="text-sm text-[var(--color-text-muted)]">Catálogo indisponível. Recarregue a aba GitHub.</p>
+            } @else {
+              <ul class="flex-1 overflow-y-auto space-y-2 pr-1 border border-[var(--color-border)] rounded-xl p-2 max-h-[420px]">
+                @for (v of variaveisFiltradas(); track v.chave) {
+                  <li>
+                    <button
+                      type="button"
+                      class="w-full text-left rounded-lg px-3 py-2 hover:bg-[var(--color-surface-muted)] border border-transparent hover:border-[var(--color-border)]"
+                      (click)="inserirVariavel(v.chave)"
+                    >
+                      <span class="font-mono text-xs text-[var(--color-primary-soft)]">{{ chavePlaceholder(v.chave) }}</span>
+                      <span class="block text-sm font-medium text-[var(--color-text)]">{{ v.titulo }}</span>
+                      <span class="block text-xs text-[var(--color-text-muted)] mt-0.5">{{ v.descricao }}</span>
+                      <span class="block text-[10px] text-[var(--color-text-subtle)] mt-1">Origem: {{ v.origemPayload }}</span>
+                      @if (v.dicaUso) {
+                        <span class="block text-[10px] text-[var(--color-text-muted)] mt-0.5">{{ v.dicaUso }}</span>
+                      }
+                    </button>
+                  </li>
+                }
+              </ul>
+            }
+          </div>
+        </div>
+
+        <div class="border border-[var(--color-border)] rounded-xl p-4 space-y-3">
+          <div class="flex flex-wrap items-center gap-3">
+            <lucide-icon [img]="previewIcon" class="w-4 h-4 text-[var(--color-text-muted)]" />
+            <span class="text-sm font-semibold text-[var(--color-text)]">Preview (como no WhatsApp)</span>
+            <select
+              class="form-input-admin text-sm max-w-xs ml-auto"
+              [ngModel]="cenarioId()"
+              (ngModelChange)="onCenarioChange($event)"
+              [disabled]="!integracao()?.cenariosPreview?.length"
+            >
+              @for (c of integracao()?.cenariosPreview ?? []; track c.id) {
+                <option [value]="c.id">{{ c.label }}</option>
+              }
+            </select>
+          </div>
+
+          @if (previewCarregando()) {
+            <p class="text-sm text-[var(--color-text-muted)] flex items-center gap-2">
+              <lucide-icon [img]="loaderIcon" class="w-4 h-4 animate-spin" />
+              Gerando preview...
+            </p>
+          } @else if (previewErro()) {
+            <p class="text-sm text-[var(--color-danger)]">{{ previewErro() }}</p>
+          } @else if (preview(); as p) {
+            @if (p.variaveisDesconhecidas.length) {
+              <div class="app-alert-warning border rounded-lg px-3 py-2 text-xs">
+                Variáveis não suportadas (serão vazias no envio):
+                <span class="font-mono">{{ p.variaveisDesconhecidas.join(', ') }}</span>
+              </div>
+            }
+            <pre class="text-xs whitespace-pre-wrap font-mono bg-[var(--color-bg-base)] rounded-lg p-3 text-[var(--color-text)]">{{ p.textoWhatsapp }}</pre>
+          }
+        </div>
+      </div>
+
+      <footer class="flex justify-end gap-2 px-5 py-4 border-t border-[var(--color-border)] shrink-0">
+        <button type="button" class="px-4 py-2 rounded-xl border border-[var(--color-border)] text-sm" (click)="fechar()">
+          Cancelar
+        </button>
+        <button
+          type="button"
+          class="px-4 py-2 rounded-xl bg-[var(--color-primary)] text-[var(--color-bg-base)] font-semibold text-sm"
+          (click)="aplicar()"
+        >
+          Aplicar
+        </button>
+      </footer>
+    </div>
+  </div>
+}

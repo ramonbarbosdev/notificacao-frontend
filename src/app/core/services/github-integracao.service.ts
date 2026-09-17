@@ -3,7 +3,11 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
-import { GithubWebhookIntegracaoResponse } from '../../shared/types/dtos';
+import {
+  GithubWebhookIntegracaoResponse,
+  GithubWebhookTemplatePreviewRequest,
+  GithubWebhookTemplatePreviewResponse,
+} from '../../shared/types/dtos';
 
 @Injectable({ providedIn: 'root' })
 export class GithubIntegracaoService {
@@ -12,6 +16,15 @@ export class GithubIntegracaoService {
 
   buscarInstrucoesWebhook(): Observable<GithubWebhookIntegracaoResponse> {
     return this.http.get<GithubWebhookIntegracaoResponse>(`${this.base}/webhook`);
+  }
+
+  previewTemplate(
+    body: GithubWebhookTemplatePreviewRequest,
+  ): Observable<GithubWebhookTemplatePreviewResponse> {
+    return this.http.post<GithubWebhookTemplatePreviewResponse>(
+      `${this.base}/webhook/template/preview`,
+      body,
+    );
   }
 
   /** Monta URL absoluta a partir do template retornado pela API (ex.: /api/webhooks/github?key=...). */

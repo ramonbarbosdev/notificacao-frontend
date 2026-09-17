@@ -4,7 +4,15 @@ import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { z } from 'zod';
 import { Router, RouterModule, ActivatedRoute } from '@angular/router';
-import { Check, KeyRound, LoaderCircle, LucideAngularModule, Settings, Webhook } from 'lucide-angular';
+import {
+  Check,
+  KeyRound,
+  LoaderCircle,
+  LucideAngularModule,
+  PencilLine,
+  Settings,
+  Webhook,
+} from 'lucide-angular';
 
 import { AuthService } from '../../core/auth/auth.service';
 import { ApiKeyService } from '../../core/services/api-key.service';
@@ -50,6 +58,10 @@ import {
   schemaOrganizacaoConfigPorAba,
 } from './schemas/organizacao-configuracao-form.schema';
 import {
+  GithubWhatsappTemplateAplicado,
+  GithubWhatsappTemplateModalComponent,
+} from './github-whatsapp-template-modal/github-whatsapp-template-modal.component';
+import {
   apiKeyFormSchema,
   ApiKeyFormData,
   ApiKeyFormErrors,
@@ -65,7 +77,15 @@ type AbaConfiguracao =
 @Component({
   selector: 'app-configuracoes-organizacao',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterModule, LucideAngularModule, EmptyStateComponent, FormFieldComponent],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    RouterModule,
+    LucideAngularModule,
+    EmptyStateComponent,
+    FormFieldComponent,
+    GithubWhatsappTemplateModalComponent,
+  ],
   templateUrl: './configuracoes-organizacao.component.html',
 })
 export class ConfiguracoesOrganizacaoComponent implements OnInit {
@@ -87,6 +107,7 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
   protected readonly checkIcon = Check;
   protected readonly keyIcon = KeyRound;
   protected readonly webhookIcon = Webhook;
+  protected readonly editTemplateIcon = PencilLine;
 
   readonly abas: {
     id: AbaConfiguracao;
@@ -140,8 +161,27 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
   readonly carregandoAlertas = signal(false);
   readonly githubIntegracao = signal<GithubWebhookIntegracaoResponse | null>(null);
   readonly carregandoGithubIntegracao = signal(false);
+  readonly modalTemplateGithubAberto = signal(false);
 
   readonly fraseAtivacaoGithubPadrao = FRASE_ATIVACAO_GITHUB_PADRAO;
+
+  resumoGithubTemplateAssunto(): string {
+    const valor = (this.form.controls.dsGithubTemplateAssuntoWhatsapp.value ?? '').trim();
+    if (valor) {
+      return this.truncarResumo(valor, 120);
+    }
+    const padrao = this.githubIntegracao()?.templateAssuntoPadrao;
+    return padrao ? `(padrão) ${this.truncarResumo(padrao, 100)}` : 'Usando padrão da API';
+  }
+
+  resumoGithubTemplateMensagem(): string {
+    const valor = (this.form.controls.dsGithubTemplateMensagemWhatsapp.value ?? '').trim();
+    if (valor) {
+      return this.truncarResumo(valor, 280);
+    }
+    const padrao = this.githubIntegracao()?.templateMensagemPadrao;
+    return padrao ? `(padrão) ${this.truncarResumo(padrao, 240)}` : 'Usando padrão da API';
+  }
 
   readonly scopes: { value: ApiKeyScope; label: string }[] = [
     { value: 'NOTIFICACOES_ENVIAR', label: 'Enviar notificacoes' },
@@ -440,6 +480,34 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
     const info = this.githubIntegracao();
     if (!info?.webhookUrlTemplate) return null;
     return this.githubIntegracaoService.montarUrlWebhookAbsoluta(info.webhookUrlTemplate);
+  }
+
+  abrirEditorTemplateGithub(): void {
+    this.modalTemplateGithubAberto.set(true);
+    if (!this.githubIntegracao() && !this.carregandoGithubIntegracao()) {
+      this.carregarGithubIntegracao();
+    }
+  }
+
+  fecharEditorTemplateGithub(): void {
+    this.modalTemplateGithubAberto.set(false);
+  }
+
+  aplicarTemplateGithub(dados: GithubWhatsappTemplateAplicado): void {
+    this.form.patchValue({
+      dsGithubTemplateAssuntoWhatsapp: dados.assunto,
+      dsGithubTemplateMensagemWhatsapp: dados.mensagem,
+    });
+    this.form.markAsDirty();
+    this.toast.success('Template aplicado — salve as configurações');
+  }
+
+  private truncarResumo(texto: string, max: number): string {
+    const normalizado = texto.replace(/\s+/g, ' ').trim();
+    if (normalizado.length <= max) {
+      return normalizado;
+    }
+    return normalizado.slice(0, max - 1) + '…';
   }
 
   copiarTexto(texto: string, mensagemSucesso = 'Copiado'): void {

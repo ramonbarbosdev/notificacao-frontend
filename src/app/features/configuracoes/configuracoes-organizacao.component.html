@@ -196,6 +196,31 @@
                 </p>
               </div>
 
+              <div class="border border-[var(--color-border)] rounded-xl p-4 space-y-3">
+                <h3 class="text-sm font-semibold text-[var(--color-text)]">Template WhatsApp (GitHub)</h3>
+                <p class="text-xs text-[var(--color-text-muted)]">
+                  O WhatsApp envia o corpo da mensagem (variáveis <code class="text-[11px]">{{'{{variavel}}'}}</code> substituídas).
+                  O assunto, se preenchido, é prefixado ao texto. Salve nesta aba após aplicar no editor.
+                </p>
+                <div class="bg-[var(--color-bg-base)]/50 rounded-lg px-3 py-3 space-y-2 text-xs font-mono text-[var(--color-text-muted)]">
+                  <p><span class="text-[var(--color-text)] font-sans font-medium text-sm">Assunto:</span> {{ resumoGithubTemplateAssunto() }}</p>
+                  <p class="whitespace-pre-wrap"><span class="text-[var(--color-text)] font-sans font-medium text-sm">Mensagem:</span> {{ resumoGithubTemplateMensagem() }}</p>
+                </div>
+                @if (campoErro('dsGithubTemplateAssuntoWhatsapp') || campoErro('dsGithubTemplateMensagemWhatsapp')) {
+                  <p class="text-xs text-[var(--color-danger)]">
+                    {{ campoErro('dsGithubTemplateAssuntoWhatsapp') || campoErro('dsGithubTemplateMensagemWhatsapp') }}
+                  </p>
+                }
+                <button
+                  type="button"
+                  class="px-4 py-2 rounded-xl border border-[var(--color-border)] text-sm flex items-center gap-2 text-[var(--color-text)] hover:bg-[var(--color-surface-muted)]"
+                  (click)="abrirEditorTemplateGithub()"
+                >
+                  <lucide-icon [img]="editTemplateIcon" class="w-4 h-4" />
+                  Abrir editor de template
+                </button>
+              </div>
+
               <div class="border border-[var(--color-border)] rounded-xl p-4 space-y-2 bg-[var(--color-bg-base)]/40">
                 <h3 class="text-sm font-semibold text-[var(--color-text)]">Fila sem responsável</h3>
                 <label class="config-toggle text-sm text-[var(--color-text)]">
@@ -245,41 +270,6 @@
                   >
                     <input formControlName="dsGithubStatusDisparo" class="form-input-admin" placeholder="Em progresso, Review" />
                   </app-form-field>
-                  <div class="border border-[var(--color-border)] rounded-xl p-4 space-y-3">
-                    <h3 class="text-sm font-semibold text-[var(--color-text)]">Template WhatsApp (GitHub)</h3>
-                    <p class="text-xs text-[var(--color-text-muted)]">
-                      Use <code class="text-[11px]">{{'{{variavel}}'}}</code>.
-                      @if (gh.variaveisTemplateWhatsapp?.length) {
-                        Variaveis:
-                        @for (v of gh.variaveisTemplateWhatsapp; track v) {
-                          <code class="text-[11px] mx-0.5">{{'{{'}}{{ v }}{{'}}'}}</code>
-                        }
-                      }
-                    </p>
-                    <app-form-field
-                      label="Assunto (opcional)"
-                      helper="Vazio usa o padrao da API."
-                      [error]="campoErro('dsGithubTemplateAssuntoWhatsapp')"
-                    >
-                      <input
-                        formControlName="dsGithubTemplateAssuntoWhatsapp"
-                        class="form-input-admin"
-                        [placeholder]="gh.templateAssuntoPadrao"
-                      />
-                    </app-form-field>
-                    <app-form-field
-                      label="Mensagem (opcional)"
-                      helper="Vazio usa o padrao. WhatsApp aceita *negrito* e _italico_."
-                      [error]="campoErro('dsGithubTemplateMensagemWhatsapp')"
-                    >
-                      <textarea
-                        formControlName="dsGithubTemplateMensagemWhatsapp"
-                        rows="6"
-                        class="form-input-admin font-mono text-xs"
-                        [placeholder]="gh.templateMensagemPadrao"
-                      ></textarea>
-                    </app-form-field>
-                  </div>
                 </div>
 
                 <div class="border border-[var(--color-border)] rounded-xl p-4 space-y-3">
@@ -556,5 +546,15 @@
           <a routerLink="/app/auditoria" class="inline-flex mt-4 px-3 py-2 rounded-xl border border-[var(--color-border)] text-sm text-[var(--color-text)]">Abrir auditoria</a>
         </section>
       }
+
+      <app-github-whatsapp-template-modal
+        [aberto]="modalTemplateGithubAberto()"
+        [assuntoInicial]="form.controls.dsGithubTemplateAssuntoWhatsapp.value ?? ''"
+        [mensagemInicial]="form.controls.dsGithubTemplateMensagemWhatsapp.value ?? ''"
+        [integracao]="githubIntegracao()"
+        [carregandoIntegracao]="carregandoGithubIntegracao()"
+        (fechado)="fecharEditorTemplateGithub()"
+        (aplicado)="aplicarTemplateGithub($event)"
+      />
 
       }

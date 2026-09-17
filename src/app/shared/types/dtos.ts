@@ -761,6 +761,37 @@ export interface OrganizacaoConfiguracao {
   dtAtualizacao?: string | null;
 }
 
+export interface GithubWebhookTemplateVariavel {
+  chave: string;
+  titulo: string;
+  descricao: string;
+  origemPayload: string;
+  exemplo: string;
+  dicaUso: string | null;
+}
+
+export interface GithubWebhookTemplateCenario {
+  id: string;
+  label: string;
+  githubEvent: string;
+  action: string;
+  descricao: string;
+}
+
+export interface GithubWebhookTemplatePreviewRequest {
+  templateAssunto?: string | null;
+  templateMensagem?: string | null;
+  cenarioId: string;
+}
+
+export interface GithubWebhookTemplatePreviewResponse {
+  assunto: string;
+  mensagem: string;
+  textoWhatsapp: string;
+  variaveisUsadas: Record<string, string>;
+  variaveisDesconhecidas: string[];
+}
+
 export interface GithubWebhookIntegracaoResponse {
   featureHabilitada: boolean;
   webhookUrlTemplate: string;
@@ -772,6 +803,8 @@ export interface GithubWebhookIntegracaoResponse {
   templateAssuntoPadrao: string;
   templateMensagemPadrao: string;
   variaveisTemplateWhatsapp: string[];
+  variaveisTemplateDetalhadas: GithubWebhookTemplateVariavel[];
+  cenariosPreview: GithubWebhookTemplateCenario[];
 }
 
 export type OrganizacaoConfiguracaoRequest = Omit<
