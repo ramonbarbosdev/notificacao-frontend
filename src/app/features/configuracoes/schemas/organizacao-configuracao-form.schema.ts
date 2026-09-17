@@ -180,6 +180,19 @@ export const orgConfigGithubSchema = z.object({
   githubNotificarIssueFechadaReaberta: z.boolean().default(false),
   githubNotificarIssueLabel: z.boolean().default(false),
   githubNotificarSomenteCampoStatus: z.boolean().default(false),
+  githubPrAvisarAvaliadores: z.boolean().default(false),
+  dsGithubPrStatusDisparo: z
+    .string()
+    .trim()
+    .max(500, 'O filtro de status do PR deve ter no maximo 500 caracteres.')
+    .optional()
+    .default(''),
+  dsGithubPrLoginsAvaliadores: z
+    .string()
+    .trim()
+    .max(500, 'Os logins devem ter no maximo 500 caracteres.')
+    .optional()
+    .default(''),
 });
 
 export const orgConfigNotificacoesSchema = orgConfigNotificacoesBaseSchema.superRefine((value, ctx) => {
@@ -254,6 +267,9 @@ export const CAMPOS_POR_ABA_ORG: Record<AbaConfiguracaoOrganizacao, (keyof Organ
     'githubNotificarIssueFechadaReaberta',
     'githubNotificarIssueLabel',
     'githubNotificarSomenteCampoStatus',
+    'githubPrAvisarAvaliadores',
+    'dsGithubPrStatusDisparo',
+    'dsGithubPrLoginsAvaliadores',
   ],
 };
 

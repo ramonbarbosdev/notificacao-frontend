@@ -765,6 +765,9 @@ export interface OrganizacaoConfiguracao {
   githubNotificarIssueFechadaReaberta?: boolean | null;
   githubNotificarIssueLabel?: boolean | null;
   githubNotificarSomenteCampoStatus?: boolean | null;
+  githubPrAvisarAvaliadores?: boolean | null;
+  dsGithubPrStatusDisparo?: string | null;
+  dsGithubPrLoginsAvaliadores?: string | null;
   webhookInboundUrl: string | null;
   webhookInboundHabilitado: boolean;
   webhookInboundSecretConfigurado: boolean;

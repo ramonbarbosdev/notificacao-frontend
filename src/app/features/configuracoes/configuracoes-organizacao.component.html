@@ -309,6 +309,41 @@
                 </label>
               </div>
 
+              <div class="border border-[var(--color-border)] rounded-xl p-4 space-y-4">
+                <div>
+                  <h3 class="text-sm font-semibold text-[var(--color-text)]">Pull requests (Project v2)</h3>
+                  <p class="text-xs text-[var(--color-text-muted)] mt-1">
+                    Quando o card for um Pull Request e entrar no status abaixo, avisa os logins configurados (opt-in WhatsApp). Não usa assignees do card.
+                  </p>
+                </div>
+                <label class="config-toggle text-sm text-[var(--color-text)]">
+                  Avisar avaliadores quando PR entrar em status configurado
+                  <input type="checkbox" formControlName="githubPrAvisarAvaliadores" />
+                </label>
+                <app-form-field
+                  label="Status do PR que disparam aviso"
+                  helper="Separados por vírgula. Ex.: Em revisão, Validação"
+                  [error]="campoErro('dsGithubPrStatusDisparo')"
+                >
+                  <input
+                    formControlName="dsGithubPrStatusDisparo"
+                    class="form-input-admin"
+                    placeholder="Em revisão, Validação"
+                  />
+                </app-form-field>
+                <app-form-field
+                  label="Logins GitHub dos avaliadores"
+                  helper="Cada login precisa ter ativado o WhatsApp na organização"
+                  [error]="campoErro('dsGithubPrLoginsAvaliadores')"
+                >
+                  <input
+                    formControlName="dsGithubPrLoginsAvaliadores"
+                    class="form-input-admin"
+                    placeholder="reviewer1, tech-lead"
+                  />
+                </app-form-field>
+              </div>
+
               <div class="border border-[var(--color-border)] rounded-xl p-4 space-y-2 bg-[var(--color-bg-base)]/40">
                 <h3 class="text-sm font-semibold text-[var(--color-text)]">Fila sem responsável</h3>
                 <label class="config-toggle text-sm text-[var(--color-text)]">

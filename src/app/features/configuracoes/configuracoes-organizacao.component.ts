@@ -244,6 +244,9 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
     githubNotificarIssueFechadaReaberta: [false],
     githubNotificarIssueLabel: [false],
     githubNotificarSomenteCampoStatus: [false],
+    githubPrAvisarAvaliadores: [false],
+    dsGithubPrStatusDisparo: [''],
+    dsGithubPrLoginsAvaliadores: [''],
   });
 
   readonly apiKeyForm = this.fb.group({
@@ -419,6 +422,8 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
       dados.dsGithubTemplateAssuntoWhatsapp = (dados.dsGithubTemplateAssuntoWhatsapp ?? '').trim() || null;
       dados.dsGithubTemplateMensagemWhatsapp = (dados.dsGithubTemplateMensagemWhatsapp ?? '').trim() || null;
       dados.dsGithubDestinatariosExtras = (dados.dsGithubDestinatariosExtras ?? '').trim() || null;
+      dados.dsGithubPrStatusDisparo = (dados.dsGithubPrStatusDisparo ?? '').trim() || null;
+      dados.dsGithubPrLoginsAvaliadores = (dados.dsGithubPrLoginsAvaliadores ?? '').trim() || null;
     }
 
     const payload: OrganizacaoConfiguracaoRequest = {
@@ -537,6 +542,9 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
       githubNotificarIssueFechadaReaberta: config.githubNotificarIssueFechadaReaberta ?? false,
       githubNotificarIssueLabel: config.githubNotificarIssueLabel ?? false,
       githubNotificarSomenteCampoStatus: config.githubNotificarSomenteCampoStatus ?? false,
+      githubPrAvisarAvaliadores: config.githubPrAvisarAvaliadores ?? false,
+      dsGithubPrStatusDisparo: config.dsGithubPrStatusDisparo ?? '',
+      dsGithubPrLoginsAvaliadores: config.dsGithubPrLoginsAvaliadores ?? '',
     };
   }
 
