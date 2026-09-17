@@ -352,6 +352,10 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
       return;
     }
 
+    if (abaAtual === 'github') {
+      this.githubTab?.sincronizarTemplateEditorNoFormulario();
+    }
+
     this.form.markAllAsTouched();
     const schema = schemaOrganizacaoConfigPorAba(abaAtual as AbaConfiguracaoOrganizacao);
     const campos = CAMPOS_POR_ABA_ORG[abaAtual as AbaConfiguracaoOrganizacao];

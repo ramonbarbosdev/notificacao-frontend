@@ -818,6 +818,7 @@ export interface GithubWebhookTemplatePreviewResponse {
   textoWhatsapp: string;
   variaveisUsadas: Record<string, string>;
   variaveisDesconhecidas: string[];
+  contextoEvento: Record<string, unknown>;
 }
 
 export interface GithubGraphqlConsultaRequest {

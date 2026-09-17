@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input, OnInit, computed, inject, input, signal } from '@angular/core';
+import { Component, Input, OnInit, computed, inject, input, output, signal, viewChild } from '@angular/core';
 import { FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { LoaderCircle, LucideAngularModule, PencilLine } from 'lucide-angular';
@@ -52,6 +52,9 @@ export class ConfiguracoesGithubTabComponent implements OnInit {
   @Input({ required: true }) errosFormulario: OrganizacaoConfiguracaoFormErrors = {};
   readonly graphqlTokenConfigurado = input(false);
   readonly githubAppPrivateKeyConfigurado = input(false);
+  readonly salvarSolicitado = output<void>();
+
+  private readonly templateModal = viewChild(GithubWhatsappTemplateModalComponent);
 
   readonly githubDefaultGraphqlUrl = GITHUB_DEFAULT_GRAPHQL_URL;
   readonly githubDefaultApiBaseUrl = GITHUB_DEFAULT_API_BASE_URL;
@@ -236,6 +239,32 @@ export class ConfiguracoesGithubTabComponent implements OnInit {
     });
     this.form.markAsDirty();
     this.toast.success('Template aplicado — salve as configurações');
+  }
+
+  /** Copia assunto/mensagem do editor aberto para o FormGroup antes do PUT. */
+  sincronizarTemplateEditorNoFormulario(): void {
+    if (!this.modalTemplateGithubAberto()) {
+      return;
+    }
+    const modal = this.templateModal();
+    if (!modal) {
+      return;
+    }
+    const dados = modal.valoresAtuais();
+    this.form.patchValue({
+      dsGithubTemplateAssuntoWhatsapp: dados.assunto,
+      dsGithubTemplateMensagemWhatsapp: dados.mensagem,
+    });
+    this.form.markAsDirty();
+  }
+
+  onSalvarTemplateNoServidor(dados: GithubWhatsappTemplateAplicado): void {
+    this.form.patchValue({
+      dsGithubTemplateAssuntoWhatsapp: dados.assunto,
+      dsGithubTemplateMensagemWhatsapp: dados.mensagem,
+    });
+    this.form.markAsDirty();
+    this.salvarSolicitado.emit();
   }
 
   resumoGithubTemplateAssunto(): string {

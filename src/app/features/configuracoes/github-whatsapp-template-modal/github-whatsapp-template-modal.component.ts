@@ -55,6 +55,8 @@ export class GithubWhatsappTemplateModalComponent implements OnDestroy {
 
   readonly fechado = output<void>();
   readonly aplicado = output<GithubWhatsappTemplateAplicado>();
+  /** Aplica no formulario e pede save na pagina (configuracoes-organizacao). */
+  readonly salvarNoServidor = output<GithubWhatsappTemplateAplicado>();
 
   protected readonly closeIcon = X;
   protected readonly previewIcon = Eye;
@@ -152,11 +154,20 @@ export class GithubWhatsappTemplateModalComponent implements OnDestroy {
     this.fechado.emit();
   }
 
-  aplicar(): void {
-    this.aplicado.emit({
+  valoresAtuais(): GithubWhatsappTemplateAplicado {
+    return {
       assunto: this.assunto(),
       mensagem: this.mensagem(),
-    });
+    };
+  }
+
+  aplicar(): void {
+    this.aplicado.emit(this.valoresAtuais());
+    this.fechar();
+  }
+
+  aplicarESalvarNoServidor(): void {
+    this.salvarNoServidor.emit(this.valoresAtuais());
     this.fechar();
   }
 
@@ -230,5 +241,24 @@ export class GithubWhatsappTemplateModalComponent implements OnDestroy {
 
   chavePlaceholder(chave: string): string {
     return `{{${chave}}}`;
+  }
+
+  contextoEventoJson(): string {
+    const ctx = this.preview()?.contextoEvento;
+    if (!ctx) {
+      return '';
+    }
+    const exemplo = {
+      evento: ctx['evento'],
+      acao: ctx['acao'],
+      titulo: ctx['titulo'],
+      url: ctx['url'],
+      status_anterior: ctx['status_anterior'],
+      status_atual: ctx['status_atual'],
+      movimentador: ctx['movimentador'],
+      responsaveis: ctx['responsaveis'],
+      destinatarios: ctx['destinatarios'],
+    };
+    return JSON.stringify(exemplo, null, 2);
   }
 }

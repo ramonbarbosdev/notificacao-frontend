@@ -16,7 +16,9 @@
             Editor — Template WhatsApp (GitHub)
           </h2>
           <p class="text-xs text-[var(--color-text-muted)] mt-0.5 m-0">
-            Use chaves ASCII <code class="text-[11px]">{{'{{variavel}}'}}</code>. Aplicar atualiza o formulário; salve as configurações na aba.
+            Use chaves ASCII <code class="text-[11px]">{{'{{variavel}}'}}</code>.
+            <strong class="font-medium text-[var(--color-text)]">Aplicar</strong> só copia para o formulário;
+            use <strong class="font-medium text-[var(--color-text)]">Aplicar e salvar</strong> ou o botão no fim da página.
           </p>
         </div>
         <button type="button" class="p-2 rounded-lg hover:bg-[var(--color-surface-muted)]" (click)="fechar()" aria-label="Fechar">
@@ -136,21 +138,33 @@
                 <span class="font-mono">{{ p.variaveisDesconhecidas.join(', ') }}</span>
               </div>
             }
+            @if (p.contextoEvento) {
+              <div class="space-y-1">
+                <p class="text-xs font-medium text-[var(--color-text-muted)]">
+                  Dados do evento (cenário de preview) — use as chaves em <code class="text-[11px]">{{'{{variavel}}'}}</code>
+                </p>
+                <pre class="text-xs whitespace-pre-wrap font-mono bg-[var(--color-bg-base)] rounded-lg p-3 text-[var(--color-text)] border border-[var(--color-border)]">{{ contextoEventoJson() }}</pre>
+              </div>
+            }
+            <p class="text-xs font-medium text-[var(--color-text-muted)] pt-1">Texto no WhatsApp</p>
             <pre class="text-xs whitespace-pre-wrap font-mono bg-[var(--color-bg-base)] rounded-lg p-3 text-[var(--color-text)]">{{ p.textoWhatsapp }}</pre>
           }
         </div>
       </div>
 
-      <footer class="flex justify-end gap-2 px-5 py-4 border-t border-[var(--color-border)] shrink-0">
+      <footer class="flex flex-wrap justify-end gap-2 px-5 py-4 border-t border-[var(--color-border)] shrink-0">
         <button type="button" class="px-4 py-2 rounded-xl border border-[var(--color-border)] text-sm" (click)="fechar()">
           Cancelar
+        </button>
+        <button type="button" class="px-4 py-2 rounded-xl border border-[var(--color-border)] text-sm" (click)="aplicar()">
+          Aplicar
         </button>
         <button
           type="button"
           class="px-4 py-2 rounded-xl bg-[var(--color-primary)] text-[var(--color-bg-base)] font-semibold text-sm"
-          (click)="aplicar()"
+          (click)="aplicarESalvarNoServidor()"
         >
-          Aplicar
+          Aplicar e salvar
         </button>
       </footer>
     </div>

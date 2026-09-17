@@ -333,6 +333,18 @@ export const CAMPOS_POR_ABA_ORG: Record<AbaConfiguracaoOrganizacao, (keyof Organ
   ],
 };
 
+function schemaSomenteCamposDaAba<T extends z.ZodObject<z.ZodRawShape>>(
+  schema: T,
+  aba: AbaConfiguracaoOrganizacao,
+): z.ZodObject<z.ZodRawShape> {
+  const campos = CAMPOS_POR_ABA_ORG[aba];
+  const pickShape = Object.fromEntries(campos.map((campo) => [campo, true])) as z.util.Exactly<
+    { [k in keyof z.infer<T>]?: true },
+    { [k in keyof z.infer<T>]?: true }
+  >;
+  return schema.pick(pickShape);
+}
+
 export function schemaOrganizacaoConfigPorAba(aba: AbaConfiguracaoOrganizacao) {
   switch (aba) {
     case 'geral':
@@ -344,6 +356,6 @@ export function schemaOrganizacaoConfigPorAba(aba: AbaConfiguracaoOrganizacao) {
     case 'notificacoes':
       return orgConfigNotificacoesSchema;
     case 'github':
-      return orgConfigGithubSchema;
+      return schemaSomenteCamposDaAba(orgConfigGithubSchema, 'github');
   }
 }
