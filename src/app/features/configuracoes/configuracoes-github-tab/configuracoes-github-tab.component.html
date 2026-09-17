@@ -76,12 +76,10 @@
               placeholder="4978839"
             />
           </app-form-field>
-          @if (githubAppPrivateKeyConfigurado()) {
-            <p class="text-xs text-[var(--color-success)]">Chave privada configurada. Deixe em branco para manter; envie vazio e salve para remover.</p>
-          }
           <app-form-field
             label="Private key (PEM)"
-            [helper]="githubAppPrivateKeyConfigurado() ? 'Deixe em branco para manter a chave atual' : 'Cole o conteúdo do arquivo .pem'"
+            [savedOnServer]="githubAppPrivateKeyConfigurado()"
+            [helper]="githubAppPrivateKeyConfigurado() ? 'Chave salva no servidor. Deixe em branco para manter; cole outra e salve para substituir.' : 'Cole o conteúdo do arquivo .pem e salve'"
             [error]="campoErro('githubAppPrivateKey')"
           >
             <textarea
@@ -170,12 +168,10 @@
           <p class="text-xs text-[var(--color-text-muted)]">
             Somente leitura. Com GitHub App ativo, o PAT não é necessário na interface.
           </p>
-          @if (graphqlTokenConfigurado()) {
-            <p class="text-xs text-[var(--color-text-muted)]">Há um PAT salvo no servidor (não exibido).</p>
-          }
           <app-form-field
             label="Token GraphQL (PAT)"
-            [helper]="graphqlTokenConfigurado() ? 'Deixe em branco para manter o token atual' : 'O token não é exibido após salvar'"
+            [savedOnServer]="graphqlTokenConfigurado()"
+            [helper]="graphqlTokenConfigurado() ? 'PAT salvo no servidor. Campo somente leitura na interface.' : 'Nenhum PAT salvo (opcional se a GitHub App estiver ativa)'"
             [error]="campoErro('githubGraphqlToken')"
           >
             <input
