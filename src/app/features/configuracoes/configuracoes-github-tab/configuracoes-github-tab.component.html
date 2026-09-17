@@ -350,6 +350,9 @@
             <p class="text-xs text-[var(--color-text-muted)]">
               Org #{{ gql.idOrganizacao }} · {{ gql.graphqlUrl }}
               · Token: {{ gql.tokenDisponivel ? 'disponível' : 'indisponível' }}
+              · App: {{ gql.githubAppCredenciaisOk ? 'ok' : 'incompleto' }}
+              · Installation ID: {{ gql.githubInstallationId ?? '—' }}
+              · PAT salvo: {{ gql.githubPatConfigurado ? 'sim' : 'não' }}
             </p>
             @if (!gql.sucesso) {
               <p class="text-[var(--color-danger)]">{{ gql.mensagemFalha || 'Consulta sem sucesso.' }}</p>

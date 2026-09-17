@@ -420,11 +420,11 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
       ...(abaAtual === 'github'
         ? {
             githubAppId:
-              dados.githubAppId != null && dados.githubAppId > 0 ? dados.githubAppId : 0,
+              dados.githubAppId != null && dados.githubAppId > 0 ? dados.githubAppId : null,
             githubInstallationId:
               dados.githubInstallationId != null && dados.githubInstallationId > 0
                 ? dados.githubInstallationId
-                : 0,
+                : null,
           }
         : {}),
     };

@@ -829,6 +829,9 @@ export interface GithubGraphqlConsultaResponse {
   idOrganizacao: number;
   graphqlUrl: string | null;
   tokenDisponivel: boolean;
+  githubAppCredenciaisOk: boolean;
+  githubInstallationId: number | null;
+  githubPatConfigurado: boolean;
   nodeId: string;
   contentType: string | null;
   sucesso: boolean;
