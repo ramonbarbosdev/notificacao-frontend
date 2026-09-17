@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, OnInit, ViewChild, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { z } from 'zod';
 import { Router, RouterModule, ActivatedRoute } from '@angular/router';
@@ -9,7 +9,6 @@ import {
   KeyRound,
   LoaderCircle,
   LucideAngularModule,
-  PencilLine,
   Settings,
   Webhook,
 } from 'lucide-angular';
@@ -17,7 +16,6 @@ import {
 import { AuthService } from '../../core/auth/auth.service';
 import { ApiKeyService } from '../../core/services/api-key.service';
 import { FeatureFlagStore } from '../../core/services/feature-flag.store';
-import { GithubIntegracaoService } from '../../core/services/github-integracao.service';
 import { OrganizacaoConfiguracaoService } from '../../core/services/organizacao-configuracao.service';
 import { AlertaOperacionalService } from '../../core/services/alerta-operacional.service';
 import { WebhookService } from '../../core/services/webhook.service';
@@ -28,7 +26,6 @@ import {
   ApiKeyCreatedResponse,
   ApiKeyScope,
   OrganizacaoConfiguracao,
-  GithubWebhookIntegracaoResponse,
   OrganizacaoConfiguracaoRequest,
   AlertaOperacional,
   RecursoFeature,
@@ -52,15 +49,11 @@ import { getZodFieldErrors } from '../../shared/helper/zod-form.helper';
 import {
   AbaConfiguracaoOrganizacao,
   CAMPOS_POR_ABA_ORG,
-  FRASE_ATIVACAO_GITHUB_PADRAO,
   OrganizacaoConfiguracaoFormData,
   OrganizacaoConfiguracaoFormErrors,
   schemaOrganizacaoConfigPorAba,
 } from './schemas/organizacao-configuracao-form.schema';
-import {
-  GithubWhatsappTemplateAplicado,
-  GithubWhatsappTemplateModalComponent,
-} from './github-whatsapp-template-modal/github-whatsapp-template-modal.component';
+import { ConfiguracoesGithubTabComponent } from './configuracoes-github-tab/configuracoes-github-tab.component';
 import {
   apiKeyFormSchema,
   ApiKeyFormData,
@@ -84,14 +77,13 @@ type AbaConfiguracao =
     LucideAngularModule,
     EmptyStateComponent,
     FormFieldComponent,
-    GithubWhatsappTemplateModalComponent,
+    ConfiguracoesGithubTabComponent,
   ],
   templateUrl: './configuracoes-organizacao.component.html',
 })
 export class ConfiguracoesOrganizacaoComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly configService = inject(OrganizacaoConfiguracaoService);
-  private readonly githubIntegracaoService = inject(GithubIntegracaoService);
   private readonly featureFlags = inject(FeatureFlagStore);
   private readonly alertaService = inject(AlertaOperacionalService);
   private readonly apiKeyService = inject(ApiKeyService);
@@ -107,7 +99,7 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
   protected readonly checkIcon = Check;
   protected readonly keyIcon = KeyRound;
   protected readonly webhookIcon = Webhook;
-  protected readonly editTemplateIcon = PencilLine;
+  @ViewChild(ConfiguracoesGithubTabComponent) private githubTab?: ConfiguracoesGithubTabComponent;
 
   readonly abas: {
     id: AbaConfiguracao;
@@ -159,29 +151,6 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
   readonly whatsappStatus = signal<WhatsappStatusResponse | null>(null);
   readonly alertasOperacionais = signal<AlertaOperacional[]>([]);
   readonly carregandoAlertas = signal(false);
-  readonly githubIntegracao = signal<GithubWebhookIntegracaoResponse | null>(null);
-  readonly carregandoGithubIntegracao = signal(false);
-  readonly modalTemplateGithubAberto = signal(false);
-
-  readonly fraseAtivacaoGithubPadrao = FRASE_ATIVACAO_GITHUB_PADRAO;
-
-  resumoGithubTemplateAssunto(): string {
-    const valor = (this.form.controls.dsGithubTemplateAssuntoWhatsapp.value ?? '').trim();
-    if (valor) {
-      return this.truncarResumo(valor, 120);
-    }
-    const padrao = this.githubIntegracao()?.templateAssuntoPadrao;
-    return padrao ? `(padrão) ${this.truncarResumo(padrao, 100)}` : 'Usando padrão da API';
-  }
-
-  resumoGithubTemplateMensagem(): string {
-    const valor = (this.form.controls.dsGithubTemplateMensagemWhatsapp.value ?? '').trim();
-    if (valor) {
-      return this.truncarResumo(valor, 280);
-    }
-    const padrao = this.githubIntegracao()?.templateMensagemPadrao;
-    return padrao ? `(padrão) ${this.truncarResumo(padrao, 240)}` : 'Usando padrão da API';
-  }
 
   readonly scopes: { value: ApiKeyScope; label: string }[] = [
     { value: 'NOTIFICACOES_ENVIAR', label: 'Enviar notificacoes' },
@@ -339,7 +308,6 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
     if (aba === 'apiKeys') this.carregarApiKeys();
     if (aba === 'webhooks') this.carregarWebhooks();
     if (aba === 'notificacoes') this.carregarAlertasOperacionais();
-    if (aba === 'github') this.carregarGithubIntegracao();
   }
 
   carregar(): void {
@@ -442,7 +410,7 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
         this.toast.success('Configurações salvas');
         this.salvando.set(false);
         if (abaAtual === 'github') {
-          this.carregarGithubIntegracao();
+          this.githubTab?.carregarGithubIntegracao();
         }
       },
       error: (err: HttpErrorResponse) => {
@@ -455,58 +423,6 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
 
   carregarWhatsappStatus(): void {
     this.whatsappService.status().subscribe({ next: (status) => this.whatsappStatus.set(status) });
-  }
-
-  carregarGithubIntegracao(): void {
-    this.carregandoGithubIntegracao.set(true);
-    this.githubIntegracaoService.buscarInstrucoesWebhook().subscribe({
-      next: (info) => {
-        this.githubIntegracao.set(info);
-        this.carregandoGithubIntegracao.set(false);
-      },
-      error: () => {
-        this.githubIntegracao.set(null);
-        this.carregandoGithubIntegracao.set(false);
-      },
-    });
-  }
-
-  urlWebhookGithubAbsoluta(): string | null {
-    const info = this.githubIntegracao();
-    if (!info?.webhookUrlTemplate) return null;
-    return this.githubIntegracaoService.montarUrlWebhookAbsoluta(info.webhookUrlTemplate);
-  }
-
-  abrirEditorTemplateGithub(): void {
-    this.modalTemplateGithubAberto.set(true);
-    if (!this.githubIntegracao() && !this.carregandoGithubIntegracao()) {
-      this.carregarGithubIntegracao();
-    }
-  }
-
-  fecharEditorTemplateGithub(): void {
-    this.modalTemplateGithubAberto.set(false);
-  }
-
-  aplicarTemplateGithub(dados: GithubWhatsappTemplateAplicado): void {
-    this.form.patchValue({
-      dsGithubTemplateAssuntoWhatsapp: dados.assunto,
-      dsGithubTemplateMensagemWhatsapp: dados.mensagem,
-    });
-    this.form.markAsDirty();
-    this.toast.success('Template aplicado — salve as configurações');
-  }
-
-  private truncarResumo(texto: string, max: number): string {
-    const normalizado = texto.replace(/\s+/g, ' ').trim();
-    if (normalizado.length <= max) {
-      return normalizado;
-    }
-    return normalizado.slice(0, max - 1) + '…';
-  }
-
-  destinatariosGithubModoLoginsConfigurados(): boolean {
-    return this.form.controls.dsGithubDestinatariosModo.value === 'LOGINS_CONFIGURADOS';
   }
 
   private patchConfigForm(config: OrganizacaoConfiguracao): Partial<OrganizacaoConfiguracaoFormData> {
@@ -546,13 +462,6 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
       dsGithubPrStatusDisparo: config.dsGithubPrStatusDisparo ?? '',
       dsGithubPrLoginsAvaliadores: config.dsGithubPrLoginsAvaliadores ?? '',
     };
-  }
-
-  copiarTexto(texto: string, mensagemSucesso = 'Copiado'): void {
-    navigator.clipboard.writeText(texto).then(
-      () => this.toast.success(mensagemSucesso),
-      () => this.toast.error('Nao foi possivel copiar'),
-    );
   }
 
   carregarAlertasOperacionais(): void {
