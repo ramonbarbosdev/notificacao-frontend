@@ -147,6 +147,90 @@
             </section>
           }
 
+          @case ('github') {
+            <section class="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-6 space-y-5">
+              <div>
+                <h2 class="text-[var(--color-text)] font-semibold">GitHub → WhatsApp</h2>
+                <p class="text-xs text-[var(--color-text-muted)] mt-1">
+                  Assignees ativam o recebimento pelo WhatsApp da organizacao. Configure a frase e compartilhe o link com o time.
+                </p>
+              </div>
+
+              @if (carregandoGithubIntegracao()) {
+                <p class="text-sm text-[var(--color-text-muted)]">Carregando integracao...</p>
+              } @else if (githubIntegracao(); as gh) {
+                @if (!gh.featureHabilitada) {
+                  <div class="app-alert-warning border rounded-xl px-4 py-3 text-sm">
+                    A feature GitHub webhook nao esta habilitada para esta organizacao. Super admin deve ativar em Feature Flags.
+                  </div>
+                }
+                @if (!gh.whatsappOrigemConectado) {
+                  <div class="app-alert-warning border rounded-xl px-4 py-3 text-sm">
+                    Conecte o WhatsApp da organizacao para gerar o link de ativacao.
+                    <a routerLink="/app/whatsapp" class="font-semibold text-[var(--color-primary-soft)] ml-1">Abrir WhatsApp</a>
+                  </div>
+                }
+                <div class="grid grid-cols-1 gap-4">
+                  <app-form-field
+                    label="Frase de ativacao (WhatsApp)"
+                    helper="Deixe vazio para usar o padrao. O desenvolvedor envia esta mensagem para vincular o numero."
+                    [error]="campoErro('dsGithubFraseAtivacaoWhatsapp')"
+                  >
+                    <textarea
+                      formControlName="dsGithubFraseAtivacaoWhatsapp"
+                      rows="2"
+                      class="form-input-admin"
+                      [placeholder]="fraseAtivacaoGithubPadrao"
+                    ></textarea>
+                  </app-form-field>
+                  <p class="text-xs text-[var(--color-text-muted)] -mt-2">
+                    Em uso agora: <span class="text-[var(--color-text)]">{{ gh.fraseAtivacaoWhatsapp }}</span>
+                  </p>
+                  <app-form-field
+                    label="Filtro de status/colunas (opcional)"
+                    helper="Valores separados por virgula para limitar quando disparar (projects/issues)."
+                    [error]="campoErro('dsGithubStatusDisparo')"
+                  >
+                    <input formControlName="dsGithubStatusDisparo" class="form-input-admin" placeholder="Em progresso, Review" />
+                  </app-form-field>
+                </div>
+
+                <div class="border border-[var(--color-border)] rounded-xl p-4 space-y-3">
+                  <h3 class="text-sm font-semibold text-[var(--color-text)]">Link para o time</h3>
+                  @if (gh.linkWhatsappAtivacao) {
+                    <code class="block text-xs break-all bg-[var(--color-bg-base)] rounded-lg px-3 py-2">{{ gh.linkWhatsappAtivacao }}</code>
+                    <button
+                      type="button"
+                      (click)="copiarTexto(gh.linkWhatsappAtivacao!, 'Link copiado')"
+                      class="px-3 py-2 rounded-xl border border-[var(--color-border)] text-sm"
+                    >
+                      Copiar link WhatsApp
+                    </button>
+                  } @else {
+                    <p class="text-sm text-[var(--color-text-muted)]">Indisponivel ate o WhatsApp estar conectado.</p>
+                  }
+                </div>
+
+                <div class="border border-[var(--color-border)] rounded-xl p-4 space-y-3">
+                  <h3 class="text-sm font-semibold text-[var(--color-text)]">Webhook no GitHub App</h3>
+                  <p class="text-xs text-[var(--color-text-muted)]">{{ gh.instrucaoWebhookSecret }}</p>
+                  @if (urlWebhookGithubAbsoluta(); as urlWebhook) {
+                    <code class="block text-xs break-all bg-[var(--color-bg-base)] rounded-lg px-3 py-2">{{ urlWebhook }}</code>
+                    <p class="text-xs text-[var(--color-text-muted)]">Substitua <code>&#123;suaApiKeyCompleta&#125;</code> pela API Key (scope NOTIFICACOES_ENVIAR).</p>
+                    <button
+                      type="button"
+                      (click)="copiarTexto(urlWebhook, 'URL copiada')"
+                      class="px-3 py-2 rounded-xl border border-[var(--color-border)] text-sm"
+                    >
+                      Copiar URL do webhook
+                    </button>
+                  }
+                  <p class="text-xs text-[var(--color-text-muted)]">{{ gh.instrucaoResponsaveis }}</p>
+                </div>
+              }
+            </section>
+          }
+
           @case ('notificacoes') {
             <section class="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-6">
               <h2 class="text-[var(--color-text)] font-semibold mb-2">Notificações</h2>
@@ -201,7 +285,7 @@
           }
         }
 
-        @if (['geral','whatsapp','templates','notificacoes'].includes(aba())) {
+        @if (['geral','whatsapp','templates','notificacoes','github'].includes(aba())) {
           <div class="flex justify-end">
             <button type="button" (click)="salvar()" [disabled]="salvando() || !isAdmin()" class="px-4 py-3 rounded-xl bg-[var(--color-primary)] disabled:opacity-50 text-[var(--color-bg-base)] text-sm font-semibold flex items-center gap-2">
               @if (salvando()) {

@@ -38,6 +38,11 @@ export class FeatureFlagsComponent implements OnInit {
     { recurso: 'TEMPLATES', label: 'Templates', descricao: 'Modelos reutilizaveis de mensagem.' },
     { recurso: 'API_PUBLICA', label: 'API publica', descricao: 'Integracao externa via API key.' },
     { recurso: 'ANALYTICS', label: 'Analytics', descricao: 'Metricas e relatorios avancados.' },
+    {
+      recurso: 'GITHUB_WEBHOOK',
+      label: 'GitHub webhook',
+      descricao: 'Alertas de issues/projects no WhatsApp (opt-in por assignee).',
+    },
   ];
 
   readonly motoresWhatsapp: { valor: MotorWhatsapp; label: string; descricao: string }[] = [

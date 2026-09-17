@@ -9,6 +9,7 @@ import { Check, KeyRound, LoaderCircle, LucideAngularModule, Settings, Webhook }
 import { AuthService } from '../../core/auth/auth.service';
 import { ApiKeyService } from '../../core/services/api-key.service';
 import { FeatureFlagStore } from '../../core/services/feature-flag.store';
+import { GithubIntegracaoService } from '../../core/services/github-integracao.service';
 import { OrganizacaoConfiguracaoService } from '../../core/services/organizacao-configuracao.service';
 import { AlertaOperacionalService } from '../../core/services/alerta-operacional.service';
 import { WebhookService } from '../../core/services/webhook.service';
@@ -19,6 +20,7 @@ import {
   ApiKeyCreatedResponse,
   ApiKeyScope,
   OrganizacaoConfiguracao,
+  GithubWebhookIntegracaoResponse,
   AlertaOperacional,
   RecursoFeature,
   Webhook as WebhookDTO,
@@ -41,6 +43,7 @@ import { getZodFieldErrors } from '../../shared/helper/zod-form.helper';
 import {
   AbaConfiguracaoOrganizacao,
   CAMPOS_POR_ABA_ORG,
+  FRASE_ATIVACAO_GITHUB_PADRAO,
   OrganizacaoConfiguracaoFormData,
   OrganizacaoConfiguracaoFormErrors,
   schemaOrganizacaoConfigPorAba,
@@ -67,6 +70,7 @@ type AbaConfiguracao =
 export class ConfiguracoesOrganizacaoComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly configService = inject(OrganizacaoConfiguracaoService);
+  private readonly githubIntegracaoService = inject(GithubIntegracaoService);
   private readonly featureFlags = inject(FeatureFlagStore);
   private readonly alertaService = inject(AlertaOperacionalService);
   private readonly apiKeyService = inject(ApiKeyService);
@@ -93,6 +97,7 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
     { id: 'geral', label: 'Geral' },
     { id: 'whatsapp', label: 'WhatsApp Sessão', recurso: 'WHATSAPP_GATEWAY' },
     { id: 'templates', label: 'Templates', recurso: 'TEMPLATES' },
+    { id: 'github', label: 'GitHub', recurso: 'GITHUB_WEBHOOK' },
     { id: 'notificacoes', label: 'Notificacoes', ocultoModoWhatsapp: true },
     { id: 'apiKeys', label: 'API Keys', adminOnly: true, recurso: 'API_PUBLICA' },
     { id: 'webhooks', label: 'Webhooks', adminOnly: true, ocultoModoWhatsapp: true, recurso: 'WEBHOOK' },
@@ -126,6 +131,10 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
   readonly whatsappStatus = signal<WhatsappStatusResponse | null>(null);
   readonly alertasOperacionais = signal<AlertaOperacional[]>([]);
   readonly carregandoAlertas = signal(false);
+  readonly githubIntegracao = signal<GithubWebhookIntegracaoResponse | null>(null);
+  readonly carregandoGithubIntegracao = signal(false);
+
+  readonly fraseAtivacaoGithubPadrao = FRASE_ATIVACAO_GITHUB_PADRAO;
 
   readonly scopes: { value: ApiKeyScope; label: string }[] = [
     { value: 'NOTIFICACOES_ENVIAR', label: 'Enviar notificacoes' },
@@ -169,6 +178,8 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
     prioridadePadrao: ['NORMAL'],
     expiracaoFilaHoras: [24],
     auditoriaHabilitada: [true],
+    dsGithubFraseAtivacaoWhatsapp: [''],
+    dsGithubStatusDisparo: [''],
   });
 
   readonly apiKeyForm = this.fb.group({
@@ -238,6 +249,7 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
       'whatsapp',
       'templates',
       'notificacoes',
+      'github',
       'apiKeys',
       'webhooks',
       'usuarios',
@@ -257,6 +269,7 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
     if (aba === 'apiKeys') this.carregarApiKeys();
     if (aba === 'webhooks') this.carregarWebhooks();
     if (aba === 'notificacoes') this.carregarAlertasOperacionais();
+    if (aba === 'github') this.carregarGithubIntegracao();
   }
 
   carregar(): void {
@@ -269,6 +282,8 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
           nuTelefoneOperacional: config.nuTelefoneOperacional
             ? maskPhoneInput(config.nuTelefoneOperacional)
             : '',
+          dsGithubFraseAtivacaoWhatsapp: config.dsGithubFraseAtivacaoWhatsapp ?? '',
+          dsGithubStatusDisparo: config.dsGithubStatusDisparo ?? '',
         });
         if (!this.isAdmin()) this.form.disable();
         this.carregando.set(false);
@@ -287,7 +302,7 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
     }
 
     const abaAtual = this.aba();
-    if (!['geral', 'whatsapp', 'templates', 'notificacoes'].includes(abaAtual)) {
+    if (!['geral', 'whatsapp', 'templates', 'notificacoes', 'github'].includes(abaAtual)) {
       return;
     }
 
@@ -315,6 +330,11 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
       dados.nuTelefoneOperacional = normalizeBrazilWhatsappMobile(dados.nuTelefoneOperacional);
     }
 
+    if (abaAtual === 'github') {
+      dados.dsGithubFraseAtivacaoWhatsapp = (dados.dsGithubFraseAtivacaoWhatsapp ?? '').trim();
+      dados.dsGithubStatusDisparo = (dados.dsGithubStatusDisparo ?? '').trim() || null;
+    }
+
     this.salvando.set(true);
     this.erro.set(null);
     this.sucesso.set(null);
@@ -325,10 +345,15 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
           nuTelefoneOperacional: config.nuTelefoneOperacional
             ? maskPhoneInput(config.nuTelefoneOperacional)
             : '',
+          dsGithubFraseAtivacaoWhatsapp: config.dsGithubFraseAtivacaoWhatsapp ?? '',
+          dsGithubStatusDisparo: config.dsGithubStatusDisparo ?? '',
         });
         this.sucesso.set('Configurações salvas.');
         this.toast.success('Configurações salvas');
         this.salvando.set(false);
+        if (abaAtual === 'github') {
+          this.carregarGithubIntegracao();
+        }
       },
       error: (err: HttpErrorResponse) => {
         this.erro.set(this.mensagemErro(err, 'Não foi possível salvar configurações.'));
@@ -340,6 +365,33 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
 
   carregarWhatsappStatus(): void {
     this.whatsappService.status().subscribe({ next: (status) => this.whatsappStatus.set(status) });
+  }
+
+  carregarGithubIntegracao(): void {
+    this.carregandoGithubIntegracao.set(true);
+    this.githubIntegracaoService.buscarInstrucoesWebhook().subscribe({
+      next: (info) => {
+        this.githubIntegracao.set(info);
+        this.carregandoGithubIntegracao.set(false);
+      },
+      error: () => {
+        this.githubIntegracao.set(null);
+        this.carregandoGithubIntegracao.set(false);
+      },
+    });
+  }
+
+  urlWebhookGithubAbsoluta(): string | null {
+    const info = this.githubIntegracao();
+    if (!info?.webhookUrlTemplate) return null;
+    return this.githubIntegracaoService.montarUrlWebhookAbsoluta(info.webhookUrlTemplate);
+  }
+
+  copiarTexto(texto: string, mensagemSucesso = 'Copiado'): void {
+    navigator.clipboard.writeText(texto).then(
+      () => this.toast.success(mensagemSucesso),
+      () => this.toast.error('Nao foi possivel copiar'),
+    );
   }
 
   carregarAlertasOperacionais(): void {

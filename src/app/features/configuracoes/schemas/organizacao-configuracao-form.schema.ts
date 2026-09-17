@@ -6,7 +6,10 @@ export type AbaConfiguracaoOrganizacao =
   | 'geral'
   | 'whatsapp'
   | 'templates'
-  | 'notificacoes';
+  | 'notificacoes'
+  | 'github';
+
+export const FRASE_ATIVACAO_GITHUB_PADRAO = 'Quero receber notificação, do github!';
 
 const emailOpcional = z
   .string()
@@ -110,6 +113,21 @@ export const orgConfigNotificacoesBaseSchema = z.object({
   auditoriaHabilitada: z.boolean(),
 });
 
+export const orgConfigGithubSchema = z.object({
+  dsGithubFraseAtivacaoWhatsapp: z
+    .string()
+    .trim()
+    .max(500, 'A frase deve ter no maximo 500 caracteres.')
+    .optional()
+    .default(''),
+  dsGithubStatusDisparo: z
+    .string()
+    .trim()
+    .max(500, 'O filtro de status deve ter no maximo 500 caracteres.')
+    .optional()
+    .default(''),
+});
+
 export const orgConfigNotificacoesSchema = orgConfigNotificacoesBaseSchema.superRefine((value, ctx) => {
   if (value.retryAutomatico && value.retryTentativas < 1) {
     ctx.addIssue({
@@ -124,7 +142,8 @@ export type OrganizacaoConfiguracaoFormData =
   z.infer<typeof orgConfigGeralSchema> &
   z.infer<typeof orgConfigWhatsappBaseSchema> &
   z.infer<typeof orgConfigTemplatesSchema> &
-  z.infer<typeof orgConfigNotificacoesBaseSchema>;
+  z.infer<typeof orgConfigNotificacoesBaseSchema> &
+  z.infer<typeof orgConfigGithubSchema>;
 export type OrganizacaoConfiguracaoFormErrors = Partial<
   Record<keyof OrganizacaoConfiguracaoFormData, string>
 >;
@@ -161,6 +180,7 @@ export const CAMPOS_POR_ABA_ORG: Record<AbaConfiguracaoOrganizacao, (keyof Organ
     'expiracaoFilaHoras',
     'auditoriaHabilitada',
   ],
+  github: ['dsGithubFraseAtivacaoWhatsapp', 'dsGithubStatusDisparo'],
 };
 
 export function schemaOrganizacaoConfigPorAba(aba: AbaConfiguracaoOrganizacao) {
@@ -173,5 +193,7 @@ export function schemaOrganizacaoConfigPorAba(aba: AbaConfiguracaoOrganizacao) {
       return orgConfigTemplatesSchema;
     case 'notificacoes':
       return orgConfigNotificacoesSchema;
+    case 'github':
+      return orgConfigGithubSchema;
   }
 }
