@@ -79,6 +79,30 @@ export class ConfiguracoesGithubTabComponent implements OnInit {
   readonly responsaveisPendentes = computed(() =>
     this.responsaveisGithub().filter((item) => item.ativo && !item.habilitado));
 
+  /** Logins GitHub persistidos em organizacao_github_responsavel (para sugestões em Regras). */
+  readonly loginsGithubSugeridos = computed(() => {
+    const porLogin = new Map<string, { login: string; habilitado: boolean }>();
+    for (const item of this.responsaveisGithub()) {
+      const login = item.githubLogin?.trim();
+      if (!login) {
+        continue;
+      }
+      const chave = login.toLowerCase();
+      const existente = porLogin.get(chave);
+      if (!existente) {
+        porLogin.set(chave, { login, habilitado: item.habilitado });
+      } else if (item.habilitado) {
+        porLogin.set(chave, { ...existente, habilitado: true });
+      }
+    }
+    return [...porLogin.values()].sort((a, b) => {
+      if (a.habilitado !== b.habilitado) {
+        return a.habilitado ? -1 : 1;
+      }
+      return a.login.localeCompare(b.login, 'pt-BR', { sensitivity: 'base' });
+    });
+  });
+
   readonly fraseAtivacaoGithubPadrao = FRASE_ATIVACAO_GITHUB_PADRAO;
 
   readonly subAbas: { id: GithubSubAba; label: string }[] = [
@@ -113,7 +137,7 @@ export class ConfiguracoesGithubTabComponent implements OnInit {
     }
     this.bloquearCamposConexaoAvancada();
     this.carregarGithubIntegracao();
-    if (this.githubSubAba() === 'habilitados') {
+    if (this.githubSubAba() === 'habilitados' || this.githubSubAba() === 'regras') {
       this.carregarResponsaveisGithub();
     }
   }
@@ -126,7 +150,7 @@ export class ConfiguracoesGithubTabComponent implements OnInit {
 
   selecionarSubAba(id: GithubSubAba): void {
     this.githubSubAba.set(id);
-    if (id === 'habilitados') {
+    if (id === 'habilitados' || id === 'regras') {
       this.carregarResponsaveisGithub();
     }
   }
@@ -234,6 +258,36 @@ export class ConfiguracoesGithubTabComponent implements OnInit {
 
   destinatariosGithubModoLoginsConfigurados(): boolean {
     return this.form.get('dsGithubDestinatariosModo')?.value === 'LOGINS_CONFIGURADOS';
+  }
+
+  loginJaNoCampo(campo: string, login: string): boolean {
+    const raw = (this.form.get(campo)?.value ?? '') as string;
+    return this.loginsDoCampo(raw).has(login.trim().toLowerCase());
+  }
+
+  adicionarLoginSugerido(campo: string, login: string): void {
+    const control = this.form.get(campo);
+    if (!control) {
+      return;
+    }
+    const normalizado = login.trim();
+    if (!normalizado || this.loginJaNoCampo(campo, normalizado)) {
+      return;
+    }
+    const atual = String(control.value ?? '').trim();
+    control.setValue(atual ? `${atual}, ${normalizado}` : normalizado);
+    control.markAsDirty();
+  }
+
+  private loginsDoCampo(raw: string): Set<string> {
+    const set = new Set<string>();
+    for (const parte of raw.split(/[,;]+/)) {
+      const login = parte.trim();
+      if (login) {
+        set.add(login.toLowerCase());
+      }
+    }
+    return set;
   }
 
   campoErro(campo: keyof OrganizacaoConfiguracaoFormData): string | null {
