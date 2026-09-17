@@ -63,12 +63,126 @@
           }
         </div>
 
-        <div class="border border-dashed border-[var(--color-border)] rounded-xl p-4 space-y-2 opacity-80">
-          <h3 class="text-sm font-semibold text-[var(--color-text)]">Token GraphQL (em breve)</h3>
+        <div class="border border-[var(--color-border)] rounded-xl p-4 space-y-3">
+          <h3 class="text-sm font-semibold text-[var(--color-text)]">GitHub App</h3>
           <p class="text-xs text-[var(--color-text-muted)]">
-            Será usado para enriquecer links de cards do Project v2 na variável <code>{{'{{url}}'}}</code> das mensagens.
-            A configuração por organização será adicionada nesta seção.
+            A API gera o token de instalação (<code>ghs_</code>) automaticamente e renova em memória. O webhook pode preencher o Installation ID se estiver vazio.
           </p>
+          <app-form-field label="App ID" [error]="campoErro('githubAppId')">
+            <input
+              type="number"
+              formControlName="githubAppId"
+              class="form-input-admin"
+              placeholder="4978839"
+            />
+          </app-form-field>
+          @if (appPrivateKeyConfigurado) {
+            <p class="text-xs text-[var(--color-success)]">Chave privada configurada. Deixe em branco para manter; envie vazio e salve para remover.</p>
+          }
+          <app-form-field
+            label="Private key (PEM)"
+            [helper]="appPrivateKeyConfigurado ? 'Deixe em branco para manter a chave atual' : 'Cole o conteúdo do arquivo .pem'"
+            [error]="campoErro('githubAppPrivateKey')"
+          >
+            <textarea
+              formControlName="githubAppPrivateKey"
+              rows="4"
+              class="form-input-admin font-mono text-xs"
+              autocomplete="off"
+              placeholder="-----BEGIN RSA PRIVATE KEY-----"
+            ></textarea>
+          </app-form-field>
+          <app-form-field
+            label="Installation ID"
+            helper="Opcional se o webhook já enviar installation.id"
+            [error]="campoErro('githubInstallationId')"
+          >
+            <input
+              type="number"
+              formControlName="githubInstallationId"
+              class="form-input-admin"
+              placeholder="162503134"
+            />
+          </app-form-field>
+        </div>
+
+        <div class="border border-[var(--color-border)] rounded-xl p-4 space-y-3">
+          <h3 class="text-sm font-semibold text-[var(--color-text)]">API</h3>
+          <p class="text-xs text-[var(--color-text-muted)]">Campos vazios usam os defaults do GitHub.com na API.</p>
+          <app-form-field label="URL GraphQL" [error]="campoErro('githubGraphqlUrl')">
+            <input
+              formControlName="githubGraphqlUrl"
+              class="form-input-admin"
+              [placeholder]="githubDefaultGraphqlUrl"
+            />
+          </app-form-field>
+          <app-form-field label="URL base da API REST" [error]="campoErro('githubApiBaseUrl')">
+            <input
+              formControlName="githubApiBaseUrl"
+              class="form-input-admin"
+              [placeholder]="githubDefaultApiBaseUrl"
+            />
+          </app-form-field>
+        </div>
+
+        <div class="border border-[var(--color-border)] rounded-xl p-4 space-y-3">
+          <h3 class="text-sm font-semibold text-[var(--color-text)]">Timeouts</h3>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <app-form-field
+              label="Connect (ms)"
+              [error]="campoErro('githubHttpConnectTimeoutMs')"
+            >
+              <input
+                type="number"
+                formControlName="githubHttpConnectTimeoutMs"
+                class="form-input-admin"
+                [placeholder]="githubDefaultConnectTimeoutMs"
+              />
+            </app-form-field>
+            <app-form-field label="Read (ms)" [error]="campoErro('githubHttpReadTimeoutMs')">
+              <input
+                type="number"
+                formControlName="githubHttpReadTimeoutMs"
+                class="form-input-admin"
+                [placeholder]="githubDefaultReadTimeoutMs"
+              />
+            </app-form-field>
+            <app-form-field
+              label="Skew cache token (s)"
+              helper="Renovar o ghs_ antes do expires_at"
+              [error]="campoErro('githubInstallationTokenSkewSegundos')"
+            >
+              <input
+                type="number"
+                formControlName="githubInstallationTokenSkewSegundos"
+                class="form-input-admin"
+                [placeholder]="githubDefaultInstallationTokenSkewSegundos"
+              />
+            </app-form-field>
+          </div>
+        </div>
+
+        <div class="border border-[var(--color-border)] rounded-xl p-4 space-y-3">
+          <h3 class="text-sm font-semibold text-[var(--color-text)]">PAT opcional (fallback)</h3>
+          <p class="text-xs text-[var(--color-text-muted)]">
+            Usado se o GitHub App não estiver configurado ou falhar. Enriquece Project v2 via <code>content_node_id</code> (<code>{{'{{url}}'}}</code>, <code>{{'{{numero}}'}}</code>, assignees).
+          </p>
+          @if (graphqlTokenConfigurado) {
+            <p class="text-xs text-[var(--color-success)]">PAT configurado. Deixe em branco para manter; envie vazio e salve para remover.</p>
+          }
+          <app-form-field
+            label="Token GraphQL (PAT)"
+            [helper]="graphqlTokenConfigurado ? 'Deixe em branco para manter o token atual' : 'O token não é exibido após salvar'"
+            [error]="campoErro('githubGraphqlToken')"
+          >
+            <input
+              type="password"
+              formControlName="githubGraphqlToken"
+              class="form-input-admin"
+              autocomplete="off"
+              placeholder="ghp_…"
+            />
+          </app-form-field>
         </div>
       }
     }

@@ -11,6 +11,54 @@ export type AbaConfiguracaoOrganizacao =
 
 export const FRASE_ATIVACAO_GITHUB_PADRAO = 'Quero receber notificação, do github!';
 
+export const GITHUB_DEFAULT_GRAPHQL_URL = 'https://api.github.com/graphql';
+export const GITHUB_DEFAULT_API_BASE_URL = 'https://api.github.com';
+export const GITHUB_DEFAULT_CONNECT_TIMEOUT_MS = 10_000;
+export const GITHUB_DEFAULT_READ_TIMEOUT_MS = 30_000;
+export const GITHUB_DEFAULT_INSTALLATION_TOKEN_SKEW_SEGUNDOS = 300;
+
+const githubUrlOpcional = z
+  .string()
+  .trim()
+  .max(500, 'URL deve ter no maximo 500 caracteres.')
+  .optional()
+  .default('')
+  .refine((value) => !value || /^https?:\/\//i.test(value), {
+    message: 'Informe uma URL http ou https valida.',
+  });
+
+const githubIntPositivoOpcional = z.preprocess(
+  (value) => {
+    if (value === '' || value === null || value === undefined) {
+      return null;
+    }
+    const numero = Number(value);
+    return Number.isFinite(numero) ? numero : value;
+  },
+  z
+    .number({ error: 'Informe um numero inteiro.' })
+    .int('Informe um numero inteiro.')
+    .positive('Informe um valor maior que zero.')
+    .nullable()
+    .optional(),
+);
+
+const githubSkewOpcional = z.preprocess(
+  (value) => {
+    if (value === '' || value === null || value === undefined) {
+      return null;
+    }
+    const numero = Number(value);
+    return Number.isFinite(numero) ? numero : value;
+  },
+  z
+    .number({ error: 'Informe um numero inteiro.' })
+    .int('Informe um numero inteiro.')
+    .min(0, 'Informe um valor maior ou igual a zero.')
+    .nullable()
+    .optional(),
+);
+
 const emailOpcional = z
   .string()
   .trim()
@@ -193,6 +241,15 @@ export const orgConfigGithubSchema = z.object({
     .max(500, 'Os logins devem ter no maximo 500 caracteres.')
     .optional()
     .default(''),
+  githubAppId: githubIntPositivoOpcional,
+  githubAppPrivateKey: z.string().optional().default(''),
+  githubInstallationId: githubIntPositivoOpcional,
+  githubGraphqlUrl: githubUrlOpcional,
+  githubApiBaseUrl: githubUrlOpcional,
+  githubHttpConnectTimeoutMs: githubIntPositivoOpcional,
+  githubHttpReadTimeoutMs: githubIntPositivoOpcional,
+  githubInstallationTokenSkewSegundos: githubSkewOpcional,
+  githubGraphqlToken: z.string().optional().default(''),
 });
 
 export const orgConfigNotificacoesSchema = orgConfigNotificacoesBaseSchema.superRefine((value, ctx) => {
@@ -252,6 +309,14 @@ export const CAMPOS_POR_ABA_ORG: Record<AbaConfiguracaoOrganizacao, (keyof Organ
     'webhookRegistrarFilaSemDestinatario',
   ],
   github: [
+    'githubAppId',
+    'githubAppPrivateKey',
+    'githubInstallationId',
+    'githubGraphqlUrl',
+    'githubApiBaseUrl',
+    'githubHttpConnectTimeoutMs',
+    'githubHttpReadTimeoutMs',
+    'githubInstallationTokenSkewSegundos',
     'dsGithubFraseAtivacaoWhatsapp',
     'dsGithubStatusDisparo',
     'dsGithubTemplateAssuntoWhatsapp',
@@ -270,6 +335,7 @@ export const CAMPOS_POR_ABA_ORG: Record<AbaConfiguracaoOrganizacao, (keyof Organ
     'githubPrAvisarAvaliadores',
     'dsGithubPrStatusDisparo',
     'dsGithubPrLoginsAvaliadores',
+    'githubGraphqlToken',
   ],
 };
 

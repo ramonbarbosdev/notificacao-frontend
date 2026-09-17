@@ -216,6 +216,15 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
     githubPrAvisarAvaliadores: [false],
     dsGithubPrStatusDisparo: [''],
     dsGithubPrLoginsAvaliadores: [''],
+    githubAppId: [null as number | null],
+    githubAppPrivateKey: [''],
+    githubInstallationId: [null as number | null],
+    githubGraphqlUrl: [''],
+    githubApiBaseUrl: [''],
+    githubHttpConnectTimeoutMs: [null as number | null],
+    githubHttpReadTimeoutMs: [null as number | null],
+    githubInstallationTokenSkewSegundos: [null as number | null],
+    githubGraphqlToken: [''],
   });
 
   readonly apiKeyForm = this.fb.group({
@@ -236,6 +245,8 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
 
   readonly webhookInboundHabilitadoNoPlano = () => this.featureFlags.habilitado('WEBHOOK');
   readonly webhookInboundSecretConfigurado = signal(false);
+  readonly githubGraphqlTokenConfigurado = signal(false);
+  readonly githubAppPrivateKeyConfigurado = signal(false);
 
   campoErro(campo: keyof OrganizacaoConfiguracaoFormData): string | null {
     return this.errosFormulario()[campo] ?? null;
@@ -316,6 +327,8 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
     this.configService.buscar().subscribe({
       next: (config) => {
         this.webhookInboundSecretConfigurado.set(!!config.webhookInboundSecretConfigurado);
+        this.githubGraphqlTokenConfigurado.set(!!config.githubGraphqlTokenConfigurado);
+        this.githubAppPrivateKeyConfigurado.set(!!config.githubAppPrivateKeyConfigurado);
         this.form.patchValue(this.patchConfigForm(config));
         if (!this.isAdmin()) this.form.disable();
         this.carregando.set(false);
@@ -374,7 +387,11 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
       }
     }
 
-    const dados = this.form.getRawValue() as OrganizacaoConfiguracao & { webhookInboundSecret?: string };
+    const dados = this.form.getRawValue() as OrganizacaoConfiguracao & {
+      webhookInboundSecret?: string;
+      githubGraphqlToken?: string;
+      githubAppPrivateKey?: string;
+    };
 
     if (dados.nuTelefoneOperacional) {
       dados.nuTelefoneOperacional = normalizeBrazilWhatsappMobile(dados.nuTelefoneOperacional);
@@ -394,9 +411,28 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
       dados.dsGithubPrLoginsAvaliadores = (dados.dsGithubPrLoginsAvaliadores ?? '').trim() || null;
     }
 
+    const graphqlTokenDirty = this.form.controls.githubGraphqlToken.dirty;
+    const appPrivateKeyDirty = this.form.controls.githubAppPrivateKey.dirty;
     const payload: OrganizacaoConfiguracaoRequest = {
       ...dados,
       webhookInboundSecret: dados.webhookInboundSecret?.trim() || null,
+      githubGraphqlToken: graphqlTokenDirty ? (dados.githubGraphqlToken?.trim() ?? '') : null,
+      githubAppPrivateKey: appPrivateKeyDirty ? (dados.githubAppPrivateKey?.trim() ?? '') : null,
+      ...(abaAtual === 'github'
+        ? {
+            githubAppId:
+              dados.githubAppId != null && dados.githubAppId > 0 ? dados.githubAppId : 0,
+            githubInstallationId:
+              dados.githubInstallationId != null && dados.githubInstallationId > 0
+                ? dados.githubInstallationId
+                : 0,
+            githubGraphqlUrl: (dados.githubGraphqlUrl ?? '').trim() || null,
+            githubApiBaseUrl: (dados.githubApiBaseUrl ?? '').trim() || null,
+            githubHttpConnectTimeoutMs: dados.githubHttpConnectTimeoutMs ?? null,
+            githubHttpReadTimeoutMs: dados.githubHttpReadTimeoutMs ?? null,
+            githubInstallationTokenSkewSegundos: dados.githubInstallationTokenSkewSegundos ?? null,
+          }
+        : {}),
     };
 
     this.salvando.set(true);
@@ -405,6 +441,8 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
     this.configService.atualizar(payload).subscribe({
       next: (config) => {
         this.webhookInboundSecretConfigurado.set(!!config.webhookInboundSecretConfigurado);
+        this.githubGraphqlTokenConfigurado.set(!!config.githubGraphqlTokenConfigurado);
+        this.githubAppPrivateKeyConfigurado.set(!!config.githubAppPrivateKeyConfigurado);
         this.form.patchValue(this.patchConfigForm(config));
         this.sucesso.set('Configurações salvas.');
         this.toast.success('Configurações salvas');
@@ -433,6 +471,15 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
         : '',
       webhookRegistrarFilaSemDestinatario: config.webhookRegistrarFilaSemDestinatario ?? true,
       webhookInboundSecret: '',
+      githubGraphqlToken: '',
+      githubAppPrivateKey: '',
+      githubAppId: config.githubAppId ?? null,
+      githubInstallationId: config.githubInstallationId ?? null,
+      githubGraphqlUrl: config.githubGraphqlUrl ?? '',
+      githubApiBaseUrl: config.githubApiBaseUrl ?? '',
+      githubHttpConnectTimeoutMs: config.githubHttpConnectTimeoutMs ?? null,
+      githubHttpReadTimeoutMs: config.githubHttpReadTimeoutMs ?? null,
+      githubInstallationTokenSkewSegundos: config.githubInstallationTokenSkewSegundos ?? null,
       ...this.valoresGithubForm(config),
     };
   }

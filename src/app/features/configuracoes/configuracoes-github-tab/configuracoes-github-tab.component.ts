@@ -10,6 +10,11 @@ import { GithubWebhookIntegracaoResponse } from '../../../shared/types/dtos';
 import { FormFieldComponent } from '../../../shared/components/forms/form-field/app-form-field';
 import {
   FRASE_ATIVACAO_GITHUB_PADRAO,
+  GITHUB_DEFAULT_API_BASE_URL,
+  GITHUB_DEFAULT_CONNECT_TIMEOUT_MS,
+  GITHUB_DEFAULT_GRAPHQL_URL,
+  GITHUB_DEFAULT_INSTALLATION_TOKEN_SKEW_SEGUNDOS,
+  GITHUB_DEFAULT_READ_TIMEOUT_MS,
   OrganizacaoConfiguracaoFormData,
   OrganizacaoConfiguracaoFormErrors,
 } from '../schemas/organizacao-configuracao-form.schema';
@@ -40,6 +45,14 @@ export class ConfiguracoesGithubTabComponent implements OnInit {
 
   @Input({ required: true }) form!: FormGroup;
   @Input({ required: true }) errosFormulario: OrganizacaoConfiguracaoFormErrors = {};
+  @Input() graphqlTokenConfigurado = false;
+  @Input() appPrivateKeyConfigurado = false;
+
+  readonly githubDefaultGraphqlUrl = GITHUB_DEFAULT_GRAPHQL_URL;
+  readonly githubDefaultApiBaseUrl = GITHUB_DEFAULT_API_BASE_URL;
+  readonly githubDefaultConnectTimeoutMs = GITHUB_DEFAULT_CONNECT_TIMEOUT_MS;
+  readonly githubDefaultReadTimeoutMs = GITHUB_DEFAULT_READ_TIMEOUT_MS;
+  readonly githubDefaultInstallationTokenSkewSegundos = GITHUB_DEFAULT_INSTALLATION_TOKEN_SKEW_SEGUNDOS;
 
   protected readonly loaderIcon = LoaderCircle;
   protected readonly editTemplateIcon = PencilLine;

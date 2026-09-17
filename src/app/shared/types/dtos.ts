@@ -771,6 +771,15 @@ export interface OrganizacaoConfiguracao {
   webhookInboundUrl: string | null;
   webhookInboundHabilitado: boolean;
   webhookInboundSecretConfigurado: boolean;
+  githubGraphqlTokenConfigurado?: boolean | null;
+  githubAppId?: number | null;
+  githubInstallationId?: number | null;
+  githubAppPrivateKeyConfigurado?: boolean | null;
+  githubGraphqlUrl?: string | null;
+  githubApiBaseUrl?: string | null;
+  githubHttpConnectTimeoutMs?: number | null;
+  githubHttpReadTimeoutMs?: number | null;
+  githubInstallationTokenSkewSegundos?: number | null;
   dtCriacao?: string | null;
   dtAtualizacao?: string | null;
 }
@@ -828,9 +837,17 @@ export interface GithubWebhookIntegracaoResponse {
 
 export type OrganizacaoConfiguracaoRequest = Omit<
   OrganizacaoConfiguracao,
-  'idOrganizacaoConfiguracao' | 'idOrganizacao' | 'dtCriacao' | 'dtAtualizacao' | 'webhookInboundSecretConfigurado'
+  | 'idOrganizacaoConfiguracao'
+  | 'idOrganizacao'
+  | 'dtCriacao'
+  | 'dtAtualizacao'
+  | 'webhookInboundSecretConfigurado'
+  | 'githubGraphqlTokenConfigurado'
+  | 'githubAppPrivateKeyConfigurado'
 > & {
   webhookInboundSecret?: string | null;
+  githubGraphqlToken?: string | null;
+  githubAppPrivateKey?: string | null;
 };
 
 export interface AlertaOperacional {
