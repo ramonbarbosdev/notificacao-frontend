@@ -750,6 +750,9 @@ export interface OrganizacaoConfiguracao {
   auditoriaHabilitada: boolean;
   dsGithubStatusDisparo?: string | null;
   dsGithubFraseAtivacaoWhatsapp?: string | null;
+  webhookInboundUrl: string | null;
+  webhookInboundHabilitado: boolean;
+  webhookInboundSecretConfigurado: boolean;
   dtCriacao?: string | null;
   dtAtualizacao?: string | null;
 }
@@ -766,8 +769,10 @@ export interface GithubWebhookIntegracaoResponse {
 
 export type OrganizacaoConfiguracaoRequest = Omit<
   OrganizacaoConfiguracao,
-  'idOrganizacaoConfiguracao' | 'idOrganizacao' | 'dtCriacao' | 'dtAtualizacao'
->;
+  'idOrganizacaoConfiguracao' | 'idOrganizacao' | 'dtCriacao' | 'dtAtualizacao' | 'webhookInboundSecretConfigurado'
+> & {
+  webhookInboundSecret?: string | null;
+};
 
 export interface AlertaOperacional {
   idAlerta: number;
@@ -828,6 +833,18 @@ export interface WebhookRequest {
   secret?: string | null;
   eventos: WebhookEvento[];
   ativo: boolean;
+}
+
+export interface WhatsappWebhookInboundConfig {
+  url: string | null;
+  habilitado: boolean;
+  secretConfigurado: boolean;
+}
+
+export interface WhatsappWebhookInboundRequest {
+  url: string | null;
+  secret?: string | null;
+  habilitado: boolean;
 }
 
 export interface AuditoriaEvento {

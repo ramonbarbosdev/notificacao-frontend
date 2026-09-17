@@ -21,6 +21,7 @@ import {
   ApiKeyScope,
   OrganizacaoConfiguracao,
   GithubWebhookIntegracaoResponse,
+  OrganizacaoConfiguracaoRequest,
   AlertaOperacional,
   RecursoFeature,
   Webhook as WebhookDTO,
@@ -169,6 +170,9 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
     whatsappLimitePorMinuto: [30],
     whatsappLimitePorDia: [1000],
     whatsappModoEnvio: ['SEGURO'],
+    webhookInboundHabilitado: [false],
+    webhookInboundUrl: [''],
+    webhookInboundSecret: [''],
     templatesVersionamento: [true],
     templatesExigirAprovacao: [false],
     templatesValidarVariaveis: [true],
@@ -197,6 +201,9 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
   });
 
   readonly isAdmin = () => this.authService.role() === 'ADMIN';
+
+  readonly webhookInboundHabilitadoNoPlano = () => this.featureFlags.habilitado('WEBHOOK');
+  readonly webhookInboundSecretConfigurado = signal(false);
 
   campoErro(campo: keyof OrganizacaoConfiguracaoFormData): string | null {
     return this.errosFormulario()[campo] ?? null;
@@ -277,6 +284,7 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
     this.erro.set(null);
     this.configService.buscar().subscribe({
       next: (config) => {
+        this.webhookInboundSecretConfigurado.set(!!config.webhookInboundSecretConfigurado);
         this.form.patchValue({
           ...config,
           nuTelefoneOperacional: config.nuTelefoneOperacional
@@ -284,6 +292,7 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
             : '',
           dsGithubFraseAtivacaoWhatsapp: config.dsGithubFraseAtivacaoWhatsapp ?? '',
           dsGithubStatusDisparo: config.dsGithubStatusDisparo ?? '',
+          webhookInboundSecret: '',
         });
         if (!this.isAdmin()) this.form.disable();
         this.carregando.set(false);
@@ -324,7 +333,25 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
     }
 
     this.errosFormulario.set({});
-    const dados = this.form.getRawValue() as OrganizacaoConfiguracao;
+
+    if (abaAtual === 'whatsapp') {
+      const webhookInboundHabilitado = this.form.controls.webhookInboundHabilitado.value;
+      const webhookInboundSecret = this.form.controls.webhookInboundSecret.value;
+
+      if (
+        webhookInboundHabilitado
+        && !this.webhookInboundSecretConfigurado()
+        && !webhookInboundSecret?.trim()
+      ) {
+        this.errosFormulario.set({
+          webhookInboundSecret: 'Informe o secret do webhook ao habilitar o encaminhamento.',
+        });
+        this.erro.set('Corrija os campos destacados antes de salvar.');
+        return;
+      }
+    }
+
+    const dados = this.form.getRawValue() as OrganizacaoConfiguracao & { webhookInboundSecret?: string };
 
     if (dados.nuTelefoneOperacional) {
       dados.nuTelefoneOperacional = normalizeBrazilWhatsappMobile(dados.nuTelefoneOperacional);
@@ -335,11 +362,17 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
       dados.dsGithubStatusDisparo = (dados.dsGithubStatusDisparo ?? '').trim() || null;
     }
 
+    const payload: OrganizacaoConfiguracaoRequest = {
+      ...dados,
+      webhookInboundSecret: dados.webhookInboundSecret?.trim() || null,
+    };
+
     this.salvando.set(true);
     this.erro.set(null);
     this.sucesso.set(null);
-    this.configService.atualizar(dados).subscribe({
+    this.configService.atualizar(payload).subscribe({
       next: (config) => {
+        this.webhookInboundSecretConfigurado.set(!!config.webhookInboundSecretConfigurado);
         this.form.patchValue({
           ...config,
           nuTelefoneOperacional: config.nuTelefoneOperacional
@@ -347,6 +380,7 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
             : '',
           dsGithubFraseAtivacaoWhatsapp: config.dsGithubFraseAtivacaoWhatsapp ?? '',
           dsGithubStatusDisparo: config.dsGithubStatusDisparo ?? '',
+          webhookInboundSecret: '',
         });
         this.sucesso.set('Configurações salvas.');
         this.toast.success('Configurações salvas');

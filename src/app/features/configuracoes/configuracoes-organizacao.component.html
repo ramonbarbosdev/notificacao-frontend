@@ -130,6 +130,46 @@
                 <label class="config-toggle">Simular digitando <input type="checkbox" formControlName="whatsappSimularDigitando" /></label>
               </div>
               <p class="text-xs text-[var(--color-text-subtle)]">Use limites conservadores para reduzir bloqueios e melhorar entregabilidade.</p>
+
+              @if (webhookInboundHabilitadoNoPlano()) {
+                <div class="border-t border-[var(--color-border)] pt-5 space-y-4">
+                  <div>
+                    <h3 class="text-[var(--color-text)] font-semibold m-0">Integração externa (webhook inbound)</h3>
+                    <p class="text-xs text-[var(--color-text-muted)] mt-1 m-0">
+                      Mensagens recebidas no WhatsApp serão encaminhadas para a URL informada (ex.: sistema de horas extras).
+                    </p>
+                  </div>
+                  <label class="config-toggle">Habilitar encaminhamento
+                    <input type="checkbox" formControlName="webhookInboundHabilitado" />
+                  </label>
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <app-form-field
+                      label="URL do webhook"
+                      helper="Endpoint que receberá as mensagens inbound"
+                      [error]="campoErro('webhookInboundUrl')"
+                    >
+                      <input
+                        formControlName="webhookInboundUrl"
+                        class="form-input-admin"
+                        placeholder="https://horas-extras.exemplo.com/api/webhooks/whatsapp/inbound"
+                      />
+                    </app-form-field>
+                    <app-form-field
+                      label="Secret"
+                      [helper]="webhookInboundSecretConfigurado() ? 'Deixe em branco para manter o secret atual' : 'Mesmo valor configurado no sistema externo'"
+                      [error]="campoErro('webhookInboundSecret')"
+                    >
+                      <input
+                        formControlName="webhookInboundSecret"
+                        type="password"
+                        class="form-input-admin"
+                        placeholder="••••••••"
+                        autocomplete="new-password"
+                      />
+                    </app-form-field>
+                  </div>
+                </div>
+              }
             </section>
           }
 
