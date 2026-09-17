@@ -330,6 +330,7 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
         this.githubGraphqlTokenConfigurado.set(!!config.githubGraphqlTokenConfigurado);
         this.githubAppPrivateKeyConfigurado.set(!!config.githubAppPrivateKeyConfigurado);
         this.form.patchValue(this.patchConfigForm(config));
+        this.githubTab?.definirTemplatesPorCenario(config.githubTemplatesPorCenario);
         this.githubTab?.bloquearCamposConexaoAvancada();
         if (!this.isAdmin()) this.form.disable();
         this.carregando.set(false);
@@ -429,6 +430,7 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
               dados.githubInstallationId != null && dados.githubInstallationId > 0
                 ? dados.githubInstallationId
                 : null,
+            githubTemplatesPorCenario: this.githubTab?.obterTemplatesPorCenarioParaSalvar() ?? {},
           }
         : {}),
     };
@@ -442,6 +444,7 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
         this.githubGraphqlTokenConfigurado.set(!!config.githubGraphqlTokenConfigurado);
         this.githubAppPrivateKeyConfigurado.set(!!config.githubAppPrivateKeyConfigurado);
         this.form.patchValue(this.patchConfigForm(config));
+        this.githubTab?.definirTemplatesPorCenario(config.githubTemplatesPorCenario);
         this.githubTab?.bloquearCamposConexaoAvancada();
         this.sucesso.set('Configurações salvas.');
         this.toast.success('Configurações salvas');

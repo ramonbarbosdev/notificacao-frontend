@@ -753,6 +753,7 @@ export interface OrganizacaoConfiguracao {
   webhookRegistrarFilaSemDestinatario?: boolean | null;
   dsGithubTemplateAssuntoWhatsapp?: string | null;
   dsGithubTemplateMensagemWhatsapp?: string | null;
+  githubTemplatesPorCenario?: Record<string, GithubTemplatePorCenario> | null;
   dsGithubFraseAtivacaoWhatsapp?: string | null;
   githubNaoNotificarMovimentador?: boolean | null;
   githubNotificarStatusAlterado?: boolean | null;
@@ -796,6 +797,11 @@ export interface GithubWebhookTemplateVariavel {
   origemPayload: string;
   exemplo: string;
   dicaUso: string | null;
+}
+
+export interface GithubTemplatePorCenario {
+  assunto?: string | null;
+  mensagem?: string | null;
 }
 
 export interface GithubWebhookTemplateCenario {

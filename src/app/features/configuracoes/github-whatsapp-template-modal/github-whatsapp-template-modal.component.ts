@@ -25,6 +25,7 @@ import { EMPTY, Subject, Subscription, debounceTime, finalize, switchMap } from 
 
 import { GithubIntegracaoService } from '../../../core/services/github-integracao.service';
 import {
+  GithubTemplatePorCenario,
   GithubWebhookIntegracaoResponse,
   GithubWebhookTemplatePreviewResponse,
   GithubWebhookTemplateVariavel,
@@ -34,6 +35,8 @@ import { extrairMensagemErroHttp } from '../../../shared/labels/notificacao.labe
 export interface GithubWhatsappTemplateAplicado {
   assunto: string;
   mensagem: string;
+  cenarioId: string;
+  templatesPorCenario: Record<string, GithubTemplatePorCenario>;
 }
 
 type CampoTemplate = 'assunto' | 'mensagem';
@@ -48,14 +51,14 @@ export class GithubWhatsappTemplateModalComponent implements OnDestroy {
   private readonly githubIntegracaoService = inject(GithubIntegracaoService);
 
   readonly aberto = input(false);
-  readonly assuntoInicial = input('');
-  readonly mensagemInicial = input('');
+  readonly assuntoFallback = input('');
+  readonly mensagemFallback = input('');
+  readonly templatesPorCenarioInicial = input<Record<string, GithubTemplatePorCenario>>({});
   readonly integracao = input<GithubWebhookIntegracaoResponse | null>(null);
   readonly carregandoIntegracao = input(false);
 
   readonly fechado = output<void>();
   readonly aplicado = output<GithubWhatsappTemplateAplicado>();
-  /** Aplica no formulario e pede save na pagina (configuracoes-organizacao). */
   readonly salvarNoServidor = output<GithubWhatsappTemplateAplicado>();
 
   protected readonly closeIcon = X;
@@ -72,6 +75,7 @@ export class GithubWhatsappTemplateModalComponent implements OnDestroy {
   readonly buscaVariavel = signal('');
   readonly campoFoco = signal<CampoTemplate>('mensagem');
   readonly cenarioId = signal('');
+  readonly templatesPorCenario = signal<Record<string, GithubTemplatePorCenario>>({});
   readonly preview = signal<GithubWebhookTemplatePreviewResponse | null>(null);
   readonly previewErro = signal<string | null>(null);
   readonly previewCarregando = signal(false);
@@ -84,12 +88,10 @@ export class GithubWhatsappTemplateModalComponent implements OnDestroy {
     effect(() => {
       const aberto = this.aberto();
       if (aberto && !this.abertoAnterior) {
-        this.assunto.set(this.assuntoInicial() ?? '');
-        this.mensagem.set(this.mensagemInicial() ?? '');
-        const cen = this.integracao()?.cenariosPreview?.[0]?.id;
-        if (cen) {
-          this.cenarioId.set(cen);
-        }
+        this.templatesPorCenario.set({ ...this.templatesPorCenarioInicial() });
+        const cen = this.integracao()?.cenariosPreview?.[0]?.id ?? '';
+        this.cenarioId.set(cen);
+        this.carregarCenarioNoEditor(cen);
         this.preview.set(null);
         this.previewErro.set(null);
         queueMicrotask(() => this.dispararPreview());
@@ -136,6 +138,11 @@ export class GithubWhatsappTemplateModalComponent implements OnDestroy {
     }
   }
 
+  cenarioTemTemplateSalvo(id: string): boolean {
+    const item = this.templatesPorCenario()[id];
+    return !!(item?.assunto?.trim() || item?.mensagem?.trim());
+  }
+
   variaveisFiltradas(): GithubWebhookTemplateVariavel[] {
     const lista = this.integracao()?.variaveisTemplateDetalhadas ?? [];
     const q = this.buscaVariavel().trim().toLowerCase();
@@ -155,9 +162,13 @@ export class GithubWhatsappTemplateModalComponent implements OnDestroy {
   }
 
   valoresAtuais(): GithubWhatsappTemplateAplicado {
+    this.persistirCenarioAtualNoMapa();
+    const id = this.cenarioId();
     return {
       assunto: this.assunto(),
       mensagem: this.mensagem(),
+      cenarioId: id,
+      templatesPorCenario: { ...this.templatesPorCenario() },
     };
   }
 
@@ -228,7 +239,9 @@ export class GithubWhatsappTemplateModalComponent implements OnDestroy {
   }
 
   onCenarioChange(id: string): void {
+    this.persistirCenarioAtualNoMapa();
     this.cenarioId.set(id);
+    this.carregarCenarioNoEditor(id);
     this.dispararPreview();
   }
 
@@ -260,5 +273,39 @@ export class GithubWhatsappTemplateModalComponent implements OnDestroy {
       destinatarios: ctx['destinatarios'],
     };
     return JSON.stringify(exemplo, null, 2);
+  }
+
+  private persistirCenarioAtualNoMapa(): void {
+    const id = this.cenarioId();
+    if (!id) {
+      return;
+    }
+    const assunto = this.assunto().trim();
+    const mensagem = this.mensagem().trim();
+    this.templatesPorCenario.update((mapa) => {
+      const proximo = { ...mapa };
+      if (!assunto && !mensagem) {
+        delete proximo[id];
+      } else {
+        proximo[id] = { assunto, mensagem };
+      }
+      return proximo;
+    });
+  }
+
+  private carregarCenarioNoEditor(id: string): void {
+    if (!id) {
+      this.assunto.set(this.assuntoFallback() ?? '');
+      this.mensagem.set(this.mensagemFallback() ?? '');
+      return;
+    }
+    const salvo = this.templatesPorCenario()[id];
+    if (salvo?.assunto?.trim() || salvo?.mensagem?.trim()) {
+      this.assunto.set(salvo.assunto ?? '');
+      this.mensagem.set(salvo.mensagem ?? '');
+      return;
+    }
+    this.assunto.set(this.assuntoFallback() ?? '');
+    this.mensagem.set(this.mensagemFallback() ?? '');
   }
 }

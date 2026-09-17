@@ -9,6 +9,7 @@ import { ToastService } from '../../../core/services/toast.service';
 import {
   GithubGraphqlConsultaResponse,
   GithubResponsavel,
+  GithubTemplatePorCenario,
   GithubWebhookIntegracaoResponse,
 } from '../../../shared/types/dtos';
 import { formatDateTimePtBr } from '../../../shared/helper/date.utils';
@@ -76,6 +77,7 @@ export class ConfiguracoesGithubTabComponent implements OnInit {
   readonly graphqlConsulta = signal<GithubGraphqlConsultaResponse | null>(null);
   readonly carregandoGraphqlConsulta = signal(false);
   readonly modalTemplateGithubAberto = signal(false);
+  readonly templatesPorCenario = signal<Record<string, GithubTemplatePorCenario>>({});
 
   readonly responsaveisHabilitados = computed(() =>
     this.responsaveisGithub().filter((item) => item.habilitado));
@@ -232,16 +234,28 @@ export class ConfiguracoesGithubTabComponent implements OnInit {
     this.modalTemplateGithubAberto.set(false);
   }
 
-  aplicarTemplateGithub(dados: GithubWhatsappTemplateAplicado): void {
-    this.form.patchValue({
-      dsGithubTemplateAssuntoWhatsapp: dados.assunto,
-      dsGithubTemplateMensagemWhatsapp: dados.mensagem,
-    });
-    this.form.markAsDirty();
-    this.toast.success('Template aplicado — salve as configurações');
+  definirTemplatesPorCenario(mapa: Record<string, GithubTemplatePorCenario> | null | undefined): void {
+    this.templatesPorCenario.set(mapa ? { ...mapa } : {});
   }
 
-  /** Copia assunto/mensagem do editor aberto para o FormGroup antes do PUT. */
+  obterTemplatesPorCenarioParaSalvar(): Record<string, GithubTemplatePorCenario> {
+    this.sincronizarTemplateEditorNoFormulario();
+    return { ...this.templatesPorCenario() };
+  }
+
+  quantidadeTemplatesPorCenarioSalvos(): number {
+    return Object.values(this.templatesPorCenario()).filter(
+      (item) => (item.assunto?.trim() ?? '') || (item.mensagem?.trim() ?? ''),
+    ).length;
+  }
+
+  aplicarTemplateGithub(dados: GithubWhatsappTemplateAplicado): void {
+    this.templatesPorCenario.set({ ...dados.templatesPorCenario });
+    this.form.markAsDirty();
+    this.toast.success('Templates por tipo atualizados — salve as configurações');
+  }
+
+  /** Copia mapa do editor aberto antes do PUT. */
   sincronizarTemplateEditorNoFormulario(): void {
     if (!this.modalTemplateGithubAberto()) {
       return;
@@ -251,18 +265,12 @@ export class ConfiguracoesGithubTabComponent implements OnInit {
       return;
     }
     const dados = modal.valoresAtuais();
-    this.form.patchValue({
-      dsGithubTemplateAssuntoWhatsapp: dados.assunto,
-      dsGithubTemplateMensagemWhatsapp: dados.mensagem,
-    });
+    this.templatesPorCenario.set({ ...dados.templatesPorCenario });
     this.form.markAsDirty();
   }
 
   onSalvarTemplateNoServidor(dados: GithubWhatsappTemplateAplicado): void {
-    this.form.patchValue({
-      dsGithubTemplateAssuntoWhatsapp: dados.assunto,
-      dsGithubTemplateMensagemWhatsapp: dados.mensagem,
-    });
+    this.templatesPorCenario.set({ ...dados.templatesPorCenario });
     this.form.markAsDirty();
     this.salvarSolicitado.emit();
   }
