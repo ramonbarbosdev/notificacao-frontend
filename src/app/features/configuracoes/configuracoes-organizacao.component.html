@@ -196,6 +196,18 @@
                 </p>
               </div>
 
+              <div class="border border-[var(--color-border)] rounded-xl p-4 space-y-2 bg-[var(--color-bg-base)]/40">
+                <h3 class="text-sm font-semibold text-[var(--color-text)]">Fila sem responsável</h3>
+                <label class="config-toggle text-sm text-[var(--color-text)]">
+                  Registrar na fila quando não houver responsável ou destinatário
+                  <input type="checkbox" formControlName="webhookRegistrarFilaSemDestinatario" />
+                </label>
+                <p class="text-xs text-[var(--color-text-muted)]">
+                  <strong>Ligado:</strong> GitHub sem opt-in e webhook genérico sem telefone entram na fila como bloqueados (histórico).
+                  <strong>Desligado:</strong> esses eventos são ignorados e não aparecem na fila.
+                </p>
+              </div>
+
               @if (carregandoGithubIntegracao()) {
                 <p class="text-sm text-[var(--color-text-muted)]">Carregando integracao...</p>
               } @else if (githubIntegracao(); as gh) {
@@ -233,13 +245,6 @@
                   >
                     <input formControlName="dsGithubStatusDisparo" class="form-input-admin" placeholder="Em progresso, Review" />
                   </app-form-field>
-                  <label class="config-toggle text-sm text-[var(--color-text)]">
-                    Registrar na fila sem responsavel/destinatario
-                    <input type="checkbox" formControlName="webhookRegistrarFilaSemDestinatario" />
-                  </label>
-                  <p class="text-xs text-[var(--color-text-muted)] -mt-2">
-                    Desmarcado: GitHub sem opt-in e webhook generico sem telefone nao entram na fila (apenas log). Marcado: entram bloqueados para historico.
-                  </p>
                   <div class="border border-[var(--color-border)] rounded-xl p-4 space-y-3">
                     <h3 class="text-sm font-semibold text-[var(--color-text)]">Template WhatsApp (GitHub)</h3>
                     <p class="text-xs text-[var(--color-text-muted)]">
@@ -319,6 +324,16 @@
               <p class="text-sm text-[var(--color-text-muted)] mb-4">
                 Políticas de reenvio e prioridade padrão da fila de notificações.
               </p>
+              <div class="border border-[var(--color-border)] rounded-xl p-4 space-y-2 mb-4">
+                <h3 class="text-sm font-semibold text-[var(--color-text)]">Webhooks (GitHub / genérico)</h3>
+                <label class="config-toggle text-sm text-[var(--color-text)]">
+                  Registrar na fila sem responsável ou destinatário
+                  <input type="checkbox" formControlName="webhookRegistrarFilaSemDestinatario" />
+                </label>
+                <p class="text-xs text-[var(--color-text-muted)]">
+                  Mesma opção da aba GitHub. Desligue para não criar item na fila quando faltar opt-in ou número WhatsApp.
+                </p>
+              </div>
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <label class="config-toggle md:col-span-2">Retry automático <input type="checkbox" formControlName="retryAutomatico" /></label>
                 <app-form-field label="Tentativas de retry" helper="Quantas vezes reenviar após falha" [error]="campoErro('retryTentativas')">

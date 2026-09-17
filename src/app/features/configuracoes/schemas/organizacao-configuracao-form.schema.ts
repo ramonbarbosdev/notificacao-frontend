@@ -134,6 +134,7 @@ export const orgConfigNotificacoesBaseSchema = z.object({
     .min(1, 'Informe pelo menos 1 hora.')
     .max(720, 'A expiracao deve ser no maximo 720 horas.'),
   auditoriaHabilitada: z.boolean(),
+  webhookRegistrarFilaSemDestinatario: z.boolean(),
 });
 
 export const orgConfigGithubSchema = z.object({
@@ -149,7 +150,6 @@ export const orgConfigGithubSchema = z.object({
     .max(500, 'O filtro de status deve ter no maximo 500 caracteres.')
     .optional()
     .default(''),
-  webhookRegistrarFilaSemDestinatario: z.boolean(),
   dsGithubTemplateAssuntoWhatsapp: z
     .string()
     .trim()
@@ -218,11 +218,11 @@ export const CAMPOS_POR_ABA_ORG: Record<AbaConfiguracaoOrganizacao, (keyof Organ
     'prioridadePadrao',
     'expiracaoFilaHoras',
     'auditoriaHabilitada',
+    'webhookRegistrarFilaSemDestinatario',
   ],
   github: [
     'dsGithubFraseAtivacaoWhatsapp',
     'dsGithubStatusDisparo',
-    'webhookRegistrarFilaSemDestinatario',
     'dsGithubTemplateAssuntoWhatsapp',
     'dsGithubTemplateMensagemWhatsapp',
   ],

@@ -111,6 +111,12 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
       if (FOCO_WHATSAPP && aba.ocultoModoWhatsapp) {
         return false;
       }
+      if (aba.id === 'github') {
+        return (
+          this.featureFlags.habilitado('GITHUB_WEBHOOK') ||
+          this.featureFlags.habilitado('WEBHOOK_GENERICO')
+        );
+      }
       if (aba.recurso && !this.featureFlags.habilitado(aba.recurso)) {
         return false;
       }
@@ -361,6 +367,10 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
 
     if (dados.nuTelefoneOperacional) {
       dados.nuTelefoneOperacional = normalizeBrazilWhatsappMobile(dados.nuTelefoneOperacional);
+    }
+
+    if (abaAtual === 'github' || abaAtual === 'notificacoes') {
+      dados.webhookRegistrarFilaSemDestinatario = !!this.form.get('webhookRegistrarFilaSemDestinatario')?.value;
     }
 
     if (abaAtual === 'github') {
