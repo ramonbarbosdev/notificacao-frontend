@@ -184,6 +184,9 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
     auditoriaHabilitada: [true],
     dsGithubFraseAtivacaoWhatsapp: [''],
     dsGithubStatusDisparo: [''],
+    webhookRegistrarFilaSemDestinatario: [true],
+    dsGithubTemplateAssuntoWhatsapp: [''],
+    dsGithubTemplateMensagemWhatsapp: [''],
   });
 
   readonly apiKeyForm = this.fb.group({
@@ -292,6 +295,9 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
             : '',
           dsGithubFraseAtivacaoWhatsapp: config.dsGithubFraseAtivacaoWhatsapp ?? '',
           dsGithubStatusDisparo: config.dsGithubStatusDisparo ?? '',
+          webhookRegistrarFilaSemDestinatario: config.webhookRegistrarFilaSemDestinatario ?? true,
+          dsGithubTemplateAssuntoWhatsapp: config.dsGithubTemplateAssuntoWhatsapp ?? '',
+          dsGithubTemplateMensagemWhatsapp: config.dsGithubTemplateMensagemWhatsapp ?? '',
           webhookInboundSecret: '',
         });
         if (!this.isAdmin()) this.form.disable();
@@ -360,6 +366,8 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
     if (abaAtual === 'github') {
       dados.dsGithubFraseAtivacaoWhatsapp = (dados.dsGithubFraseAtivacaoWhatsapp ?? '').trim();
       dados.dsGithubStatusDisparo = (dados.dsGithubStatusDisparo ?? '').trim() || null;
+      dados.dsGithubTemplateAssuntoWhatsapp = (dados.dsGithubTemplateAssuntoWhatsapp ?? '').trim() || null;
+      dados.dsGithubTemplateMensagemWhatsapp = (dados.dsGithubTemplateMensagemWhatsapp ?? '').trim() || null;
     }
 
     const payload: OrganizacaoConfiguracaoRequest = {
@@ -380,6 +388,9 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
             : '',
           dsGithubFraseAtivacaoWhatsapp: config.dsGithubFraseAtivacaoWhatsapp ?? '',
           dsGithubStatusDisparo: config.dsGithubStatusDisparo ?? '',
+          webhookRegistrarFilaSemDestinatario: config.webhookRegistrarFilaSemDestinatario ?? true,
+          dsGithubTemplateAssuntoWhatsapp: config.dsGithubTemplateAssuntoWhatsapp ?? '',
+          dsGithubTemplateMensagemWhatsapp: config.dsGithubTemplateMensagemWhatsapp ?? '',
           webhookInboundSecret: '',
         });
         this.sucesso.set('Configurações salvas.');

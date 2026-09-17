@@ -18,6 +18,7 @@ const PADROES: Partial<Record<RecursoFeature, boolean>> = {
   API_PUBLICA: false,
   ANALYTICS: false,
   GITHUB_WEBHOOK: false,
+  WEBHOOK_GENERICO: false,
 };
 
 @Injectable({ providedIn: 'root' })

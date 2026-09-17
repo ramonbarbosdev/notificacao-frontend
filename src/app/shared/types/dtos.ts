@@ -632,7 +632,8 @@ export type RecursoFeature =
   | 'TEMPLATES'
   | 'API_PUBLICA'
   | 'ANALYTICS'
-  | 'GITHUB_WEBHOOK';
+  | 'GITHUB_WEBHOOK'
+  | 'WEBHOOK_GENERICO';
 
 export type ApiKeyScope =
   | 'NOTIFICACOES_ENVIAR'
@@ -749,6 +750,9 @@ export interface OrganizacaoConfiguracao {
   expiracaoFilaHoras: number | null;
   auditoriaHabilitada: boolean;
   dsGithubStatusDisparo?: string | null;
+  webhookRegistrarFilaSemDestinatario?: boolean | null;
+  dsGithubTemplateAssuntoWhatsapp?: string | null;
+  dsGithubTemplateMensagemWhatsapp?: string | null;
   dsGithubFraseAtivacaoWhatsapp?: string | null;
   webhookInboundUrl: string | null;
   webhookInboundHabilitado: boolean;
@@ -765,6 +769,9 @@ export interface GithubWebhookIntegracaoResponse {
   fraseAtivacaoWhatsapp: string;
   linkWhatsappAtivacao: string | null;
   whatsappOrigemConectado: boolean;
+  templateAssuntoPadrao: string;
+  templateMensagemPadrao: string;
+  variaveisTemplateWhatsapp: string[];
 }
 
 export type OrganizacaoConfiguracaoRequest = Omit<

@@ -149,6 +149,19 @@ export const orgConfigGithubSchema = z.object({
     .max(500, 'O filtro de status deve ter no maximo 500 caracteres.')
     .optional()
     .default(''),
+  webhookRegistrarFilaSemDestinatario: z.boolean(),
+  dsGithubTemplateAssuntoWhatsapp: z
+    .string()
+    .trim()
+    .max(500, 'O assunto do template deve ter no maximo 500 caracteres.')
+    .optional()
+    .default(''),
+  dsGithubTemplateMensagemWhatsapp: z
+    .string()
+    .trim()
+    .max(8000, 'A mensagem do template deve ter no maximo 8000 caracteres.')
+    .optional()
+    .default(''),
 });
 
 export const orgConfigNotificacoesSchema = orgConfigNotificacoesBaseSchema.superRefine((value, ctx) => {
@@ -206,7 +219,13 @@ export const CAMPOS_POR_ABA_ORG: Record<AbaConfiguracaoOrganizacao, (keyof Organ
     'expiracaoFilaHoras',
     'auditoriaHabilitada',
   ],
-  github: ['dsGithubFraseAtivacaoWhatsapp', 'dsGithubStatusDisparo'],
+  github: [
+    'dsGithubFraseAtivacaoWhatsapp',
+    'dsGithubStatusDisparo',
+    'webhookRegistrarFilaSemDestinatario',
+    'dsGithubTemplateAssuntoWhatsapp',
+    'dsGithubTemplateMensagemWhatsapp',
+  ],
 };
 
 export function schemaOrganizacaoConfigPorAba(aba: AbaConfiguracaoOrganizacao) {

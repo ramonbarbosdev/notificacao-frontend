@@ -43,6 +43,11 @@ export class FeatureFlagsComponent implements OnInit {
       label: 'GitHub webhook',
       descricao: 'Alertas de issues/projects no WhatsApp (opt-in por assignee).',
     },
+    {
+      recurso: 'WEBHOOK_GENERICO',
+      label: 'Webhook generico',
+      descricao: 'POST /webhooks/generico para enfileirar WhatsApp a partir de qualquer sistema.',
+    },
   ];
 
   readonly motoresWhatsapp: { valor: MotorWhatsapp; label: string; descricao: string }[] = [
