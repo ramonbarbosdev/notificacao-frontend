@@ -228,6 +228,7 @@ export const orgConfigGithubSchema = z.object({
   githubNotificarIssueFechadaReaberta: z.boolean().default(false),
   githubNotificarIssueLabel: z.boolean().default(false),
   githubNotificarSomenteCampoStatus: z.boolean().default(false),
+  githubNotificarReordenacao: z.boolean().default(false),
   githubPrAvisarAvaliadores: z.boolean().default(false),
   dsGithubPrStatusDisparo: z
     .string()
@@ -327,6 +328,7 @@ export const CAMPOS_POR_ABA_ORG: Record<AbaConfiguracaoOrganizacao, (keyof Organ
     'githubNotificarIssueFechadaReaberta',
     'githubNotificarIssueLabel',
     'githubNotificarSomenteCampoStatus',
+    'githubNotificarReordenacao',
     'githubPrAvisarAvaliadores',
     'dsGithubPrStatusDisparo',
     'dsGithubPrLoginsAvaliadores',
