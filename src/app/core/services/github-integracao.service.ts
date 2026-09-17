@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
 import {
+  GithubResponsavel,
   GithubWebhookIntegracaoResponse,
   GithubWebhookTemplatePreviewRequest,
   GithubWebhookTemplatePreviewResponse,
@@ -16,6 +17,10 @@ export class GithubIntegracaoService {
 
   buscarInstrucoesWebhook(): Observable<GithubWebhookIntegracaoResponse> {
     return this.http.get<GithubWebhookIntegracaoResponse>(`${this.base}/webhook`);
+  }
+
+  listarResponsaveis(): Observable<GithubResponsavel[]> {
+    return this.http.get<GithubResponsavel[]>(`${this.base}/responsaveis`);
   }
 
   previewTemplate(

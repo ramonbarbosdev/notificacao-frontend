@@ -1,12 +1,13 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input, OnInit, inject, input, signal } from '@angular/core';
+import { Component, Input, OnInit, computed, inject, input, signal } from '@angular/core';
 import { FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { LoaderCircle, LucideAngularModule, PencilLine } from 'lucide-angular';
 
 import { GithubIntegracaoService } from '../../../core/services/github-integracao.service';
 import { ToastService } from '../../../core/services/toast.service';
-import { GithubWebhookIntegracaoResponse } from '../../../shared/types/dtos';
+import { GithubResponsavel, GithubWebhookIntegracaoResponse } from '../../../shared/types/dtos';
+import { formatDateTimePtBr } from '../../../shared/helper/date.utils';
 import { FormFieldComponent } from '../../../shared/components/forms/form-field/app-form-field';
 import {
   FRASE_ATIVACAO_GITHUB_PADRAO,
@@ -23,7 +24,7 @@ import {
   GithubWhatsappTemplateModalComponent,
 } from '../github-whatsapp-template-modal/github-whatsapp-template-modal.component';
 
-export type GithubSubAba = 'conexao' | 'equipe' | 'regras' | 'mensagem';
+export type GithubSubAba = 'conexao' | 'equipe' | 'habilitados' | 'regras' | 'mensagem';
 
 @Component({
   selector: 'app-configuracoes-github-tab',
@@ -60,16 +61,27 @@ export class ConfiguracoesGithubTabComponent implements OnInit {
   readonly githubSubAba = signal<GithubSubAba>('conexao');
   readonly githubIntegracao = signal<GithubWebhookIntegracaoResponse | null>(null);
   readonly carregandoGithubIntegracao = signal(false);
+  readonly responsaveisGithub = signal<GithubResponsavel[]>([]);
+  readonly carregandoResponsaveis = signal(false);
+  readonly erroResponsaveis = signal<string | null>(null);
   readonly modalTemplateGithubAberto = signal(false);
+
+  readonly responsaveisHabilitados = computed(() =>
+    this.responsaveisGithub().filter((item) => item.habilitado));
+  readonly responsaveisPendentes = computed(() =>
+    this.responsaveisGithub().filter((item) => item.ativo && !item.habilitado));
 
   readonly fraseAtivacaoGithubPadrao = FRASE_ATIVACAO_GITHUB_PADRAO;
 
   readonly subAbas: { id: GithubSubAba; label: string }[] = [
     { id: 'conexao', label: 'Conexão' },
     { id: 'equipe', label: 'Equipe' },
+    { id: 'habilitados', label: 'Habilitados' },
     { id: 'regras', label: 'Regras' },
     { id: 'mensagem', label: 'Mensagem' },
   ];
+
+  readonly formatarData = formatDateTimePtBr;
 
   private static readonly CAMPOS_CONEXAO_SOMENTE_LEITURA: (keyof OrganizacaoConfiguracaoFormData)[] = [
     'githubGraphqlUrl',
@@ -82,11 +94,20 @@ export class ConfiguracoesGithubTabComponent implements OnInit {
 
   ngOnInit(): void {
     const secao = this.route.snapshot.queryParamMap.get('githubSecao');
-    if (secao === 'conexao' || secao === 'equipe' || secao === 'regras' || secao === 'mensagem') {
+    if (
+      secao === 'conexao'
+      || secao === 'equipe'
+      || secao === 'habilitados'
+      || secao === 'regras'
+      || secao === 'mensagem'
+    ) {
       this.githubSubAba.set(secao);
     }
     this.bloquearCamposConexaoAvancada();
     this.carregarGithubIntegracao();
+    if (this.githubSubAba() === 'habilitados') {
+      this.carregarResponsaveisGithub();
+    }
   }
 
   bloquearCamposConexaoAvancada(): void {
@@ -97,6 +118,25 @@ export class ConfiguracoesGithubTabComponent implements OnInit {
 
   selecionarSubAba(id: GithubSubAba): void {
     this.githubSubAba.set(id);
+    if (id === 'habilitados') {
+      this.carregarResponsaveisGithub();
+    }
+  }
+
+  carregarResponsaveisGithub(): void {
+    this.carregandoResponsaveis.set(true);
+    this.erroResponsaveis.set(null);
+    this.githubIntegracaoService.listarResponsaveis().subscribe({
+      next: (lista) => {
+        this.responsaveisGithub.set(lista);
+        this.carregandoResponsaveis.set(false);
+      },
+      error: () => {
+        this.responsaveisGithub.set([]);
+        this.erroResponsaveis.set('Não foi possível carregar a lista de habilitados.');
+        this.carregandoResponsaveis.set(false);
+      },
+    });
   }
 
   carregarGithubIntegracao(): void {

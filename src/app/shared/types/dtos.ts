@@ -820,6 +820,15 @@ export interface GithubWebhookTemplatePreviewResponse {
   variaveisDesconhecidas: string[];
 }
 
+export interface GithubResponsavel {
+  idGithubResponsavel: number;
+  githubLogin: string | null;
+  whatsappMascarado: string;
+  habilitado: boolean;
+  ativo: boolean;
+  dtAtualizacao: string;
+}
+
 export interface GithubWebhookIntegracaoResponse {
   featureHabilitada: boolean;
   webhookUrlTemplate: string;
