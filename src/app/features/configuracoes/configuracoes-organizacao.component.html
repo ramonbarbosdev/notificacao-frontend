@@ -193,6 +193,8 @@
               [errosFormulario]="errosFormulario()"
               [graphqlTokenConfigurado]="githubGraphqlTokenConfigurado()"
               [githubAppPrivateKeyConfigurado]="githubAppPrivateKeyConfigurado()"
+              [templatesPorCenarioServidor]="githubTemplatesPorCenario()"
+              (templatesPorCenarioChange)="onGithubTemplatesPorCenarioChange($event)"
               (salvarSolicitado)="salvar()"
             />
           }

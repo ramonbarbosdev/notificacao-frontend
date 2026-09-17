@@ -25,6 +25,7 @@ import {
   ApiKey,
   ApiKeyCreatedResponse,
   ApiKeyScope,
+  GithubTemplatePorCenario,
   OrganizacaoConfiguracao,
   OrganizacaoConfiguracaoRequest,
   AlertaOperacional,
@@ -151,6 +152,8 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
   readonly whatsappStatus = signal<WhatsappStatusResponse | null>(null);
   readonly alertasOperacionais = signal<AlertaOperacional[]>([]);
   readonly carregandoAlertas = signal(false);
+  /** Fonte de verdade dos templates por cenário (filho pode não estar montado no carregar). */
+  readonly githubTemplatesPorCenario = signal<Record<string, GithubTemplatePorCenario>>({});
 
   readonly scopes: { value: ApiKeyScope; label: string }[] = [
     { value: 'NOTIFICACOES_ENVIAR', label: 'Enviar notificacoes' },
@@ -331,7 +334,8 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
         this.githubGraphqlTokenConfigurado.set(!!config.githubGraphqlTokenConfigurado);
         this.githubAppPrivateKeyConfigurado.set(!!config.githubAppPrivateKeyConfigurado);
         this.form.patchValue(this.patchConfigForm(config));
-        this.githubTab?.definirTemplatesPorCenario(config.githubTemplatesPorCenario);
+        this.githubTemplatesPorCenario.set(config.githubTemplatesPorCenario ?? {});
+        this.githubTab?.definirTemplatesPorCenario(this.githubTemplatesPorCenario());
         this.githubTab?.bloquearCamposConexaoAvancada();
         if (!this.isAdmin()) this.form.disable();
         this.carregando.set(false);
@@ -431,7 +435,7 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
               dados.githubInstallationId != null && dados.githubInstallationId > 0
                 ? dados.githubInstallationId
                 : null,
-            githubTemplatesPorCenario: this.githubTab?.obterTemplatesPorCenarioParaSalvar() ?? {},
+            githubTemplatesPorCenario: this.resolverGithubTemplatesPorCenarioParaSalvar(),
           }
         : {}),
     };
@@ -445,7 +449,8 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
         this.githubGraphqlTokenConfigurado.set(!!config.githubGraphqlTokenConfigurado);
         this.githubAppPrivateKeyConfigurado.set(!!config.githubAppPrivateKeyConfigurado);
         this.form.patchValue(this.patchConfigForm(config));
-        this.githubTab?.definirTemplatesPorCenario(config.githubTemplatesPorCenario);
+        this.githubTemplatesPorCenario.set(config.githubTemplatesPorCenario ?? {});
+        this.githubTab?.definirTemplatesPorCenario(this.githubTemplatesPorCenario());
         this.githubTab?.bloquearCamposConexaoAvancada();
         this.sucesso.set('Configurações salvas.');
         this.toast.success('Configurações salvas');
@@ -464,6 +469,21 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
 
   carregarWhatsappStatus(): void {
     this.whatsappService.status().subscribe({ next: (status) => this.whatsappStatus.set(status) });
+  }
+
+  onGithubTemplatesPorCenarioChange(mapa: Record<string, GithubTemplatePorCenario>): void {
+    this.githubTemplatesPorCenario.set({ ...mapa });
+  }
+
+  private resolverGithubTemplatesPorCenarioParaSalvar(): Record<string, GithubTemplatePorCenario> {
+    if (this.aba() === 'github') {
+      this.githubTab?.sincronizarTemplateEditorNoFormulario();
+      const doFilho = this.githubTab?.obterTemplatesPorCenarioParaSalvar();
+      if (doFilho) {
+        return doFilho;
+      }
+    }
+    return { ...this.githubTemplatesPorCenario() };
   }
 
   private patchConfigForm(config: OrganizacaoConfiguracao): Partial<OrganizacaoConfiguracaoFormData> {

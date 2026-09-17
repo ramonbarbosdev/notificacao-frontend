@@ -1,5 +1,16 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input, OnInit, computed, inject, input, output, signal, viewChild } from '@angular/core';
+import {
+  Component,
+  Input,
+  OnInit,
+  computed,
+  effect,
+  inject,
+  input,
+  output,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { LoaderCircle, LucideAngularModule, PencilLine } from 'lucide-angular';
@@ -53,6 +64,8 @@ export class ConfiguracoesGithubTabComponent implements OnInit {
   @Input({ required: true }) errosFormulario: OrganizacaoConfiguracaoFormErrors = {};
   readonly graphqlTokenConfigurado = input(false);
   readonly githubAppPrivateKeyConfigurado = input(false);
+  readonly templatesPorCenarioServidor = input<Record<string, GithubTemplatePorCenario>>({});
+  readonly templatesPorCenarioChange = output<Record<string, GithubTemplatePorCenario>>();
   readonly salvarSolicitado = output<void>();
 
   private readonly templateModal = viewChild(GithubWhatsappTemplateModalComponent);
@@ -78,6 +91,16 @@ export class ConfiguracoesGithubTabComponent implements OnInit {
   readonly carregandoGraphqlConsulta = signal(false);
   readonly modalTemplateGithubAberto = signal(false);
   readonly templatesPorCenario = signal<Record<string, GithubTemplatePorCenario>>({});
+
+  constructor() {
+    effect(() => {
+      if (this.modalTemplateGithubAberto()) {
+        return;
+      }
+      const mapa = this.templatesPorCenarioServidor();
+      this.templatesPorCenario.set(mapa ? { ...mapa } : {});
+    });
+  }
 
   readonly responsaveisHabilitados = computed(() =>
     this.responsaveisGithub().filter((item) => item.habilitado));
@@ -250,7 +273,7 @@ export class ConfiguracoesGithubTabComponent implements OnInit {
   }
 
   aplicarTemplateGithub(dados: GithubWhatsappTemplateAplicado): void {
-    this.templatesPorCenario.set({ ...dados.templatesPorCenario });
+    this.publicarTemplatesPorCenario(dados.templatesPorCenario);
     this.form.markAsDirty();
     this.toast.success('Templates por tipo atualizados — salve as configurações');
   }
@@ -270,9 +293,15 @@ export class ConfiguracoesGithubTabComponent implements OnInit {
   }
 
   onSalvarTemplateNoServidor(dados: GithubWhatsappTemplateAplicado): void {
-    this.templatesPorCenario.set({ ...dados.templatesPorCenario });
+    this.publicarTemplatesPorCenario(dados.templatesPorCenario);
     this.form.markAsDirty();
     this.salvarSolicitado.emit();
+  }
+
+  private publicarTemplatesPorCenario(mapa: Record<string, GithubTemplatePorCenario>): void {
+    const copia = { ...mapa };
+    this.templatesPorCenario.set(copia);
+    this.templatesPorCenarioChange.emit(copia);
   }
 
   resumoGithubTemplateAssunto(): string {

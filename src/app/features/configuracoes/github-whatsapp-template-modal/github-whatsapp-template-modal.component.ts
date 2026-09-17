@@ -89,7 +89,10 @@ export class GithubWhatsappTemplateModalComponent implements OnDestroy {
       const aberto = this.aberto();
       if (aberto && !this.abertoAnterior) {
         this.templatesPorCenario.set({ ...this.templatesPorCenarioInicial() });
-        const cen = this.integracao()?.cenariosPreview?.[0]?.id ?? '';
+        const cen =
+          this.cenarioId() && this.integracao()?.cenariosPreview?.some((c) => c.id === this.cenarioId())
+            ? this.cenarioId()
+            : (this.integracao()?.cenariosPreview?.[0]?.id ?? '');
         this.cenarioId.set(cen);
         this.carregarCenarioNoEditor(cen);
         this.preview.set(null);
@@ -164,11 +167,12 @@ export class GithubWhatsappTemplateModalComponent implements OnDestroy {
   valoresAtuais(): GithubWhatsappTemplateAplicado {
     this.persistirCenarioAtualNoMapa();
     const id = this.cenarioId();
+    const mapa = { ...this.templatesPorCenario() };
     return {
       assunto: this.assunto(),
       mensagem: this.mensagem(),
       cenarioId: id,
-      templatesPorCenario: { ...this.templatesPorCenario() },
+      templatesPorCenario: mapa,
     };
   }
 
