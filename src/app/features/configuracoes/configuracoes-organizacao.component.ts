@@ -233,6 +233,17 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
     webhookRegistrarFilaSemDestinatario: [true],
     dsGithubTemplateAssuntoWhatsapp: [''],
     dsGithubTemplateMensagemWhatsapp: [''],
+    githubNaoNotificarMovimentador: [true],
+    githubNotificarStatusAlterado: [true],
+    githubNotificarTarefaCriada: [false],
+    githubNotificarResponsavelAlterado: [false],
+    githubNotificarTarefaAtribuida: [false],
+    githubIgnorarSemResponsavel: [true],
+    dsGithubDestinatariosModo: ['RESPONSAVEIS'],
+    dsGithubDestinatariosExtras: [''],
+    githubNotificarIssueFechadaReaberta: [false],
+    githubNotificarIssueLabel: [false],
+    githubNotificarSomenteCampoStatus: [false],
   });
 
   readonly apiKeyForm = this.fb.group({
@@ -334,18 +345,7 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
     this.configService.buscar().subscribe({
       next: (config) => {
         this.webhookInboundSecretConfigurado.set(!!config.webhookInboundSecretConfigurado);
-        this.form.patchValue({
-          ...config,
-          nuTelefoneOperacional: config.nuTelefoneOperacional
-            ? maskPhoneInput(config.nuTelefoneOperacional)
-            : '',
-          dsGithubFraseAtivacaoWhatsapp: config.dsGithubFraseAtivacaoWhatsapp ?? '',
-          dsGithubStatusDisparo: config.dsGithubStatusDisparo ?? '',
-          webhookRegistrarFilaSemDestinatario: config.webhookRegistrarFilaSemDestinatario ?? true,
-          dsGithubTemplateAssuntoWhatsapp: config.dsGithubTemplateAssuntoWhatsapp ?? '',
-          dsGithubTemplateMensagemWhatsapp: config.dsGithubTemplateMensagemWhatsapp ?? '',
-          webhookInboundSecret: '',
-        });
+        this.form.patchValue(this.patchConfigForm(config));
         if (!this.isAdmin()) this.form.disable();
         this.carregando.set(false);
       },
@@ -418,6 +418,7 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
       dados.dsGithubStatusDisparo = (dados.dsGithubStatusDisparo ?? '').trim() || null;
       dados.dsGithubTemplateAssuntoWhatsapp = (dados.dsGithubTemplateAssuntoWhatsapp ?? '').trim() || null;
       dados.dsGithubTemplateMensagemWhatsapp = (dados.dsGithubTemplateMensagemWhatsapp ?? '').trim() || null;
+      dados.dsGithubDestinatariosExtras = (dados.dsGithubDestinatariosExtras ?? '').trim() || null;
     }
 
     const payload: OrganizacaoConfiguracaoRequest = {
@@ -431,18 +432,7 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
     this.configService.atualizar(payload).subscribe({
       next: (config) => {
         this.webhookInboundSecretConfigurado.set(!!config.webhookInboundSecretConfigurado);
-        this.form.patchValue({
-          ...config,
-          nuTelefoneOperacional: config.nuTelefoneOperacional
-            ? maskPhoneInput(config.nuTelefoneOperacional)
-            : '',
-          dsGithubFraseAtivacaoWhatsapp: config.dsGithubFraseAtivacaoWhatsapp ?? '',
-          dsGithubStatusDisparo: config.dsGithubStatusDisparo ?? '',
-          webhookRegistrarFilaSemDestinatario: config.webhookRegistrarFilaSemDestinatario ?? true,
-          dsGithubTemplateAssuntoWhatsapp: config.dsGithubTemplateAssuntoWhatsapp ?? '',
-          dsGithubTemplateMensagemWhatsapp: config.dsGithubTemplateMensagemWhatsapp ?? '',
-          webhookInboundSecret: '',
-        });
+        this.form.patchValue(this.patchConfigForm(config));
         this.sucesso.set('Configurações salvas.');
         this.toast.success('Configurações salvas');
         this.salvando.set(false);
@@ -508,6 +498,46 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
       return normalizado;
     }
     return normalizado.slice(0, max - 1) + '…';
+  }
+
+  destinatariosGithubModoLoginsConfigurados(): boolean {
+    return this.form.controls.dsGithubDestinatariosModo.value === 'LOGINS_CONFIGURADOS';
+  }
+
+  private patchConfigForm(config: OrganizacaoConfiguracao): Partial<OrganizacaoConfiguracaoFormData> {
+    return {
+      ...(config as Partial<OrganizacaoConfiguracaoFormData>),
+      nuTelefoneOperacional: config.nuTelefoneOperacional
+        ? maskPhoneInput(config.nuTelefoneOperacional)
+        : '',
+      webhookRegistrarFilaSemDestinatario: config.webhookRegistrarFilaSemDestinatario ?? true,
+      webhookInboundSecret: '',
+      ...this.valoresGithubForm(config),
+    };
+  }
+
+  private valoresGithubForm(config: OrganizacaoConfiguracao): Partial<OrganizacaoConfiguracaoFormData> {
+    return {
+      dsGithubFraseAtivacaoWhatsapp: config.dsGithubFraseAtivacaoWhatsapp ?? '',
+      dsGithubStatusDisparo: config.dsGithubStatusDisparo ?? '',
+      dsGithubTemplateAssuntoWhatsapp: config.dsGithubTemplateAssuntoWhatsapp ?? '',
+      dsGithubTemplateMensagemWhatsapp: config.dsGithubTemplateMensagemWhatsapp ?? '',
+      githubNaoNotificarMovimentador: config.githubNaoNotificarMovimentador ?? true,
+      githubNotificarStatusAlterado: config.githubNotificarStatusAlterado ?? true,
+      githubNotificarTarefaCriada: config.githubNotificarTarefaCriada ?? false,
+      githubNotificarResponsavelAlterado: config.githubNotificarResponsavelAlterado ?? false,
+      githubNotificarTarefaAtribuida: config.githubNotificarTarefaAtribuida ?? false,
+      githubIgnorarSemResponsavel: config.githubIgnorarSemResponsavel ?? true,
+      dsGithubDestinatariosModo:
+        config.dsGithubDestinatariosModo === 'RESPONSAVEIS_E_MOVIMENTADOR'
+        || config.dsGithubDestinatariosModo === 'LOGINS_CONFIGURADOS'
+          ? config.dsGithubDestinatariosModo
+          : 'RESPONSAVEIS',
+      dsGithubDestinatariosExtras: config.dsGithubDestinatariosExtras ?? '',
+      githubNotificarIssueFechadaReaberta: config.githubNotificarIssueFechadaReaberta ?? false,
+      githubNotificarIssueLabel: config.githubNotificarIssueLabel ?? false,
+      githubNotificarSomenteCampoStatus: config.githubNotificarSomenteCampoStatus ?? false,
+    };
   }
 
   copiarTexto(texto: string, mensagemSucesso = 'Copiado'): void {

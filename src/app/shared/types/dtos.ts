@@ -754,12 +754,28 @@ export interface OrganizacaoConfiguracao {
   dsGithubTemplateAssuntoWhatsapp?: string | null;
   dsGithubTemplateMensagemWhatsapp?: string | null;
   dsGithubFraseAtivacaoWhatsapp?: string | null;
+  githubNaoNotificarMovimentador?: boolean | null;
+  githubNotificarStatusAlterado?: boolean | null;
+  githubNotificarTarefaCriada?: boolean | null;
+  githubNotificarResponsavelAlterado?: boolean | null;
+  githubNotificarTarefaAtribuida?: boolean | null;
+  githubIgnorarSemResponsavel?: boolean | null;
+  dsGithubDestinatariosModo?: GithubDestinatariosModo | string | null;
+  dsGithubDestinatariosExtras?: string | null;
+  githubNotificarIssueFechadaReaberta?: boolean | null;
+  githubNotificarIssueLabel?: boolean | null;
+  githubNotificarSomenteCampoStatus?: boolean | null;
   webhookInboundUrl: string | null;
   webhookInboundHabilitado: boolean;
   webhookInboundSecretConfigurado: boolean;
   dtCriacao?: string | null;
   dtAtualizacao?: string | null;
 }
+
+export type GithubDestinatariosModo =
+  | 'RESPONSAVEIS'
+  | 'RESPONSAVEIS_E_MOVIMENTADOR'
+  | 'LOGINS_CONFIGURADOS';
 
 export interface GithubWebhookTemplateVariavel {
   chave: string;

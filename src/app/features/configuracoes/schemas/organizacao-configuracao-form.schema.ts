@@ -162,6 +162,24 @@ export const orgConfigGithubSchema = z.object({
     .max(8000, 'A mensagem do template deve ter no maximo 8000 caracteres.')
     .optional()
     .default(''),
+  githubNaoNotificarMovimentador: z.boolean().default(true),
+  githubNotificarStatusAlterado: z.boolean().default(true),
+  githubNotificarTarefaCriada: z.boolean().default(false),
+  githubNotificarResponsavelAlterado: z.boolean().default(false),
+  githubNotificarTarefaAtribuida: z.boolean().default(false),
+  githubIgnorarSemResponsavel: z.boolean().default(true),
+  dsGithubDestinatariosModo: z
+    .enum(['RESPONSAVEIS', 'RESPONSAVEIS_E_MOVIMENTADOR', 'LOGINS_CONFIGURADOS'])
+    .default('RESPONSAVEIS'),
+  dsGithubDestinatariosExtras: z
+    .string()
+    .trim()
+    .max(500, 'Logins extras devem ter no maximo 500 caracteres.')
+    .optional()
+    .default(''),
+  githubNotificarIssueFechadaReaberta: z.boolean().default(false),
+  githubNotificarIssueLabel: z.boolean().default(false),
+  githubNotificarSomenteCampoStatus: z.boolean().default(false),
 });
 
 export const orgConfigNotificacoesSchema = orgConfigNotificacoesBaseSchema.superRefine((value, ctx) => {
@@ -225,6 +243,17 @@ export const CAMPOS_POR_ABA_ORG: Record<AbaConfiguracaoOrganizacao, (keyof Organ
     'dsGithubStatusDisparo',
     'dsGithubTemplateAssuntoWhatsapp',
     'dsGithubTemplateMensagemWhatsapp',
+    'githubNaoNotificarMovimentador',
+    'githubNotificarStatusAlterado',
+    'githubNotificarTarefaCriada',
+    'githubNotificarResponsavelAlterado',
+    'githubNotificarTarefaAtribuida',
+    'githubIgnorarSemResponsavel',
+    'dsGithubDestinatariosModo',
+    'dsGithubDestinatariosExtras',
+    'githubNotificarIssueFechadaReaberta',
+    'githubNotificarIssueLabel',
+    'githubNotificarSomenteCampoStatus',
   ],
 };
 

@@ -221,6 +221,94 @@
                 </button>
               </div>
 
+              <div class="border border-[var(--color-border)] rounded-xl p-4 space-y-4">
+                <div>
+                  <h3 class="text-sm font-semibold text-[var(--color-text)]">Regras de notificação</h3>
+                  <p class="text-xs text-[var(--color-text-muted)] mt-1">
+                    Defina quando o webhook dispara WhatsApp e quem recebe. Vazio em status = todas as colunas permitidas pelos gatilhos.
+                  </p>
+                </div>
+
+                <label class="config-toggle text-sm text-[var(--color-text)]">
+                  Não notificar quem realizou a movimentação
+                  <input type="checkbox" formControlName="githubNaoNotificarMovimentador" />
+                </label>
+
+                <div class="space-y-2">
+                  <p class="text-sm font-medium text-[var(--color-text)]">Notificar quando</p>
+                  <label class="config-toggle text-sm text-[var(--color-text)]">
+                    Status da tarefa for alterado
+                    <input type="checkbox" formControlName="githubNotificarStatusAlterado" />
+                  </label>
+                  <label class="config-toggle text-sm text-[var(--color-text)]">
+                    Tarefa for criada
+                    <input type="checkbox" formControlName="githubNotificarTarefaCriada" />
+                  </label>
+                  <label class="config-toggle text-sm text-[var(--color-text)]">
+                    Responsável for alterado
+                    <input type="checkbox" formControlName="githubNotificarResponsavelAlterado" />
+                  </label>
+                  <label class="config-toggle text-sm text-[var(--color-text)]">
+                    Tarefa for atribuída
+                    <input type="checkbox" formControlName="githubNotificarTarefaAtribuida" />
+                  </label>
+                  <label class="config-toggle text-sm text-[var(--color-text)]">
+                    Issue fechada ou reaberta
+                    <input type="checkbox" formControlName="githubNotificarIssueFechadaReaberta" />
+                  </label>
+                  <label class="config-toggle text-sm text-[var(--color-text)]">
+                    Label adicionada na issue
+                    <input type="checkbox" formControlName="githubNotificarIssueLabel" />
+                  </label>
+                  <label class="config-toggle text-sm text-[var(--color-text)]">
+                    Project v2: somente mudança no campo Status
+                    <input type="checkbox" formControlName="githubNotificarSomenteCampoStatus" />
+                  </label>
+                </div>
+
+                <app-form-field
+                  label="Status que geram notificação"
+                  helper="Separados por vírgula. Ex.: Em andamento, Validação, Review"
+                  [error]="campoErro('dsGithubStatusDisparo')"
+                >
+                  <input
+                    formControlName="dsGithubStatusDisparo"
+                    class="form-input-admin"
+                    placeholder="Em andamento, Validação"
+                  />
+                </app-form-field>
+
+                <div class="space-y-2">
+                  <p class="text-sm font-medium text-[var(--color-text)]">Destinatários</p>
+                  <label class="flex items-start gap-2 text-sm text-[var(--color-text)] cursor-pointer">
+                    <input type="radio" formControlName="dsGithubDestinatariosModo" value="RESPONSAVEIS" class="mt-1" />
+                    <span>Responsáveis da tarefa (assignees)</span>
+                  </label>
+                  <label class="flex items-start gap-2 text-sm text-[var(--color-text)] cursor-pointer">
+                    <input type="radio" formControlName="dsGithubDestinatariosModo" value="RESPONSAVEIS_E_MOVIMENTADOR" class="mt-1" />
+                    <span>Responsáveis + quem moveu/editou</span>
+                  </label>
+                  <label class="flex items-start gap-2 text-sm text-[var(--color-text)] cursor-pointer">
+                    <input type="radio" formControlName="dsGithubDestinatariosModo" value="LOGINS_CONFIGURADOS" class="mt-1" />
+                    <span>Logins GitHub configurados (opt-in obrigatório)</span>
+                  </label>
+                  @if (destinatariosGithubModoLoginsConfigurados()) {
+                    <app-form-field
+                      label="Logins GitHub (vírgula)"
+                      helper="Ex.: tech-lead, devops — ignoram assignees do card"
+                      [error]="campoErro('dsGithubDestinatariosExtras')"
+                    >
+                      <input formControlName="dsGithubDestinatariosExtras" class="form-input-admin" placeholder="octocat, dev1" />
+                    </app-form-field>
+                  }
+                </div>
+
+                <label class="config-toggle text-sm text-[var(--color-text)]">
+                  Ignorar tarefas sem responsável (não usar quem moveu como fallback)
+                  <input type="checkbox" formControlName="githubIgnorarSemResponsavel" />
+                </label>
+              </div>
+
               <div class="border border-[var(--color-border)] rounded-xl p-4 space-y-2 bg-[var(--color-bg-base)]/40">
                 <h3 class="text-sm font-semibold text-[var(--color-text)]">Fila sem responsável</h3>
                 <label class="config-toggle text-sm text-[var(--color-text)]">
@@ -263,13 +351,6 @@
                   <p class="text-xs text-[var(--color-text-muted)] -mt-2">
                     Em uso agora: <span class="text-[var(--color-text)]">{{ gh.fraseAtivacaoWhatsapp }}</span>
                   </p>
-                  <app-form-field
-                    label="Filtro de status/colunas (opcional)"
-                    helper="Valores separados por virgula para limitar quando disparar (projects/issues)."
-                    [error]="campoErro('dsGithubStatusDisparo')"
-                  >
-                    <input formControlName="dsGithubStatusDisparo" class="form-input-admin" placeholder="Em progresso, Review" />
-                  </app-form-field>
                 </div>
 
                 <div class="border border-[var(--color-border)] rounded-xl p-4 space-y-3">
