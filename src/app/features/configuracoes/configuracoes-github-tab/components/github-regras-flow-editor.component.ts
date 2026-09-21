@@ -4,12 +4,12 @@ import {
   Input,
   OnChanges,
   SimpleChanges,
-  TemplateRef,
+  computed,
   output,
   signal,
 } from '@angular/core';
 import { FormGroup } from '@angular/forms';
-import { Check, LayoutGrid, Link2, X } from 'lucide-angular';
+import { ArrowRight, Check, LayoutGrid, Link2 } from 'lucide-angular';
 import { LucideAngularModule } from 'lucide-angular';
 
 import {
@@ -18,47 +18,69 @@ import {
 } from '../../../../shared/types/dtos';
 import { corStatusGithubProject } from '../github-status-color.util';
 import {
+  labelDestinatarios,
+  labelMensagem,
+  labelResumoColuna,
+  mapaCenariosPorId,
+  resumoColuna,
+  filtrarOpcoesColuna,
+} from '../github-regras-flow.util';
+import {
   GithubRegraColuna,
   GithubRegrasPorStatusDocumento,
-  colunaAtiva,
   derivarRegrasDoFormLegacy,
   mesclarOpcoesKanban,
   parseRegrasPorStatus,
   persistirRegrasNoForm,
 } from '../github-regras-por-status.util';
-import { GithubRegrasGlobalPanelComponent } from './github-regras-global-panel.component';
+
+export type GithubFlowNoEdicao = 'tipos' | 'destinatarios' | 'mensagem' | null;
 
 @Component({
-  selector: 'app-github-regras-board',
+  selector: 'app-github-regras-flow-editor',
   standalone: true,
-  imports: [CommonModule, LucideAngularModule, GithubRegrasGlobalPanelComponent],
-  templateUrl: './github-regras-board.component.html',
+  imports: [CommonModule, LucideAngularModule],
+  templateUrl: './github-regras-flow-editor.component.html',
 })
-export class GithubRegrasBoardComponent implements OnChanges {
+export class GithubRegrasFlowEditorComponent implements OnChanges {
   @Input({ required: true }) form!: FormGroup;
   @Input({ required: true }) statusOpcoes: GithubProjectV2StatusOpcao[] = [];
-  @Input({ required: true }) campoErro!: (campo: string) => string | null;
   @Input() conexaoOk = false;
   @Input() kanbanOk = false;
   @Input() cenariosPreview: GithubWebhookTemplateCenario[] = [];
-  @Input() sugestoesLoginsExtras: TemplateRef<unknown> | null = null;
-  @Input() sugestoesLoginsPr: TemplateRef<unknown> | null = null;
 
-  readonly irParaSecao = output<'conexao' | 'kanban' | 'eventos'>();
+  readonly irParaSecao = output<'conexao' | 'kanban'>();
 
   protected readonly linkIcon = Link2;
   protected readonly gridIcon = LayoutGrid;
   protected readonly checkIcon = Check;
-  protected readonly closeIcon = X;
+  protected readonly arrowIcon = ArrowRight;
   protected readonly corStatus = corStatusGithubProject;
 
   readonly documento = signal<GithubRegrasPorStatusDocumento>({ versao: 1, colunas: {} });
   readonly colunaSelecionadaId = signal<string | null>(null);
-  readonly modoMatriz = signal(false);
+  readonly noEdicao = signal<GithubFlowNoEdicao>(null);
+  readonly buscaColuna = signal('');
+  readonly somenteAtivas = signal(false);
+
+  readonly cenariosMap = computed(() => mapaCenariosPorId(this.cenariosPreview));
+
+  readonly opcoesFiltradas = computed(() =>
+    filtrarOpcoesColuna(
+      this.statusOpcoes,
+      this.buscaColuna(),
+      this.somenteAtivas(),
+      this.documento(),
+    ),
+  );
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['statusOpcoes'] || changes['form']) {
       this.recarregarDocumento();
+    }
+    if (changes['statusOpcoes'] && this.statusOpcoes.length > 0 && !this.colunaSelecionadaId()) {
+      const ordenadas = [...this.statusOpcoes].sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
+      this.colunaSelecionadaId.set(ordenadas[0]?.optionId ?? null);
     }
   }
 
@@ -76,24 +98,34 @@ export class GithubRegrasBoardComponent implements OnChanges {
     }
   }
 
-  colunasOrdenadas(): GithubProjectV2StatusOpcao[] {
-    return [...this.statusOpcoes].sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
+  selecionarColuna(optionId: string): void {
+    this.colunaSelecionadaId.set(optionId);
+    this.noEdicao.set(null);
+  }
+
+  abrirNo(no: GithubFlowNoEdicao): void {
+    this.noEdicao.set(this.noEdicao() === no ? null : no);
   }
 
   regra(optionId: string): GithubRegraColuna | null {
     return this.documento().colunas[optionId] ?? null;
   }
 
-  selecionarColuna(optionId: string): void {
-    this.colunaSelecionadaId.set(optionId);
+  regraSelecionada(): GithubRegraColuna | null {
+    const id = this.colunaSelecionadaId();
+    return id ? this.regra(id) : null;
   }
 
-  fecharDrawer(): void {
-    this.colunaSelecionadaId.set(null);
+  opcaoSelecionada(): GithubProjectV2StatusOpcao | null {
+    const id = this.colunaSelecionadaId();
+    if (!id) {
+      return null;
+    }
+    return this.statusOpcoes.find((o) => o.optionId === id) ?? null;
   }
 
-  alternarModoMatriz(): void {
-    this.modoMatriz.update((v) => !v);
+  resumo(optionId: string): string {
+    return labelResumoColuna(resumoColuna(this.regra(optionId)));
   }
 
   patchColuna(optionId: string, patch: Partial<GithubRegraColuna>): void {
@@ -116,15 +148,14 @@ export class GithubRegrasBoardComponent implements OnChanges {
   toggleAoEntrar(
     optionId: string,
     campo: 'fluxoGeral' | 'prAvaliadores' | 'issueAvaliadores',
-    valor?: boolean,
+    valor: boolean,
   ): void {
     const regra = this.regra(optionId);
     if (!regra) {
       return;
     }
-    const novo = valor ?? !regra.aoEntrar[campo];
     this.patchColuna(optionId, {
-      aoEntrar: { ...regra.aoEntrar, [campo]: novo },
+      aoEntrar: { ...regra.aoEntrar, [campo]: valor },
     });
   }
 
@@ -133,9 +164,7 @@ export class GithubRegrasBoardComponent implements OnChanges {
     if (!regra) {
       return;
     }
-    this.patchColuna(optionId, {
-      destinatarios: { ...regra.destinatarios, modo },
-    });
+    this.patchColuna(optionId, { destinatarios: { ...regra.destinatarios, modo } });
   }
 
   alterarDestinatariosExtras(optionId: string, extras: string): void {
@@ -153,9 +182,7 @@ export class GithubRegrasBoardComponent implements OnChanges {
     if (!regra) {
       return;
     }
-    this.patchColuna(optionId, {
-      mensagem: { ...regra.mensagem, usarTemplatePadrao },
-    });
+    this.patchColuna(optionId, { mensagem: { ...regra.mensagem, usarTemplatePadrao } });
   }
 
   alterarMensagemCenario(optionId: string, cenarioId: string): void {
@@ -168,32 +195,11 @@ export class GithubRegrasBoardComponent implements OnChanges {
     });
   }
 
-  colunaAtiva(optionId: string): boolean {
-    const regra = this.regra(optionId);
-    return regra ? colunaAtiva(regra) : false;
+  destinatariosLabel(regra: GithubRegraColuna): string {
+    return labelDestinatarios(regra);
   }
 
-  badgesColuna(optionId: string): string[] {
-    const regra = this.regra(optionId);
-    if (!regra) {
-      return [];
-    }
-    const b: string[] = [];
-    if (regra.aoEntrar.fluxoGeral) {
-      b.push('Geral');
-    }
-    if (regra.aoEntrar.prAvaliadores) {
-      b.push('PR');
-    }
-    if (regra.aoEntrar.issueAvaliadores) {
-      b.push('Issue');
-    }
-    if (regra.destinatarios.modo !== 'INHERIT') {
-      b.push('Dest.');
-    }
-    if (!regra.mensagem.usarTemplatePadrao && regra.mensagem.cenarioId) {
-      b.push('Msg');
-    }
-    return b;
+  mensagemLabel(regra: GithubRegraColuna): string {
+    return labelMensagem(regra, this.cenariosMap());
   }
 }

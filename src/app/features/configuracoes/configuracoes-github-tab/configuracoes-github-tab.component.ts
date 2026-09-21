@@ -61,7 +61,8 @@ import {
   GithubIntegracaoStatusStripComponent,
 } from './components/github-integracao-status-strip.component';
 import { GithubProjectV2CardComponent } from './components/github-project-v2-card.component';
-import { GithubRegrasBoardComponent } from './components/github-regras-board.component';
+import { GithubRegrasEventosGeraisComponent } from './components/github-regras-eventos-gerais.component';
+import { GithubRegrasFlowEditorComponent } from './components/github-regras-flow-editor.component';
 import { GithubWebhookDecisoesPanelComponent } from './components/github-webhook-decisoes-panel.component';
 import { corStatusGithubProject } from './github-status-color.util';
 
@@ -73,6 +74,8 @@ export type GithubSubAba =
   | 'regras'
   | 'mensagem'
   | 'eventos';
+
+export type GithubRegrasView = 'fluxos' | 'eventos';
 
 @Component({
   selector: 'app-configuracoes-github-tab',
@@ -87,7 +90,8 @@ export type GithubSubAba =
     GithubIntegracaoStatusStripComponent,
     GithubProjectV2CardComponent,
     GithubWebhookDecisoesPanelComponent,
-    GithubRegrasBoardComponent,
+    GithubRegrasFlowEditorComponent,
+    GithubRegrasEventosGeraisComponent,
   ],
   templateUrl: './configuracoes-github-tab.component.html',
 })
@@ -120,6 +124,7 @@ export class ConfiguracoesGithubTabComponent implements OnInit {
   readonly corStatusGithub = corStatusGithubProject;
 
   readonly githubSubAba = signal<GithubSubAba>('conexao');
+  readonly githubRegrasView = signal<GithubRegrasView>('fluxos');
   readonly githubIntegracao = signal<GithubWebhookIntegracaoResponse | null>(null);
   readonly carregandoGithubIntegracao = signal(false);
   readonly responsaveisGithub = signal<GithubResponsavel[]>([]);
@@ -327,6 +332,23 @@ export class ConfiguracoesGithubTabComponent implements OnInit {
     if (this.githubSubAba() === 'habilitados' || this.githubSubAba() === 'regras') {
       this.carregarResponsaveisGithub();
     }
+    const regrasView = this.route.snapshot.queryParamMap.get('regrasView');
+    if (regrasView === 'fluxos' || regrasView === 'eventos') {
+      this.githubRegrasView.set(regrasView);
+    }
+  }
+
+  selecionarRegrasView(view: GithubRegrasView): void {
+    this.githubRegrasView.set(view);
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { aba: 'github', githubSecao: 'regras', regrasView: view },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
+    if (view === 'eventos') {
+      this.carregarResponsaveisGithub();
+    }
   }
 
   bloquearCamposConexaoAvancada(): void {
@@ -337,9 +359,13 @@ export class ConfiguracoesGithubTabComponent implements OnInit {
 
   selecionarSubAba(id: GithubSubAba): void {
     this.githubSubAba.set(id);
+    const queryParams: Record<string, string> = { aba: 'github', githubSecao: id };
+    if (id === 'regras') {
+      queryParams['regrasView'] = this.githubRegrasView();
+    }
     void this.router.navigate([], {
       relativeTo: this.route,
-      queryParams: { aba: 'github', githubSecao: id },
+      queryParams,
       queryParamsHandling: 'merge',
       replaceUrl: true,
     });

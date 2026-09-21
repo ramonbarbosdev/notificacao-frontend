@@ -46,6 +46,8 @@ import {
 } from '../../shared/labels/whatsapp-operacional.labels';
 
 import { FOCO_WHATSAPP } from '../../shared/config/product.config';
+import { validarDocumentoRegras } from './configuracoes-github-tab/github-regras-flow.util';
+import { parseRegrasPorStatus } from './configuracoes-github-tab/github-regras-por-status.util';
 import { getZodFieldErrors } from '../../shared/helper/zod-form.helper';
 import {
   AbaConfiguracaoOrganizacao,
@@ -387,6 +389,21 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
     }
 
     this.errosFormulario.set({});
+
+    if (abaAtual === 'github') {
+      const rawRegras = String(this.form.get('dsGithubRegrasPorStatus')?.value ?? '');
+      if (rawRegras.trim()) {
+        const validacao = validarDocumentoRegras(parseRegrasPorStatus(rawRegras));
+        if (!validacao.ok) {
+          const nomes = validacao.colunasInvalidas.map((c) => c.nome).join(', ');
+          this.erro.set(
+            `No fluxograma, colunas com fluxo Geral precisam de template padrão ou cenário: ${nomes}.`,
+          );
+          this.toast.error('Regras GitHub incompletas', this.erro() ?? undefined);
+          return;
+        }
+      }
+    }
 
     if (abaAtual === 'whatsapp') {
       const webhookInboundHabilitado = this.form.controls.webhookInboundHabilitado.value;

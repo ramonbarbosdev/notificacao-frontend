@@ -73,10 +73,11 @@ const PADRAO_GATILHOS = 'STATUS_ALTERADO,REORDENADO';
   template: `
     <div class="space-y-3" [formGroup]="form">
       <div>
-        <p class="text-sm font-medium text-[var(--color-text)]">Aplicar este filtro de colunas aos gatilhos</p>
+        <p class="text-sm font-medium text-[var(--color-text)]">Gatilhos que respeitam o fluxograma de colunas</p>
         <p class="text-xs text-[var(--color-text-muted)] leading-relaxed mt-1">
-          Só os gatilhos marcados abaixo exigem que a coluna do evento esteja na lista acima. Os demais disparam sem
-          consultar essa lista (ex.: responsável alterado).
+          Para os gatilhos marcados abaixo, o fluxo geral só dispara se a coluna de destino tiver
+          <strong>Geral</strong> ativo no fluxograma (aba Fluxos). Os demais disparam sem essa checagem (ex.:
+          responsável alterado).
         </p>
       </div>
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">

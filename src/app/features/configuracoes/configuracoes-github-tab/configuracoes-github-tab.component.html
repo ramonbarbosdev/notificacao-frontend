@@ -530,17 +530,47 @@
     }
 
     @case ('regras') {
-      <app-github-regras-board
-        [form]="form"
-        [statusOpcoes]="statusOpcoesKanban()"
-        [campoErro]="campoErroFormulario.bind(this)"
-        [conexaoOk]="githubConexaoPronta()"
-        [kanbanOk]="githubKanbanPronto()"
-        [cenariosPreview]="githubIntegracao()?.cenariosPreview ?? []"
-        [sugestoesLoginsExtras]="sugestoesLoginsGithub"
-        [sugestoesLoginsPr]="sugestoesLoginsGithub"
-        (irParaSecao)="selecionarSubAba($event)"
-      />
+      <div class="space-y-6">
+        <nav class="flex flex-wrap gap-2">
+          <button
+            type="button"
+            class="px-4 py-2 rounded-xl text-sm font-medium border transition-colors"
+            [class.border-[var(--color-primary)]]="githubRegrasView() === 'fluxos'"
+            [class.bg-[var(--color-primary)]/15]="githubRegrasView() === 'fluxos'"
+            [class.border-[var(--color-border)]]="githubRegrasView() !== 'fluxos'"
+            (click)="selecionarRegrasView('fluxos')"
+          >
+            Fluxos por coluna
+          </button>
+          <button
+            type="button"
+            class="px-4 py-2 rounded-xl text-sm font-medium border transition-colors"
+            [class.border-[var(--color-primary)]]="githubRegrasView() === 'eventos'"
+            [class.bg-[var(--color-primary)]/15]="githubRegrasView() === 'eventos'"
+            [class.border-[var(--color-border)]]="githubRegrasView() !== 'eventos'"
+            (click)="selecionarRegrasView('eventos')"
+          >
+            Eventos gerais
+          </button>
+        </nav>
+        @if (githubRegrasView() === 'fluxos') {
+          <app-github-regras-flow-editor
+            [form]="form"
+            [statusOpcoes]="statusOpcoesKanban()"
+            [conexaoOk]="githubConexaoPronta()"
+            [kanbanOk]="githubKanbanPronto()"
+            [cenariosPreview]="githubIntegracao()?.cenariosPreview ?? []"
+            (irParaSecao)="selecionarSubAba($event)"
+          />
+        } @else {
+          <app-github-regras-eventos-gerais
+            [form]="form"
+            [campoErro]="campoErroFormulario.bind(this)"
+            [sugestoesLoginsExtras]="sugestoesLoginsGithub"
+            [sugestoesLoginsPr]="sugestoesLoginsGithub"
+          />
+        }
+      </div>
     }
 
     @case ('eventos') {
