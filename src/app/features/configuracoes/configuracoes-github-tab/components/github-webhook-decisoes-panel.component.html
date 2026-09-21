@@ -1,0 +1,126 @@
+<div class="border border-[var(--color-border)] rounded-xl p-4 space-y-4">
+  <div class="flex flex-wrap items-start justify-between gap-3">
+    <div>
+      <h3 class="text-sm font-semibold text-[var(--color-text)]">Histórico de decisões (webhook)</h3>
+      <p class="text-xs text-[var(--color-text-muted)] mt-1 max-w-2xl">
+        Cada linha mostra o que a API fez ao processar um evento do GitHub: gatilho, filtro de status, fluxo
+        (geral vs avaliadores) e destinatários. Use para diagnosticar por que não houve WhatsApp.
+      </p>
+    </div>
+    <button
+      type="button"
+      class="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-[var(--color-border)] text-sm"
+      [disabled]="carregando()"
+      (click)="carregar()"
+    >
+      <lucide-icon [img]="carregando() ? loaderIcon : refreshIcon" class="w-4 h-4" [class.animate-spin]="carregando()" />
+      Atualizar
+    </button>
+  </div>
+
+  @if (carregando() && !lista()) {
+    <div class="flex items-center gap-2 text-sm text-[var(--color-text-muted)] py-6">
+      <lucide-icon [img]="loaderIcon" class="w-4 h-4 animate-spin" />
+      Carregando eventos…
+    </div>
+  } @else if (erro()) {
+    <p class="text-sm text-[var(--color-danger)]">{{ erro() }}</p>
+  } @else if (lista(); as meta) {
+    @if (meta.itens.length === 0) {
+      <p class="text-sm text-[var(--color-text-muted)] py-4">
+        Nenhum evento registrado ainda. Mova um card no Project v2 e atualize esta lista.
+      </p>
+    } @else {
+      <div class="overflow-x-auto rounded-xl border border-[var(--color-border)]">
+        <table class="w-full text-sm text-left">
+          <thead class="bg-[var(--color-bg-base)]/60 text-[var(--color-text-muted)]">
+            <tr>
+              <th class="px-3 py-2 font-medium">Quando</th>
+              <th class="px-3 py-2 font-medium">Resultado</th>
+              <th class="px-3 py-2 font-medium">Status</th>
+              <th class="px-3 py-2 font-medium">Tipo</th>
+              <th class="px-3 py-2 font-medium">Fluxo</th>
+              <th class="px-3 py-2 font-medium">Resumo</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-[var(--color-border)]">
+            @for (item of meta.itens; track item.id) {
+              <tr
+                class="cursor-pointer hover:bg-[var(--color-surface-muted)]/50 transition-colors"
+                (click)="alternarDetalhe(item)"
+              >
+                <td class="px-3 py-2 text-[var(--color-text-muted)] whitespace-nowrap text-xs">
+                  {{ formatarData(item.dtCriacao) }}
+                </td>
+                <td class="px-3 py-2">
+                  <span class="inline-flex px-2 py-0.5 rounded-full text-xs border {{ classeResultado(item.resultado) }}">
+                    {{ labelResultado(item.resultado) }}
+                  </span>
+                </td>
+                <td class="px-3 py-2 text-[var(--color-text)]">
+                  {{ item.statusDestino || '—' }}
+                  @if (item.statusAnterior) {
+                    <span class="text-[var(--color-text-muted)] text-xs block">de {{ item.statusAnterior }}</span>
+                  }
+                </td>
+                <td class="px-3 py-2 font-mono text-xs">{{ tipoCard(item) }}</td>
+                <td class="px-3 py-2 text-xs text-[var(--color-text-muted)]">{{ labelFluxo(item.fluxoDestinatarios) }}</td>
+                <td class="px-3 py-2 text-[var(--color-text)] text-xs max-w-md">
+                  {{ item.descricao }}
+                  @if (item.loginsDestino) {
+                    <span class="block text-[var(--color-text-muted)] font-mono mt-0.5">{{ item.loginsDestino }}</span>
+                  }
+                </td>
+              </tr>
+              @if (itemExpandidoId() === item.id) {
+                <tr class="bg-[var(--color-bg-base)]/40">
+                  <td colspan="6" class="px-4 py-3 text-xs space-y-2">
+                    @if (item.tituloCard) {
+                      <p><span class="text-[var(--color-text-muted)]">Card:</span> {{ item.tituloCard }}</p>
+                    }
+                    @if (item.deliveryId) {
+                      <p><span class="text-[var(--color-text-muted)]">Delivery:</span> <code>{{ item.deliveryId }}</code></p>
+                    }
+                    <p>
+                      <span class="text-[var(--color-text-muted)]">Evento:</span>
+                      {{ item.githubEvent || '—' }} / {{ item.action || '—' }}
+                      @if (item.whatsappEnfileirados > 0) {
+                        · {{ item.whatsappEnfileirados }} WhatsApp(s)
+                      }
+                    </p>
+                    @if (detalheJson(item); as json) {
+                      <pre class="text-[11px] overflow-x-auto rounded-lg border border-[var(--color-border)] p-2 bg-[var(--color-bg-base)]">{{ json }}</pre>
+                    }
+                  </td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <div class="flex items-center justify-between text-xs text-[var(--color-text-muted)]">
+        <span>{{ meta.totalElementos }} evento(s)</span>
+        <div class="flex gap-2">
+          <button
+            type="button"
+            class="px-2 py-1 rounded-lg border border-[var(--color-border)] disabled:opacity-40"
+            [disabled]="pagina() <= 0 || carregando()"
+            (click)="paginaAnterior()"
+          >
+            Anterior
+          </button>
+          <span class="px-2 py-1">Página {{ meta.pagina + 1 }} / {{ meta.totalPaginas || 1 }}</span>
+          <button
+            type="button"
+            class="px-2 py-1 rounded-lg border border-[var(--color-border)] disabled:opacity-40"
+            [disabled]="pagina() >= meta.totalPaginas - 1 || carregando()"
+            (click)="paginaProxima()"
+          >
+            Próxima
+          </button>
+        </div>
+      </div>
+    }
+  }
+</div>

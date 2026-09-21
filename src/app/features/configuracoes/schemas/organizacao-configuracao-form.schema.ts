@@ -242,6 +242,26 @@ export const orgConfigGithubSchema = z.object({
     .max(500, 'Os logins devem ter no maximo 500 caracteres.')
     .optional()
     .default(''),
+  githubIssueAvisarAvaliadores: z.boolean().default(false),
+  dsGithubIssueStatusDisparo: z
+    .string()
+    .trim()
+    .max(500, 'O filtro de status da issue deve ter no maximo 500 caracteres.')
+    .optional()
+    .default(''),
+  dsGithubOrganizationLogin: z
+    .string()
+    .trim()
+    .max(100, 'O login da organizacao deve ter no maximo 100 caracteres.')
+    .optional()
+    .default(''),
+  dsGithubProjectV2NodeId: z
+    .string()
+    .trim()
+    .max(120, 'O node id do project deve ter no maximo 120 caracteres.')
+    .optional()
+    .default(''),
+  nuGithubProjectV2Number: githubIntPositivoOpcional,
   githubAppId: githubIntPositivoOpcional,
   githubAppPrivateKey: z.string().optional().default(''),
   githubInstallationId: githubIntPositivoOpcional,
@@ -332,6 +352,11 @@ export const CAMPOS_POR_ABA_ORG: Record<AbaConfiguracaoOrganizacao, (keyof Organ
     'githubPrAvisarAvaliadores',
     'dsGithubPrStatusDisparo',
     'dsGithubPrLoginsAvaliadores',
+    'githubIssueAvisarAvaliadores',
+    'dsGithubIssueStatusDisparo',
+    'dsGithubOrganizationLogin',
+    'dsGithubProjectV2NodeId',
+    'nuGithubProjectV2Number',
   ],
 };
 

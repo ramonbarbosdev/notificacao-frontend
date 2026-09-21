@@ -264,7 +264,19 @@
         }
 
         @if (['geral','whatsapp','templates','notificacoes','github'].includes(aba())) {
-          <div class="flex justify-end">
+          <div
+            class="flex justify-end pt-2"
+            [class.sticky]="aba() === 'github' && form.dirty"
+            [class.bottom-0]="aba() === 'github' && form.dirty"
+            [class.z-10]="aba() === 'github' && form.dirty"
+            [class.-mx-2]="aba() === 'github' && form.dirty"
+            [class.px-2]="aba() === 'github' && form.dirty"
+            [class.pb-2]="aba() === 'github' && form.dirty"
+            [class.bg-[var(--color-bg-base)]]="aba() === 'github' && form.dirty"
+            [class.border-t]="aba() === 'github' && form.dirty"
+            [class.border-[var(--color-border)]]="aba() === 'github' && form.dirty"
+            [class.shadow-[0_-8px_24px_rgba(0,0,0,0.12)]]="aba() === 'github' && form.dirty"
+          >
             <button type="button" (click)="salvar()" [disabled]="salvando() || !isAdmin()" class="px-4 py-3 rounded-xl bg-[var(--color-primary)] disabled:opacity-50 text-[var(--color-bg-base)] text-sm font-semibold flex items-center gap-2">
               @if (salvando()) {
                 <lucide-icon [img]="loaderIcon" class="w-4 h-4 animate-spin" />

@@ -12,13 +12,30 @@ import {
   viewChild,
 } from '@angular/core';
 import { FormGroup, ReactiveFormsModule } from '@angular/forms';
-import { ActivatedRoute, RouterModule } from '@angular/router';
-import { LoaderCircle, LucideAngularModule, PencilLine } from 'lucide-angular';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import {
+  Bell,
+  Copy,
+  LayoutGrid,
+  Link2,
+  LoaderCircle,
+  LucideAngularModule,
+  LucideIconData,
+  MessageSquare,
+  PencilLine,
+  ScrollText,
+  UserCheck,
+  Users,
+} from 'lucide-angular';
 
 import { GithubIntegracaoService } from '../../../core/services/github-integracao.service';
 import { ToastService } from '../../../core/services/toast.service';
 import {
   GithubGraphqlConsultaResponse,
+  GithubProjectV2ListaResponse,
+  GithubProjectV2Resumo,
+  GithubProjectV2StatusOpcao,
+  GithubProjectV2VinculoResponse,
   GithubResponsavel,
   GithubTemplatePorCenario,
   GithubWebhookIntegracaoResponse,
@@ -39,8 +56,23 @@ import {
   GithubWhatsappTemplateAplicado,
   GithubWhatsappTemplateModalComponent,
 } from '../github-whatsapp-template-modal/github-whatsapp-template-modal.component';
+import {
+  GithubIntegracaoStatusItem,
+  GithubIntegracaoStatusStripComponent,
+} from './components/github-integracao-status-strip.component';
+import { GithubProjectV2CardComponent } from './components/github-project-v2-card.component';
+import { GithubStatusDisparoPickerComponent } from './components/github-status-disparo-picker.component';
+import { GithubWebhookDecisoesPanelComponent } from './components/github-webhook-decisoes-panel.component';
+import { corStatusGithubProject } from './github-status-color.util';
 
-export type GithubSubAba = 'conexao' | 'equipe' | 'habilitados' | 'regras' | 'mensagem';
+export type GithubSubAba =
+  | 'conexao'
+  | 'kanban'
+  | 'equipe'
+  | 'habilitados'
+  | 'regras'
+  | 'mensagem'
+  | 'eventos';
 
 @Component({
   selector: 'app-configuracoes-github-tab',
@@ -52,6 +84,10 @@ export type GithubSubAba = 'conexao' | 'equipe' | 'habilitados' | 'regras' | 'me
     LucideAngularModule,
     FormFieldComponent,
     GithubWhatsappTemplateModalComponent,
+    GithubIntegracaoStatusStripComponent,
+    GithubStatusDisparoPickerComponent,
+    GithubProjectV2CardComponent,
+    GithubWebhookDecisoesPanelComponent,
   ],
   templateUrl: './configuracoes-github-tab.component.html',
 })
@@ -59,6 +95,7 @@ export class ConfiguracoesGithubTabComponent implements OnInit {
   private readonly githubIntegracaoService = inject(GithubIntegracaoService);
   private readonly toast = inject(ToastService);
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
 
   @Input({ required: true }) form!: FormGroup;
   @Input({ required: true }) errosFormulario: OrganizacaoConfiguracaoFormErrors = {};
@@ -78,6 +115,9 @@ export class ConfiguracoesGithubTabComponent implements OnInit {
 
   protected readonly loaderIcon = LoaderCircle;
   protected readonly editTemplateIcon = PencilLine;
+  protected readonly copyIcon = Copy;
+  protected readonly linkIcon = Link2;
+  readonly corStatusGithub = corStatusGithubProject;
 
   readonly githubSubAba = signal<GithubSubAba>('conexao');
   readonly githubIntegracao = signal<GithubWebhookIntegracaoResponse | null>(null);
@@ -89,6 +129,12 @@ export class ConfiguracoesGithubTabComponent implements OnInit {
   readonly graphqlContentType = signal('Issue');
   readonly graphqlConsulta = signal<GithubGraphqlConsultaResponse | null>(null);
   readonly carregandoGraphqlConsulta = signal(false);
+  readonly vinculoKanban = signal<GithubProjectV2VinculoResponse | null>(null);
+  readonly carregandoVinculoKanban = signal(false);
+  readonly listaProjects = signal<GithubProjectV2ListaResponse | null>(null);
+  readonly carregandoProjects = signal(false);
+  readonly statusOpcoesKanban = signal<GithubProjectV2StatusOpcao[]>([]);
+  readonly carregandoStatusOpcoes = signal(false);
   readonly modalTemplateGithubAberto = signal(false);
   readonly templatesPorCenario = signal<Record<string, GithubTemplatePorCenario>>({});
 
@@ -133,13 +179,103 @@ export class ConfiguracoesGithubTabComponent implements OnInit {
 
   readonly fraseAtivacaoGithubPadrao = FRASE_ATIVACAO_GITHUB_PADRAO;
 
-  readonly subAbas: { id: GithubSubAba; label: string }[] = [
-    { id: 'conexao', label: 'Conexão' },
-    { id: 'equipe', label: 'Equipe' },
-    { id: 'habilitados', label: 'Habilitados' },
-    { id: 'regras', label: 'Regras' },
-    { id: 'mensagem', label: 'Mensagem' },
+  readonly subAbas: {
+    id: GithubSubAba;
+    label: string;
+    icon: LucideIconData;
+    descricaoCurta: string;
+  }[] = [
+    {
+      id: 'conexao',
+      label: 'Conexão',
+      icon: Link2,
+      descricaoCurta: 'Webhook no GitHub App e credenciais de instalação.',
+    },
+    {
+      id: 'kanban',
+      label: 'Kanban',
+      icon: LayoutGrid,
+      descricaoCurta: 'Vincule o Project v2 usado no board da organização.',
+    },
+    {
+      id: 'equipe',
+      label: 'Equipe',
+      icon: Users,
+      descricaoCurta: 'Frase e link de ativação WhatsApp para o time.',
+    },
+    {
+      id: 'habilitados',
+      label: 'Habilitados',
+      icon: UserCheck,
+      descricaoCurta: 'Quem já vinculou login GitHub e recebe alertas.',
+    },
+    {
+      id: 'regras',
+      label: 'Regras',
+      icon: Bell,
+      descricaoCurta: 'Gatilhos, destinatários e status que disparam WhatsApp.',
+    },
+    {
+      id: 'mensagem',
+      label: 'Mensagem',
+      icon: MessageSquare,
+      descricaoCurta: 'Template WhatsApp e textos por tipo de evento.',
+    },
+    {
+      id: 'eventos',
+      label: 'Eventos',
+      icon: ScrollText,
+      descricaoCurta: 'Histórico visual de cada webhook processado e motivo da decisão.',
+    },
   ];
+
+  readonly subAbaAtivaMeta = computed(() =>
+    this.subAbas.find((item) => item.id === this.githubSubAba()) ?? this.subAbas[0]);
+
+  readonly itensSaudeIntegracao = computed((): GithubIntegracaoStatusItem[] => {
+    const gh = this.githubIntegracao();
+    const vinculo = this.vinculoKanban();
+    const appId = this.form.get('githubAppId')?.value;
+    const appOk =
+      appId != null
+      && Number(appId) > 0
+      && (this.githubAppPrivateKeyConfigurado() || !!String(this.form.get('githubAppPrivateKey')?.value ?? '').trim());
+    const projectSalvo =
+      !!vinculo?.project?.id
+      || !!String(this.form.get('dsGithubProjectV2NodeId')?.value ?? '').trim();
+    return [
+      {
+        id: 'feature',
+        label: 'Feature GitHub',
+        ok: !!gh?.featureHabilitada,
+        hint: gh?.featureHabilitada ? 'Habilitada na organização' : 'Ative em Feature Flags',
+      },
+      {
+        id: 'whatsapp',
+        label: 'WhatsApp',
+        ok: !!gh?.whatsappOrigemConectado,
+        hint: gh?.whatsappOrigemConectado ? 'Sessão conectada' : 'Conecte em WhatsApp',
+      },
+      {
+        id: 'app',
+        label: 'GitHub App',
+        ok: appOk,
+        hint: appOk ? 'App ID e chave configurados' : 'Informe App ID e private key',
+      },
+      {
+        id: 'kanban',
+        label: 'Project v2',
+        ok: projectSalvo,
+        hint: projectSalvo ? 'Board vinculado' : 'Escolha um project na aba Kanban',
+      },
+      {
+        id: 'token',
+        label: 'Token GraphQL',
+        ok: vinculo?.graphqlTokenDisponivel ?? false,
+        hint: vinculo?.graphqlTokenDisponivel ? 'Token disponível' : 'Aguarde instalação ou webhook',
+      },
+    ];
+  });
 
   readonly formatarData = formatDateTimePtBr;
 
@@ -156,15 +292,20 @@ export class ConfiguracoesGithubTabComponent implements OnInit {
     const secao = this.route.snapshot.queryParamMap.get('githubSecao');
     if (
       secao === 'conexao'
+      || secao === 'kanban'
       || secao === 'equipe'
       || secao === 'habilitados'
       || secao === 'regras'
       || secao === 'mensagem'
+      || secao === 'eventos'
     ) {
       this.githubSubAba.set(secao);
     }
     this.bloquearCamposConexaoAvancada();
     this.carregarGithubIntegracao();
+    if (this.githubSubAba() === 'kanban' || this.githubSubAba() === 'regras') {
+      this.carregarVinculoKanban();
+    }
     if (this.githubSubAba() === 'habilitados' || this.githubSubAba() === 'regras') {
       this.carregarResponsaveisGithub();
     }
@@ -178,9 +319,101 @@ export class ConfiguracoesGithubTabComponent implements OnInit {
 
   selecionarSubAba(id: GithubSubAba): void {
     this.githubSubAba.set(id);
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { aba: 'github', githubSecao: id },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
+    if (id === 'kanban' || id === 'regras') {
+      this.carregarVinculoKanban();
+    }
     if (id === 'habilitados' || id === 'regras') {
       this.carregarResponsaveisGithub();
     }
+  }
+
+  projectIdSelecionado(): string {
+    return String(this.form.get('dsGithubProjectV2NodeId')?.value ?? '').trim();
+  }
+
+  carregarVinculoKanban(): void {
+    this.carregandoVinculoKanban.set(true);
+    this.githubIntegracaoService.obterVinculoProject().subscribe({
+      next: (vinculo) => {
+        this.vinculoKanban.set(vinculo);
+        this.statusOpcoesKanban.set(vinculo.statusOpcoes ?? []);
+        this.carregandoVinculoKanban.set(false);
+      },
+      error: () => {
+        this.vinculoKanban.set(null);
+        this.statusOpcoesKanban.set([]);
+        this.carregandoVinculoKanban.set(false);
+        this.toast.error('Não foi possível carregar o vínculo do Project v2');
+      },
+    });
+  }
+
+  carregarProjectsKanban(): void {
+    const orgLogin = String(this.form.get('dsGithubOrganizationLogin')?.value ?? '').trim();
+    this.carregandoProjects.set(true);
+    this.listaProjects.set(null);
+    this.githubIntegracaoService.listarProjects(orgLogin || null).subscribe({
+      next: (resposta) => {
+        this.listaProjects.set(resposta);
+        this.carregandoProjects.set(false);
+        if (!resposta.sucesso && resposta.mensagem) {
+          this.toast.error(resposta.mensagem);
+        }
+      },
+      error: (err) => {
+        this.listaProjects.set(null);
+        this.carregandoProjects.set(false);
+        const msg = err?.error?.message ?? 'Falha ao listar projects no GitHub';
+        this.toast.error(msg);
+      },
+    });
+  }
+
+  recarregarStatusOpcoesKanban(): void {
+    const projectNodeId = String(this.form.get('dsGithubProjectV2NodeId')?.value ?? '').trim();
+    if (!projectNodeId) {
+      this.toast.error('Vincule ou selecione um Project v2 antes');
+      return;
+    }
+    this.carregandoStatusOpcoes.set(true);
+    this.githubIntegracaoService.listarStatusOpcoes(projectNodeId).subscribe({
+      next: (resposta) => {
+        if (resposta.sucesso) {
+          this.statusOpcoesKanban.set(resposta.statusOpcoes ?? []);
+        } else {
+          this.statusOpcoesKanban.set([]);
+          if (resposta.mensagem) {
+            this.toast.error(resposta.mensagem);
+          }
+        }
+        this.carregandoStatusOpcoes.set(false);
+      },
+      error: () => {
+        this.statusOpcoesKanban.set([]);
+        this.carregandoStatusOpcoes.set(false);
+        this.toast.error('Falha ao carregar colunas de Status');
+      },
+    });
+  }
+
+  selecionarProjectKanban(project: GithubProjectV2Resumo): void {
+    this.form.patchValue({
+      dsGithubProjectV2NodeId: project.id,
+      nuGithubProjectV2Number: project.number ?? null,
+    });
+    this.form.markAsDirty();
+    this.recarregarStatusOpcoesKanban();
+  }
+
+  projectKanbanSelecionado(): boolean {
+    const nodeId = String(this.form.get('dsGithubProjectV2NodeId')?.value ?? '').trim();
+    return !!nodeId;
   }
 
   consultarGraphqlOrganizacao(): void {

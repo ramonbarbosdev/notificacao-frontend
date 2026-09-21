@@ -1,0 +1,43 @@
+<div class="space-y-2" [formGroup]="form">
+  <app-form-field [label]="titulo()" [helper]="helper()" [error]="erro()">
+    <input [formControlName]="campo()" class="form-input-admin" placeholder="Em andamento, Validação" autocomplete="off" />
+  </app-form-field>
+  @if (opcoes().length > 0) {
+    <div class="flex flex-wrap items-center gap-2 -mt-1">
+      <button
+        type="button"
+        class="text-xs text-[var(--color-primary-soft)] hover:underline"
+        (click)="limpar()"
+      >
+        Limpar seleção
+      </button>
+      @if (carregandoOpcoes()) {
+        <span class="text-xs text-[var(--color-text-muted)]">Atualizando colunas…</span>
+      }
+    </div>
+    <div class="flex flex-wrap gap-2">
+      @for (opcao of opcoes(); track opcao.optionId) {
+        <button
+          type="button"
+          class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs transition-colors"
+          [class.border-[var(--color-primary)]]="selecionado(opcao.name)"
+          [class.bg-[var(--color-primary)]/15]="selecionado(opcao.name)"
+          [class.text-[var(--color-text)]]="selecionado(opcao.name)"
+          [class.border-[var(--color-border)]]="!selecionado(opcao.name)"
+          [class.text-[var(--color-text-muted)]]="!selecionado(opcao.name)"
+          (click)="alternar(opcao.name)"
+        >
+          <span
+            class="w-2 h-2 rounded-full shrink-0"
+            [style.background-color]="corOpcao(opcao.color)"
+          ></span>
+          {{ opcao.name }}
+        </button>
+      }
+    </div>
+  } @else if (!vinculoCarregando()) {
+    <p class="text-xs text-[var(--color-text-muted)]">
+      Vincule um Project v2 na aba Kanban para escolher colunas por clique (ou digite os nomes separados por vírgula).
+    </p>
+  }
+</div>

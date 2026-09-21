@@ -220,6 +220,11 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
     githubPrAvisarAvaliadores: [false],
     dsGithubPrStatusDisparo: [''],
     dsGithubPrLoginsAvaliadores: [''],
+    githubIssueAvisarAvaliadores: [false],
+    dsGithubIssueStatusDisparo: [''],
+    dsGithubOrganizationLogin: [''],
+    dsGithubProjectV2NodeId: [''],
+    nuGithubProjectV2Number: [null as number | null],
     githubAppId: [null as number | null],
     githubAppPrivateKey: [''],
     githubInstallationId: [null as number | null],
@@ -420,6 +425,13 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
       dados.dsGithubDestinatariosExtras = (dados.dsGithubDestinatariosExtras ?? '').trim() || null;
       dados.dsGithubPrStatusDisparo = (dados.dsGithubPrStatusDisparo ?? '').trim() || null;
       dados.dsGithubPrLoginsAvaliadores = (dados.dsGithubPrLoginsAvaliadores ?? '').trim() || null;
+      dados.dsGithubIssueStatusDisparo = (dados.dsGithubIssueStatusDisparo ?? '').trim() || null;
+      dados.dsGithubOrganizationLogin = (dados.dsGithubOrganizationLogin ?? '').trim() || null;
+      dados.dsGithubProjectV2NodeId = (dados.dsGithubProjectV2NodeId ?? '').trim() || null;
+      dados.nuGithubProjectV2Number =
+        dados.nuGithubProjectV2Number != null && dados.nuGithubProjectV2Number > 0
+          ? dados.nuGithubProjectV2Number
+          : null;
     }
 
     const appPrivateKeyDirty = this.form.controls.githubAppPrivateKey.dirty;
@@ -457,6 +469,7 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
         this.salvando.set(false);
         if (abaAtual === 'github') {
           this.githubTab?.carregarGithubIntegracao();
+          this.githubTab?.carregarVinculoKanban();
         }
       },
       error: (err: HttpErrorResponse) => {
@@ -532,6 +545,11 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
       githubPrAvisarAvaliadores: config.githubPrAvisarAvaliadores ?? false,
       dsGithubPrStatusDisparo: config.dsGithubPrStatusDisparo ?? '',
       dsGithubPrLoginsAvaliadores: config.dsGithubPrLoginsAvaliadores ?? '',
+      githubIssueAvisarAvaliadores: config.githubIssueAvisarAvaliadores ?? false,
+      dsGithubIssueStatusDisparo: config.dsGithubIssueStatusDisparo ?? '',
+      dsGithubOrganizationLogin: config.dsGithubOrganizationLogin ?? '',
+      dsGithubProjectV2NodeId: config.dsGithubProjectV2NodeId ?? '',
+      nuGithubProjectV2Number: config.nuGithubProjectV2Number ?? null,
     };
   }
 

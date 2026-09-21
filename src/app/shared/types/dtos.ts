@@ -770,6 +770,11 @@ export interface OrganizacaoConfiguracao {
   githubPrAvisarAvaliadores?: boolean | null;
   dsGithubPrStatusDisparo?: string | null;
   dsGithubPrLoginsAvaliadores?: string | null;
+  githubIssueAvisarAvaliadores?: boolean | null;
+  dsGithubIssueStatusDisparo?: string | null;
+  dsGithubOrganizationLogin?: string | null;
+  dsGithubProjectV2NodeId?: string | null;
+  nuGithubProjectV2Number?: number | null;
   webhookInboundUrl: string | null;
   webhookInboundHabilitado: boolean;
   webhookInboundSecretConfigurado: boolean;
@@ -859,6 +864,74 @@ export interface GithubResponsavel {
   habilitado: boolean;
   ativo: boolean;
   dtAtualizacao: string;
+}
+
+export interface GithubProjectV2Resumo {
+  id: string;
+  number: number | null;
+  title: string | null;
+  url: string | null;
+}
+
+export interface GithubProjectV2StatusOpcao {
+  optionId: string;
+  name: string;
+  color: string | null;
+  description: string | null;
+}
+
+export interface GithubProjectV2ListaResponse {
+  organizationLogin: string | null;
+  sucesso: boolean;
+  mensagem: string | null;
+  errosGraphql: string[];
+  projects: GithubProjectV2Resumo[];
+}
+
+export interface GithubProjectV2StatusOpcoesResponse {
+  project: GithubProjectV2Resumo | null;
+  sucesso: boolean;
+  mensagem: string | null;
+  errosGraphql: string[];
+  statusOpcoes: GithubProjectV2StatusOpcao[];
+}
+
+export interface GithubWebhookDecisao {
+  id: number;
+  deliveryId: string | null;
+  githubEvent: string | null;
+  action: string | null;
+  resultado: string;
+  descricao: string;
+  tituloCard: string | null;
+  statusDestino: string | null;
+  statusAnterior: string | null;
+  pullRequest: boolean;
+  issueProjectV2: boolean;
+  fluxoDestinatarios: string | null;
+  loginsDestino: string | null;
+  whatsappEnfileirados: number;
+  detalhe: Record<string, unknown>;
+  dtCriacao: string;
+}
+
+export interface GithubWebhookDecisaoListaResponse {
+  itens: GithubWebhookDecisao[];
+  pagina: number;
+  tamanhoPagina: number;
+  totalElementos: number;
+  totalPaginas: number;
+}
+
+export interface GithubProjectV2VinculoResponse {
+  organizationLogin: string | null;
+  project: GithubProjectV2Resumo | null;
+  statusOpcoes: GithubProjectV2StatusOpcao[];
+  disparoGeral: string[];
+  disparoIssue: string[];
+  disparoPr: string[];
+  graphqlTokenDisponivel: boolean;
+  mensagem: string | null;
 }
 
 export interface GithubWebhookIntegracaoResponse {

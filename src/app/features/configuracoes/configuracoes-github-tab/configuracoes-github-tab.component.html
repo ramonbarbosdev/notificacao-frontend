@@ -1,29 +1,44 @@
 <section class="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-6 space-y-5" [formGroup]="form">
-  <div>
-    <h2 class="text-[var(--color-text)] font-semibold">GitHub → WhatsApp</h2>
-    <p class="text-xs text-[var(--color-text-muted)] mt-1">
-      Fluxo sugerido:
-      <span class="text-[var(--color-text)]">Conexão → Equipe → Habilitados → Regras → Mensagem</span>
-      — depois use <span class="text-[var(--color-text)]">Salvar configurações</span> no fim da página.
-    </p>
+  <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+    <div>
+      <h2 class="text-[var(--color-text)] font-semibold text-lg">GitHub → WhatsApp</h2>
+      <p class="text-sm text-[var(--color-text-muted)] mt-1 max-w-2xl">
+        Configure webhook, board e regras. Salve as alterações no botão ao final da página.
+      </p>
+    </div>
   </div>
+
+  @if (form.dirty) {
+    <div class="app-alert-warning border rounded-xl px-4 py-3 text-sm flex items-start gap-2">
+      <span class="font-medium text-[var(--color-text)]">Alterações não salvas</span>
+      <span class="text-[var(--color-text-muted)]">— use Salvar configurações abaixo antes de sair.</span>
+    </div>
+  }
+
+  <app-github-integracao-status-strip [itens]="itensSaudeIntegracao()" />
 
   <div class="flex flex-wrap gap-2">
     @for (item of subAbas; track item.id) {
       <button
         type="button"
         (click)="selecionarSubAba(item.id)"
-        class="px-4 py-2 rounded-xl border text-sm"
+        class="inline-flex items-center gap-2 px-3 py-2 rounded-xl border text-sm transition-colors"
         [class.bg-[var(--color-primary)]]="githubSubAba() === item.id"
         [class.text-[var(--color-bg-base)]]="githubSubAba() === item.id"
         [class.border-[var(--color-primary)]]="githubSubAba() === item.id"
         [class.border-[var(--color-border)]]="githubSubAba() !== item.id"
         [class.text-[var(--color-text-muted)]]="githubSubAba() !== item.id"
+        [class.hover:bg-[var(--color-surface-muted)]]="githubSubAba() !== item.id"
       >
+        <lucide-icon [img]="item.icon" class="w-4 h-4 shrink-0" />
         {{ item.label }}
       </button>
     }
   </div>
+
+  @if (subAbaAtivaMeta(); as meta) {
+    <p class="text-sm text-[var(--color-text-muted)] -mt-1">{{ meta.descricaoCurta }}</p>
+  }
 
   @switch (githubSubAba()) {
     @case ('conexao') {
@@ -45,19 +60,28 @@
           </div>
         }
 
-        <div class="border border-[var(--color-border)] rounded-xl p-4 space-y-3">
-          <h3 class="text-sm font-semibold text-[var(--color-text)]">Webhook no GitHub App</h3>
+        <div class="border border-[var(--color-border)] rounded-xl p-4 space-y-3 bg-[var(--color-bg-base)]/30">
+          <div class="flex items-center gap-2">
+            <div class="w-10 h-10 rounded-xl border border-[var(--color-border)] flex items-center justify-center bg-[var(--color-surface)]">
+              <lucide-icon [img]="linkIcon" class="w-5 h-5 text-[var(--color-primary-soft)]" />
+            </div>
+            <div>
+              <h3 class="text-sm font-semibold text-[var(--color-text)]">Webhook no GitHub App</h3>
+              <p class="text-xs text-[var(--color-text-muted)]">Cole a URL no app e use a API Key como secret.</p>
+            </div>
+          </div>
           <p class="text-xs text-[var(--color-text-muted)]">{{ gh.instrucaoWebhookSecret }}</p>
           @if (urlWebhookGithubAbsoluta(); as urlWebhook) {
-            <code class="block text-xs break-all bg-[var(--color-bg-base)] rounded-lg px-3 py-2">{{ urlWebhook }}</code>
+            <code class="block text-xs break-all bg-[var(--color-bg-base)] rounded-lg px-3 py-2 border border-[var(--color-border)]">{{ urlWebhook }}</code>
             <p class="text-xs text-[var(--color-text-muted)]">
               Substitua <code>&#123;suaApiKeyCompleta&#125;</code> pela API Key (scope NOTIFICACOES_ENVIAR).
             </p>
             <button
               type="button"
               (click)="copiarTexto(urlWebhook, 'URL copiada')"
-              class="px-3 py-2 rounded-xl border border-[var(--color-border)] text-sm"
+              class="px-4 py-2 rounded-xl bg-[var(--color-primary)] text-[var(--color-bg-base)] text-sm font-medium inline-flex items-center gap-2"
             >
+              <lucide-icon [img]="copyIcon" class="w-4 h-4" />
               Copiar URL do webhook
             </button>
           }
@@ -104,86 +128,198 @@
           </app-form-field>
         </div>
 
-        <div class="border border-[var(--color-border)] rounded-xl p-4 space-y-3 opacity-80">
-          <h3 class="text-sm font-semibold text-[var(--color-text)]">API</h3>
-          <p class="text-xs text-[var(--color-text-muted)]">
-            Somente leitura. A API usa os defaults do GitHub.com (ou valores já salvos).
+        <details class="border border-[var(--color-border)] rounded-xl overflow-hidden">
+          <summary class="px-4 py-3 cursor-pointer text-sm font-medium text-[var(--color-text)] bg-[var(--color-bg-base)]/40 hover:bg-[var(--color-surface-muted)]">
+            Configuração avançada (somente leitura)
+          </summary>
+          <div class="p-4 space-y-4 border-t border-[var(--color-border)]">
+            <div class="space-y-3">
+              <h4 class="text-xs font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">API</h4>
+              <app-form-field label="URL GraphQL" [error]="campoErro('githubGraphqlUrl')">
+                <input formControlName="githubGraphqlUrl" class="form-input-admin" [placeholder]="githubDefaultGraphqlUrl" />
+              </app-form-field>
+              <app-form-field label="URL base da API REST" [error]="campoErro('githubApiBaseUrl')">
+                <input formControlName="githubApiBaseUrl" class="form-input-admin" [placeholder]="githubDefaultApiBaseUrl" />
+              </app-form-field>
+            </div>
+            <div class="space-y-3">
+              <h4 class="text-xs font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">Timeouts</h4>
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <app-form-field label="Connect (ms)" [error]="campoErro('githubHttpConnectTimeoutMs')">
+                  <input type="number" formControlName="githubHttpConnectTimeoutMs" class="form-input-admin" [placeholder]="githubDefaultConnectTimeoutMs" />
+                </app-form-field>
+                <app-form-field label="Read (ms)" [error]="campoErro('githubHttpReadTimeoutMs')">
+                  <input type="number" formControlName="githubHttpReadTimeoutMs" class="form-input-admin" [placeholder]="githubDefaultReadTimeoutMs" />
+                </app-form-field>
+                <app-form-field label="Skew cache token (s)" [error]="campoErro('githubInstallationTokenSkewSegundos')">
+                  <input type="number" formControlName="githubInstallationTokenSkewSegundos" class="form-input-admin" [placeholder]="githubDefaultInstallationTokenSkewSegundos" />
+                </app-form-field>
+              </div>
+            </div>
+            <div class="space-y-3">
+              <h4 class="text-xs font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">PAT opcional</h4>
+              <app-form-field
+                label="Token GraphQL (PAT)"
+                [savedOnServer]="graphqlTokenConfigurado()"
+                [helper]="graphqlTokenConfigurado() ? 'PAT salvo no servidor.' : 'Opcional com GitHub App ativa'"
+                [error]="campoErro('githubGraphqlToken')"
+              >
+                <input type="password" formControlName="githubGraphqlToken" class="form-input-admin" autocomplete="off" placeholder="ghp_…" />
+              </app-form-field>
+            </div>
+          </div>
+        </details>
+      }
+    }
+
+    @case ('kanban') {
+      <div class="border border-[var(--color-border)] rounded-xl p-4 space-y-4">
+        <div>
+          <h3 class="text-sm font-semibold text-[var(--color-text)]">Project v2 (kanban)</h3>
+          <p class="text-xs text-[var(--color-text-muted)] mt-1">
+            Um board por organização. O login da org pode ser preenchido automaticamente no primeiro webhook.
+            Depois de escolher o project, use <strong>Salvar configurações</strong> no fim da página.
           </p>
-          <app-form-field label="URL GraphQL" [error]="campoErro('githubGraphqlUrl')">
-            <input
-              formControlName="githubGraphqlUrl"
-              class="form-input-admin"
-              [placeholder]="githubDefaultGraphqlUrl"
-            />
-          </app-form-field>
-          <app-form-field label="URL base da API REST" [error]="campoErro('githubApiBaseUrl')">
-            <input
-              formControlName="githubApiBaseUrl"
-              class="form-input-admin"
-              [placeholder]="githubDefaultApiBaseUrl"
-            />
-          </app-form-field>
         </div>
 
-        <div class="border border-[var(--color-border)] rounded-xl p-4 space-y-3 opacity-80">
-          <h3 class="text-sm font-semibold text-[var(--color-text)]">Timeouts</h3>
-          <p class="text-xs text-[var(--color-text-muted)]">Somente leitura.</p>
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <app-form-field
-              label="Connect (ms)"
-              [error]="campoErro('githubHttpConnectTimeoutMs')"
+        @if (carregandoVinculoKanban()) {
+          <div class="flex items-center gap-2 text-sm text-[var(--color-text-muted)]">
+            <lucide-icon [img]="loaderIcon" class="w-4 h-4 animate-spin" />
+            Carregando vínculo…
+          </div>
+        } @else if (vinculoKanban(); as vinculo) {
+          @if (vinculo.mensagem) {
+            <p class="text-xs text-[var(--color-text-muted)]">{{ vinculo.mensagem }}</p>
+          }
+          @if (!vinculo.graphqlTokenDisponivel) {
+            <div class="app-alert-warning border rounded-xl px-4 py-3 text-sm">
+              Token GraphQL indisponível. Configure a GitHub App na aba Conexão e aguarde um webhook com installation.id.
+            </div>
+          }
+        }
+
+        <app-form-field
+          label="Login da organização no GitHub"
+          helper="Ex.: minha-empresa — usado para listar projects"
+          [error]="campoErro('dsGithubOrganizationLogin')"
+        >
+          <input
+            formControlName="dsGithubOrganizationLogin"
+            class="form-input-admin font-mono"
+            placeholder="org-login"
+          />
+        </app-form-field>
+
+        <div class="flex flex-wrap gap-2">
+          <button
+            type="button"
+            class="px-3 py-2 rounded-xl border border-[var(--color-border)] text-sm"
+            [disabled]="carregandoProjects()"
+            (click)="carregarProjectsKanban()"
+          >
+            Listar projects
+          </button>
+          <button
+            type="button"
+            class="px-3 py-2 rounded-xl border border-[var(--color-border)] text-sm"
+            [disabled]="carregandoVinculoKanban()"
+            (click)="carregarVinculoKanban()"
+          >
+            Atualizar vínculo
+          </button>
+          @if (projectKanbanSelecionado()) {
+            <button
+              type="button"
+              class="px-3 py-2 rounded-xl border border-[var(--color-border)] text-sm"
+              [disabled]="carregandoStatusOpcoes()"
+              (click)="recarregarStatusOpcoesKanban()"
             >
-              <input
-                type="number"
-                formControlName="githubHttpConnectTimeoutMs"
-                class="form-input-admin"
-                [placeholder]="githubDefaultConnectTimeoutMs"
-              />
+              Recarregar colunas Status
+            </button>
+          }
+        </div>
+
+        @if (carregandoProjects()) {
+          <div class="flex items-center gap-2 text-sm text-[var(--color-text-muted)]">
+            <lucide-icon [img]="loaderIcon" class="w-4 h-4 animate-spin" />
+            Consultando GitHub…
+          </div>
+        } @else if (listaProjects(); as lista) {
+          @if (!lista.sucesso) {
+            <p class="text-sm text-[var(--color-danger)]">{{ lista.mensagem || 'Não foi possível listar projects.' }}</p>
+            @if (lista.errosGraphql.length) {
+              <ul class="list-disc pl-5 text-xs text-[var(--color-text-muted)]">
+                @for (erro of lista.errosGraphql; track erro) {
+                  <li>{{ erro }}</li>
+                }
+              </ul>
+            }
+          } @else if (lista.projects.length === 0) {
+            <p class="text-sm text-[var(--color-text-muted)]">Nenhum Project v2 encontrado para {{ lista.organizationLogin }}.</p>
+          } @else {
+            <div class="space-y-2">
+              <p class="text-xs text-[var(--color-text-muted)]">Clique para vincular (salve depois):</p>
+              <div class="flex flex-col gap-2">
+                @for (proj of lista.projects; track proj.id) {
+                  <app-github-project-v2-card
+                    [project]="proj"
+                    [selecionado]="projectIdSelecionado() === proj.id"
+                    (selecionar)="selecionarProjectKanban($event)"
+                  />
+                }
+              </div>
+            </div>
+          }
+        }
+
+        @if (vinculoKanban()?.project; as projectAtual) {
+          <div class="bg-[var(--color-bg-base)]/50 rounded-xl px-3 py-3 text-sm space-y-1">
+            <p class="text-[var(--color-text-muted)] text-xs uppercase tracking-wide">Salvo no servidor</p>
+            <p class="text-[var(--color-text)]">
+              #{{ projectAtual.number }} — {{ projectAtual.title || 'Project v2' }}
+            </p>
+            @if (projectAtual.url) {
+              <a [href]="projectAtual.url" target="_blank" rel="noopener" class="text-xs text-[var(--color-primary-soft)] break-all">
+                {{ projectAtual.url }}
+              </a>
+            }
+          </div>
+        }
+
+        <details class="border border-[var(--color-border)] rounded-xl">
+          <summary class="px-4 py-3 cursor-pointer text-sm text-[var(--color-text-muted)] hover:bg-[var(--color-surface-muted)] rounded-xl">
+            Detalhes técnicos do vínculo
+          </summary>
+          <div class="px-4 pb-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <app-form-field label="Project node id" [error]="campoErro('dsGithubProjectV2NodeId')">
+              <input formControlName="dsGithubProjectV2NodeId" class="form-input-admin font-mono text-xs" readonly />
             </app-form-field>
-            <app-form-field label="Read (ms)" [error]="campoErro('githubHttpReadTimeoutMs')">
-              <input
-                type="number"
-                formControlName="githubHttpReadTimeoutMs"
-                class="form-input-admin"
-                [placeholder]="githubDefaultReadTimeoutMs"
-              />
-            </app-form-field>
-            <app-form-field
-              label="Skew cache token (s)"
-              helper="Renovar o ghs_ antes do expires_at"
-              [error]="campoErro('githubInstallationTokenSkewSegundos')"
-            >
-              <input
-                type="number"
-                formControlName="githubInstallationTokenSkewSegundos"
-                class="form-input-admin"
-                [placeholder]="githubDefaultInstallationTokenSkewSegundos"
-              />
+            <app-form-field label="Número do project" [error]="campoErro('nuGithubProjectV2Number')">
+              <input type="number" formControlName="nuGithubProjectV2Number" class="form-input-admin" readonly />
             </app-form-field>
           </div>
-        </div>
+        </details>
 
-        <div class="border border-[var(--color-border)] rounded-xl p-4 space-y-3 opacity-80">
-          <h3 class="text-sm font-semibold text-[var(--color-text)]">PAT opcional (fallback)</h3>
-          <p class="text-xs text-[var(--color-text-muted)]">
-            Somente leitura. Com GitHub App ativo, o PAT não é necessário na interface.
-          </p>
-          <app-form-field
-            label="Token GraphQL (PAT)"
-            [savedOnServer]="graphqlTokenConfigurado()"
-            [helper]="graphqlTokenConfigurado() ? 'PAT salvo no servidor. Campo somente leitura na interface.' : 'Nenhum PAT salvo (opcional se a GitHub App estiver ativa)'"
-            [error]="campoErro('githubGraphqlToken')"
-          >
-            <input
-              type="password"
-              formControlName="githubGraphqlToken"
-              class="form-input-admin"
-              autocomplete="off"
-              placeholder="ghp_…"
-            />
-          </app-form-field>
-        </div>
-      }
+        @if (statusOpcoesKanban().length > 0) {
+          <div class="space-y-2 pt-2 border-t border-[var(--color-border)]">
+            <p class="text-sm font-medium text-[var(--color-text)]">Colunas de Status no board</p>
+            <p class="text-xs text-[var(--color-text-muted)]">
+              Na aba Regras, marque quais colunas disparam notificação.
+            </p>
+            <div class="flex flex-wrap gap-2">
+              @for (opcao of statusOpcoesKanban(); track opcao.optionId) {
+                <span
+                  class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-[var(--color-border)] text-xs text-[var(--color-text)]"
+                  [title]="opcao.description || ''"
+                >
+                  <span class="w-2 h-2 rounded-full shrink-0" [style.background-color]="corStatusGithub(opcao.color)"></span>
+                  {{ opcao.name }}
+                </span>
+              }
+            </div>
+          </div>
+        }
+      </div>
     }
 
     @case ('equipe') {
@@ -193,10 +329,11 @@
           Carregando integração…
         </div>
       } @else if (githubIntegracao(); as gh) {
-        <div class="grid grid-cols-1 gap-4">
+        <div class="border border-[var(--color-border)] rounded-xl p-4 space-y-3">
+          <h3 class="text-sm font-semibold text-[var(--color-text)]">Frase de ativação</h3>
           <app-form-field
-            label="Frase de ativação (WhatsApp)"
-            helper="Deixe vazio para usar o padrão. O desenvolvedor envia esta mensagem para vincular o número."
+            label="Mensagem no WhatsApp"
+            helper="Vazio usa o padrão. O dev envia esta frase para vincular o número ao login GitHub."
             [error]="campoErro('dsGithubFraseAtivacaoWhatsapp')"
           >
             <textarea
@@ -206,20 +343,21 @@
               [placeholder]="fraseAtivacaoGithubPadrao"
             ></textarea>
           </app-form-field>
-          <p class="text-xs text-[var(--color-text-muted)] -mt-2">
+          <p class="text-xs text-[var(--color-text-muted)]">
             Em uso agora: <span class="text-[var(--color-text)]">{{ gh.fraseAtivacaoWhatsapp }}</span>
           </p>
         </div>
 
-        <div class="border border-[var(--color-border)] rounded-xl p-4 space-y-3">
+        <div class="border border-[var(--color-border)] rounded-xl p-4 space-y-3 bg-[var(--color-bg-base)]/30">
           <h3 class="text-sm font-semibold text-[var(--color-text)]">Link para o time</h3>
           @if (gh.linkWhatsappAtivacao) {
-            <code class="block text-xs break-all bg-[var(--color-bg-base)] rounded-lg px-3 py-2">{{ gh.linkWhatsappAtivacao }}</code>
+            <code class="block text-xs break-all bg-[var(--color-bg-base)] rounded-lg px-3 py-2 border border-[var(--color-border)]">{{ gh.linkWhatsappAtivacao }}</code>
             <button
               type="button"
               (click)="copiarTexto(gh.linkWhatsappAtivacao!, 'Link copiado')"
-              class="px-3 py-2 rounded-xl border border-[var(--color-border)] text-sm"
+              class="px-4 py-2 rounded-xl bg-[var(--color-primary)] text-[var(--color-bg-base)] text-sm font-medium inline-flex items-center gap-2"
             >
+              <lucide-icon [img]="copyIcon" class="w-4 h-4" />
               Copiar link WhatsApp
             </button>
           } @else {
@@ -301,14 +439,14 @@
         }
       </div>
 
-      <div class="border border-[var(--color-border)] rounded-xl p-4 space-y-4">
-        <div>
-          <h3 class="text-sm font-semibold text-[var(--color-text)]">Consulta GraphQL (esta organização)</h3>
-          <p class="text-xs text-[var(--color-text-muted)] mt-1">
-            Mesma chamada usada no webhook: token e URL da org, retorno organizado (assignees, título, URL).
-            Cole o <code class="text-[11px]">content_node_id</code> do payload do Project v2.
-          </p>
-        </div>
+      <details class="border border-[var(--color-border)] rounded-xl overflow-hidden">
+        <summary class="px-4 py-3 cursor-pointer text-sm font-medium text-[var(--color-text)] bg-[var(--color-bg-base)]/40 hover:bg-[var(--color-surface-muted)]">
+          Ferramenta de diagnóstico (GraphQL)
+        </summary>
+        <div class="p-4 space-y-4 border-t border-[var(--color-border)]">
+        <p class="text-xs text-[var(--color-text-muted)]">
+          Mesma chamada do webhook. Cole o <code class="text-[11px]">content_node_id</code> do Project v2.
+        </p>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <app-form-field label="content_node_id">
             <input
@@ -381,11 +519,13 @@
             }
           </div>
         }
-      </div>
+        </div>
+      </details>
     }
 
     @case ('regras') {
-      <div class="border border-[var(--color-border)] rounded-xl p-4 space-y-4">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div class="border border-[var(--color-border)] rounded-xl p-4 space-y-4 lg:col-span-2">
         <div>
           <h3 class="text-sm font-semibold text-[var(--color-text)]">Regras de notificação</h3>
           <p class="text-xs text-[var(--color-text-muted)] mt-1">
@@ -398,56 +538,56 @@
           <input type="checkbox" formControlName="githubNaoNotificarMovimentador" />
         </label>
 
-        <div class="space-y-2">
-          <p class="text-sm font-medium text-[var(--color-text)]">Notificar quando</p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
           <label class="config-toggle text-sm text-[var(--color-text)]">
-            Status da tarefa for alterado
+            Status alterado
             <input type="checkbox" formControlName="githubNotificarStatusAlterado" />
           </label>
           <label class="config-toggle text-sm text-[var(--color-text)]">
-            Tarefa for criada
+            Tarefa criada
             <input type="checkbox" formControlName="githubNotificarTarefaCriada" />
           </label>
           <label class="config-toggle text-sm text-[var(--color-text)]">
-            Responsável for alterado
+            Responsável alterado
             <input type="checkbox" formControlName="githubNotificarResponsavelAlterado" />
           </label>
           <label class="config-toggle text-sm text-[var(--color-text)]">
-            Tarefa for atribuída
+            Tarefa atribuída
             <input type="checkbox" formControlName="githubNotificarTarefaAtribuida" />
           </label>
           <label class="config-toggle text-sm text-[var(--color-text)]">
-            Issue fechada ou reaberta
+            Issue fechada/reaberta
             <input type="checkbox" formControlName="githubNotificarIssueFechadaReaberta" />
           </label>
           <label class="config-toggle text-sm text-[var(--color-text)]">
-            Label adicionada na issue
+            Label na issue
             <input type="checkbox" formControlName="githubNotificarIssueLabel" />
           </label>
           <label class="config-toggle text-sm text-[var(--color-text)]">
-            Project v2: somente mudança no campo Status
+            Só campo Status (v2)
             <input type="checkbox" formControlName="githubNotificarSomenteCampoStatus" />
           </label>
           <label class="config-toggle text-sm text-[var(--color-text)]">
-            Item for reordenado no Project (v2)
+            Reordenação no board
             <input type="checkbox" formControlName="githubNotificarReordenacao" />
           </label>
         </div>
 
-        <app-form-field
-          label="Status que geram notificação"
-          helper="Separados por vírgula. Ex.: Em andamento, Validação, Review"
-          [error]="campoErro('dsGithubStatusDisparo')"
-        >
-          <input
-            formControlName="dsGithubStatusDisparo"
-            class="form-input-admin"
-            placeholder="Em andamento, Validação"
-          />
-        </app-form-field>
+        <app-github-status-disparo-picker
+          [form]="form"
+          campo="dsGithubStatusDisparo"
+          titulo="Status que geram notificação (geral)"
+          helper="Vazio = todas as colunas permitidas pelos gatilhos acima."
+          [erro]="campoErro('dsGithubStatusDisparo')"
+          [opcoes]="statusOpcoesKanban()"
+          [carregandoOpcoes]="carregandoStatusOpcoes()"
+          [vinculoCarregando]="carregandoVinculoKanban()"
+        />
+      </div>
 
+      <div class="border border-[var(--color-border)] rounded-xl p-4 space-y-4">
+        <h3 class="text-sm font-semibold text-[var(--color-text)]">Destinatários</h3>
         <div class="space-y-2">
-          <p class="text-sm font-medium text-[var(--color-text)]">Destinatários</p>
           <label class="flex items-start gap-2 text-sm text-[var(--color-text)] cursor-pointer">
             <input type="radio" formControlName="dsGithubDestinatariosModo" value="RESPONSAVEIS" class="mt-1" />
             <span>Responsáveis da tarefa (assignees)</span>
@@ -473,14 +613,14 @@
         </div>
 
         <label class="config-toggle text-sm text-[var(--color-text)]">
-          Ignorar tarefas sem responsável (não usar quem moveu como fallback)
+          Ignorar sem responsável
           <input type="checkbox" formControlName="githubIgnorarSemResponsavel" />
         </label>
       </div>
 
-      <div class="border border-[var(--color-border)] rounded-xl p-4 space-y-4">
+      <div class="border border-[var(--color-border)] rounded-xl p-4 space-y-4 h-fit">
         <div>
-          <h3 class="text-sm font-semibold text-[var(--color-text)]">Pull requests (Project v2)</h3>
+          <h3 class="text-sm font-semibold text-[var(--color-text)]">Pull requests</h3>
           <p class="text-xs text-[var(--color-text-muted)] mt-1">
             Quando o card for um Pull Request e entrar no status abaixo, avisa os logins configurados (opt-in WhatsApp). Não usa assignees do card.
             Personalize a mensagem no editor de template WhatsApp — cenário
@@ -491,17 +631,16 @@
           Avisar avaliadores quando PR entrar em status configurado
           <input type="checkbox" formControlName="githubPrAvisarAvaliadores" />
         </label>
-        <app-form-field
-          label="Status do PR que disparam aviso"
-          helper="Separados por vírgula. Ex.: Em revisão, Validação"
-          [error]="campoErro('dsGithubPrStatusDisparo')"
-        >
-          <input
-            formControlName="dsGithubPrStatusDisparo"
-            class="form-input-admin"
-            placeholder="Em revisão, Validação"
-          />
-        </app-form-field>
+        <app-github-status-disparo-picker
+          [form]="form"
+          campo="dsGithubPrStatusDisparo"
+          titulo="Status do PR que disparam aviso"
+          helper="Coluna de destino quando o card é Pull Request."
+          [erro]="campoErro('dsGithubPrStatusDisparo')"
+          [opcoes]="statusOpcoesKanban()"
+          [carregandoOpcoes]="carregandoStatusOpcoes()"
+          [vinculoCarregando]="carregandoVinculoKanban()"
+        />
         <app-form-field
           label="Logins GitHub dos avaliadores"
           helper="Cada login precisa ter ativado o WhatsApp na organização"
@@ -516,7 +655,33 @@
         <ng-container *ngTemplateOutlet="sugestoesLoginsGithub; context: { campo: 'dsGithubPrLoginsAvaliadores' }" />
       </div>
 
-      <div class="border border-[var(--color-border)] rounded-xl p-4 space-y-2 bg-[var(--color-bg-base)]/40">
+      <div class="border border-[var(--color-border)] rounded-xl p-4 space-y-4 h-fit">
+        <div>
+          <h3 class="text-sm font-semibold text-[var(--color-text)]">Issues</h3>
+          <p class="text-xs text-[var(--color-text-muted)] mt-1">
+            Quando o card for uma Issue e entrar no status configurado, avisa os mesmos logins de avaliadores do PR (opt-in WhatsApp).
+          </p>
+        </div>
+        <label class="config-toggle text-sm text-[var(--color-text)]">
+          Avisar avaliadores quando Issue entrar em status configurado
+          <input type="checkbox" formControlName="githubIssueAvisarAvaliadores" />
+        </label>
+        <app-github-status-disparo-picker
+          [form]="form"
+          campo="dsGithubIssueStatusDisparo"
+          titulo="Status da Issue que disparam aviso"
+          helper="Usa os mesmos logins de avaliadores do PR."
+          [erro]="campoErro('dsGithubIssueStatusDisparo')"
+          [opcoes]="statusOpcoesKanban()"
+          [carregandoOpcoes]="carregandoStatusOpcoes()"
+          [vinculoCarregando]="carregandoVinculoKanban()"
+        />
+        <p class="text-xs text-[var(--color-text-muted)] -mt-2">
+          Logins: configure em <strong>Logins GitHub dos avaliadores</strong> na seção de PR acima.
+        </p>
+      </div>
+
+      <div class="border border-[var(--color-border)] rounded-xl p-4 space-y-2 bg-[var(--color-bg-base)]/40 lg:col-span-2">
         <h3 class="text-sm font-semibold text-[var(--color-text)]">Fila sem responsável</h3>
         <label class="config-toggle text-sm text-[var(--color-text)]">
           Registrar na fila quando não houver responsável ou destinatário
@@ -527,19 +692,28 @@
           <strong>Desligado:</strong> esses eventos são ignorados e não aparecem na fila.
         </p>
       </div>
+      </div>
+    }
+
+    @case ('eventos') {
+      <app-github-webhook-decisoes-panel />
     }
 
     @case ('mensagem') {
-      <div class="border border-[var(--color-border)] rounded-xl p-4 space-y-3">
+      <div class="border border-[var(--color-border)] rounded-xl p-4 space-y-4 max-w-xl">
         <h3 class="text-sm font-semibold text-[var(--color-text)]">Template WhatsApp (GitHub)</h3>
         <p class="text-xs text-[var(--color-text-muted)]">
-          O WhatsApp envia o corpo da mensagem (variáveis <code class="text-[11px]">{{'{{variavel}}'}}</code> substituídas).
-          Template <strong class="text-[var(--color-text)]">padrão (fallback)</strong> abaixo; no editor, cada tipo do seletor pode ter texto próprio
-          ({{ quantidadeTemplatesPorCenarioSalvos() }} tipo(s) com template dedicado salvo).
+          Variáveis <code class="text-[11px]">{{'{{variavel}}'}}</code> são substituídas no envio.
+          {{ quantidadeTemplatesPorCenarioSalvos() }} tipo(s) com template dedicado no editor.
         </p>
-        <div class="bg-[var(--color-bg-base)]/50 rounded-lg px-3 py-3 space-y-2 text-xs font-mono text-[var(--color-text-muted)]">
-          <p><span class="text-[var(--color-text)] font-sans font-medium text-sm">Assunto:</span> {{ resumoGithubTemplateAssunto() }}</p>
-          <p class="whitespace-pre-wrap"><span class="text-[var(--color-text)] font-sans font-medium text-sm">Mensagem:</span> {{ resumoGithubTemplateMensagem() }}</p>
+        <div class="rounded-2xl border border-[var(--color-border)] bg-[#0b141a] p-4 space-y-3">
+          <div class="max-w-[85%] ml-auto rounded-xl rounded-tr-sm bg-[#005c4b] px-3 py-2 text-sm text-[#e9edef] shadow-sm">
+            <p class="text-[10px] uppercase tracking-wide text-[#99beb3] mb-1 font-sans">Assunto</p>
+            <p class="font-sans text-sm leading-snug">{{ resumoGithubTemplateAssunto() }}</p>
+          </div>
+          <div class="max-w-[90%] rounded-xl rounded-tl-sm bg-[#202c33] px-3 py-2 text-sm text-[#e9edef] font-sans leading-relaxed whitespace-pre-wrap">
+            {{ resumoGithubTemplateMensagem() }}
+          </div>
         </div>
         @if (campoErro('dsGithubTemplateAssuntoWhatsapp') || campoErro('dsGithubTemplateMensagemWhatsapp')) {
           <p class="text-xs text-[var(--color-danger)]">
