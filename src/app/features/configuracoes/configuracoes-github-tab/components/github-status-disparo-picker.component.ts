@@ -56,6 +56,11 @@ export class GithubStatusDisparoPickerComponent {
     control.markAsDirty();
   }
 
+  resumoSelecao(): string | null {
+    const raw = String(this.form.get(this.campo())?.value ?? '').trim();
+    return raw.length > 0 ? raw : null;
+  }
+
   private nomes(): Set<string> {
     const raw = String(this.form.get(this.campo())?.value ?? '');
     const set = new Set<string>();

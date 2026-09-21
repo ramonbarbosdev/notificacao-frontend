@@ -15,15 +15,15 @@ export interface GithubIntegracaoStatusItem {
   imports: [CommonModule, LucideAngularModule],
   template: `
     <div
-      class="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-base)]/40 px-4 py-3 space-y-2"
+      class="rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-base)]/40 px-5 py-4 space-y-3"
     >
       <p class="text-xs font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
         Saúde da integração
       </p>
-      <div class="flex flex-wrap gap-2">
+      <div class="flex flex-wrap gap-2.5">
         @for (item of itens(); track item.id) {
           <span
-            class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs"
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs"
             [class.border-[var(--color-success-border)]]="item.ok"
             [class.bg-[var(--color-success-bg)]]="item.ok"
             [class.text-[var(--color-success)]]="item.ok"

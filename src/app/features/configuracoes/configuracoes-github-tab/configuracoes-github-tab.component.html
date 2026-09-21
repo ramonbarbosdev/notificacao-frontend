@@ -1,8 +1,8 @@
-<section class="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-6 space-y-5" [formGroup]="form">
-  <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
-    <div>
-      <h2 class="text-[var(--color-text)] font-semibold text-lg">GitHub → WhatsApp</h2>
-      <p class="text-sm text-[var(--color-text-muted)] mt-1 max-w-2xl">
+<section class="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-6 md:p-8 space-y-8" [formGroup]="form">
+  <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+    <div class="space-y-2">
+      <h2 class="text-[var(--color-text)] font-semibold text-xl tracking-tight">GitHub → WhatsApp</h2>
+      <p class="text-sm text-[var(--color-text-muted)] max-w-2xl leading-relaxed">
         Configure webhook, board e regras. Salve as alterações no botão ao final da página.
       </p>
     </div>
@@ -17,12 +17,13 @@
 
   <app-github-integracao-status-strip [itens]="itensSaudeIntegracao()" />
 
-  <div class="flex flex-wrap gap-2">
+  <div class="space-y-4 pb-1 border-b border-[var(--color-border)]">
+  <div class="flex flex-wrap gap-2.5">
     @for (item of subAbas; track item.id) {
       <button
         type="button"
         (click)="selecionarSubAba(item.id)"
-        class="inline-flex items-center gap-2 px-3 py-2 rounded-xl border text-sm transition-colors"
+        class="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl border text-sm transition-colors"
         [class.bg-[var(--color-primary)]]="githubSubAba() === item.id"
         [class.text-[var(--color-bg-base)]]="githubSubAba() === item.id"
         [class.border-[var(--color-primary)]]="githubSubAba() === item.id"
@@ -37,8 +38,9 @@
   </div>
 
   @if (subAbaAtivaMeta(); as meta) {
-    <p class="text-sm text-[var(--color-text-muted)] -mt-1">{{ meta.descricaoCurta }}</p>
+    <p class="text-sm text-[var(--color-text-muted)] leading-relaxed pb-4">{{ meta.descricaoCurta }}</p>
   }
+  </div>
 
   @switch (githubSubAba()) {
     @case ('conexao') {
@@ -60,8 +62,9 @@
           </div>
         }
 
-        <div class="border border-[var(--color-border)] rounded-xl p-4 space-y-3 bg-[var(--color-bg-base)]/30">
-          <div class="flex items-center gap-2">
+        <div class="flex flex-col gap-6 md:gap-8">
+        <div class="border border-[var(--color-border)] rounded-2xl p-5 md:p-6 space-y-5 bg-[var(--color-bg-base)]/30">
+          <div class="flex items-center gap-3">
             <div class="w-10 h-10 rounded-xl border border-[var(--color-border)] flex items-center justify-center bg-[var(--color-surface)]">
               <lucide-icon [img]="linkIcon" class="w-5 h-5 text-[var(--color-primary-soft)]" />
             </div>
@@ -70,10 +73,10 @@
               <p class="text-xs text-[var(--color-text-muted)]">Cole a URL no app e use a API Key como secret.</p>
             </div>
           </div>
-          <p class="text-xs text-[var(--color-text-muted)]">{{ gh.instrucaoWebhookSecret }}</p>
+          <p class="text-xs text-[var(--color-text-muted)] leading-relaxed">{{ gh.instrucaoWebhookSecret }}</p>
           @if (urlWebhookGithubAbsoluta(); as urlWebhook) {
-            <code class="block text-xs break-all bg-[var(--color-bg-base)] rounded-lg px-3 py-2 border border-[var(--color-border)]">{{ urlWebhook }}</code>
-            <p class="text-xs text-[var(--color-text-muted)]">
+            <code class="block text-xs break-all bg-[var(--color-bg-base)] rounded-xl px-4 py-3 border border-[var(--color-border)]">{{ urlWebhook }}</code>
+            <p class="text-xs text-[var(--color-text-muted)] leading-relaxed">
               Substitua <code>&#123;suaApiKeyCompleta&#125;</code> pela API Key (scope NOTIFICACOES_ENVIAR).
             </p>
             <button
@@ -87,9 +90,9 @@
           }
         </div>
 
-        <div class="border border-[var(--color-border)] rounded-xl p-4 space-y-3">
+        <div class="border border-[var(--color-border)] rounded-2xl p-5 md:p-6 space-y-5">
           <h3 class="text-sm font-semibold text-[var(--color-text)]">GitHub App</h3>
-          <p class="text-xs text-[var(--color-text-muted)]">
+          <p class="text-xs text-[var(--color-text-muted)] leading-relaxed">
             A API gera o token de instalação (<code>ghs_</code>) automaticamente e renova em memória. O webhook pode preencher o Installation ID se estiver vazio.
           </p>
           <app-form-field label="App ID" [error]="campoErro('githubAppId')">
@@ -169,11 +172,12 @@
             </div>
           </div>
         </details>
+        </div>
       }
     }
 
     @case ('kanban') {
-      <div class="border border-[var(--color-border)] rounded-xl p-4 space-y-4">
+      <div class="border border-[var(--color-border)] rounded-2xl p-5 md:p-6 space-y-6">
         <div>
           <h3 class="text-sm font-semibold text-[var(--color-text)]">Project v2 (kanban)</h3>
           <p class="text-xs text-[var(--color-text-muted)] mt-1">
@@ -329,8 +333,9 @@
           Carregando integração…
         </div>
       } @else if (githubIntegracao(); as gh) {
-        <div class="border border-[var(--color-border)] rounded-xl p-4 space-y-3">
-          <h3 class="text-sm font-semibold text-[var(--color-text)]">Frase de ativação</h3>
+        <div class="flex flex-col gap-6 md:gap-8">
+        <div class="border border-[var(--color-border)] rounded-2xl p-5 md:p-6 space-y-5">
+          <h3 class="text-base font-semibold text-[var(--color-text)]">Frase de ativação</h3>
           <app-form-field
             label="Mensagem no WhatsApp"
             helper="Vazio usa o padrão. O dev envia esta frase para vincular o número ao login GitHub."
@@ -348,8 +353,8 @@
           </p>
         </div>
 
-        <div class="border border-[var(--color-border)] rounded-xl p-4 space-y-3 bg-[var(--color-bg-base)]/30">
-          <h3 class="text-sm font-semibold text-[var(--color-text)]">Link para o time</h3>
+        <div class="border border-[var(--color-border)] rounded-2xl p-5 md:p-6 space-y-5 bg-[var(--color-bg-base)]/30">
+          <h3 class="text-base font-semibold text-[var(--color-text)]">Link para o time</h3>
           @if (gh.linkWhatsappAtivacao) {
             <code class="block text-xs break-all bg-[var(--color-bg-base)] rounded-lg px-3 py-2 border border-[var(--color-border)]">{{ gh.linkWhatsappAtivacao }}</code>
             <button
@@ -365,12 +370,13 @@
           }
         </div>
 
-        <p class="text-xs text-[var(--color-text-muted)]">{{ gh.instrucaoResponsaveis }}</p>
+        <p class="text-xs text-[var(--color-text-muted)] leading-relaxed">{{ gh.instrucaoResponsaveis }}</p>
+        </div>
       }
     }
 
     @case ('habilitados') {
-      <div class="border border-[var(--color-border)] rounded-xl p-4 space-y-4">
+      <div class="border border-[var(--color-border)] rounded-2xl p-5 md:p-6 space-y-6">
         <div class="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h3 class="text-sm font-semibold text-[var(--color-text)]">Quem recebe GitHub → WhatsApp</h3>
@@ -524,11 +530,11 @@
     }
 
     @case ('regras') {
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-      <div class="border border-[var(--color-border)] rounded-xl p-4 space-y-4 lg:col-span-2">
-        <div>
-          <h3 class="text-sm font-semibold text-[var(--color-text)]">Regras de notificação</h3>
-          <p class="text-xs text-[var(--color-text-muted)] mt-1">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
+      <div class="border border-[var(--color-border)] rounded-2xl p-5 md:p-6 space-y-6 lg:col-span-2">
+        <div class="space-y-2">
+          <h3 class="text-base font-semibold text-[var(--color-text)]">Regras de notificação</h3>
+          <p class="text-sm text-[var(--color-text-muted)] leading-relaxed">
             Defina quando o webhook dispara WhatsApp e quem recebe. Vazio em status = todas as colunas permitidas pelos gatilhos.
           </p>
         </div>
@@ -538,7 +544,7 @@
           <input type="checkbox" formControlName="githubNaoNotificarMovimentador" />
         </label>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <label class="config-toggle text-sm text-[var(--color-text)]">
             Status alterado
             <input type="checkbox" formControlName="githubNotificarStatusAlterado" />
@@ -573,6 +579,7 @@
           </label>
         </div>
 
+        <div class="pt-6 border-t border-[var(--color-border)]">
         <app-github-status-disparo-picker
           [form]="form"
           campo="dsGithubStatusDisparo"
@@ -583,11 +590,12 @@
           [carregandoOpcoes]="carregandoStatusOpcoes()"
           [vinculoCarregando]="carregandoVinculoKanban()"
         />
+        </div>
       </div>
 
-      <div class="border border-[var(--color-border)] rounded-xl p-4 space-y-4">
-        <h3 class="text-sm font-semibold text-[var(--color-text)]">Destinatários</h3>
-        <div class="space-y-2">
+      <div class="border border-[var(--color-border)] rounded-2xl p-5 md:p-6 space-y-6">
+        <h3 class="text-base font-semibold text-[var(--color-text)]">Destinatários</h3>
+        <div class="space-y-3">
           <label class="flex items-start gap-2 text-sm text-[var(--color-text)] cursor-pointer">
             <input type="radio" formControlName="dsGithubDestinatariosModo" value="RESPONSAVEIS" class="mt-1" />
             <span>Responsáveis da tarefa (assignees)</span>
@@ -612,16 +620,16 @@
           }
         </div>
 
-        <label class="config-toggle text-sm text-[var(--color-text)]">
+        <label class="config-toggle text-sm text-[var(--color-text)] mt-2">
           Ignorar sem responsável
           <input type="checkbox" formControlName="githubIgnorarSemResponsavel" />
         </label>
       </div>
 
-      <div class="border border-[var(--color-border)] rounded-xl p-4 space-y-4 h-fit">
-        <div>
-          <h3 class="text-sm font-semibold text-[var(--color-text)]">Pull requests</h3>
-          <p class="text-xs text-[var(--color-text-muted)] mt-1">
+      <div class="border border-[var(--color-border)] rounded-2xl p-5 md:p-6 space-y-6 h-fit">
+        <div class="space-y-2">
+          <h3 class="text-base font-semibold text-[var(--color-text)]">Pull requests</h3>
+          <p class="text-sm text-[var(--color-text-muted)] leading-relaxed">
             Quando o card for um Pull Request e entrar no status abaixo, avisa os logins configurados (opt-in WhatsApp). Não usa assignees do card.
             Personalize a mensagem no editor de template WhatsApp — cenário
             <strong>Project v2 — PR em status (avaliadores)</strong>.
@@ -655,10 +663,10 @@
         <ng-container *ngTemplateOutlet="sugestoesLoginsGithub; context: { campo: 'dsGithubPrLoginsAvaliadores' }" />
       </div>
 
-      <div class="border border-[var(--color-border)] rounded-xl p-4 space-y-4 h-fit">
-        <div>
-          <h3 class="text-sm font-semibold text-[var(--color-text)]">Issues</h3>
-          <p class="text-xs text-[var(--color-text-muted)] mt-1">
+      <div class="border border-[var(--color-border)] rounded-2xl p-5 md:p-6 space-y-6 h-fit">
+        <div class="space-y-2">
+          <h3 class="text-base font-semibold text-[var(--color-text)]">Issues</h3>
+          <p class="text-sm text-[var(--color-text-muted)] leading-relaxed">
             Quando o card for uma Issue e entrar no status configurado, avisa os mesmos logins de avaliadores do PR (opt-in WhatsApp).
           </p>
         </div>
@@ -676,13 +684,13 @@
           [carregandoOpcoes]="carregandoStatusOpcoes()"
           [vinculoCarregando]="carregandoVinculoKanban()"
         />
-        <p class="text-xs text-[var(--color-text-muted)] -mt-2">
+        <p class="text-xs text-[var(--color-text-muted)] leading-relaxed pt-1">
           Logins: configure em <strong>Logins GitHub dos avaliadores</strong> na seção de PR acima.
         </p>
       </div>
 
-      <div class="border border-[var(--color-border)] rounded-xl p-4 space-y-2 bg-[var(--color-bg-base)]/40 lg:col-span-2">
-        <h3 class="text-sm font-semibold text-[var(--color-text)]">Fila sem responsável</h3>
+      <div class="border border-[var(--color-border)] rounded-2xl p-5 md:p-6 space-y-4 bg-[var(--color-bg-base)]/40 lg:col-span-2">
+        <h3 class="text-base font-semibold text-[var(--color-text)]">Fila sem responsável</h3>
         <label class="config-toggle text-sm text-[var(--color-text)]">
           Registrar na fila quando não houver responsável ou destinatário
           <input type="checkbox" formControlName="webhookRegistrarFilaSemDestinatario" />
@@ -700,8 +708,8 @@
     }
 
     @case ('mensagem') {
-      <div class="border border-[var(--color-border)] rounded-xl p-4 space-y-4 max-w-xl">
-        <h3 class="text-sm font-semibold text-[var(--color-text)]">Template WhatsApp (GitHub)</h3>
+      <div class="border border-[var(--color-border)] rounded-2xl p-5 md:p-6 space-y-6 max-w-xl">
+        <h3 class="text-base font-semibold text-[var(--color-text)]">Template WhatsApp (GitHub)</h3>
         <p class="text-xs text-[var(--color-text-muted)]">
           Variáveis <code class="text-[11px]">{{'{{variavel}}'}}</code> são substituídas no envio.
           {{ quantidadeTemplatesPorCenarioSalvos() }} tipo(s) com template dedicado no editor.
@@ -734,18 +742,18 @@
 </section>
 
 <ng-template #sugestoesLoginsGithub let-campo="campo">
-  <div class="-mt-1 mb-3 space-y-2">
+  <div class="space-y-3 pt-1">
     @if (carregandoResponsaveis() && loginsGithubSugeridos().length === 0) {
       <p class="text-xs text-[var(--color-text-muted)]">Carregando logins salvos na organização…</p>
     } @else if (loginsGithubSugeridos().length > 0) {
       <p class="text-xs text-[var(--color-text-muted)]">
         Responsáveis GitHub salvos no banco — clique para adicionar à lista:
       </p>
-      <div class="flex flex-wrap gap-2">
+      <div class="flex flex-wrap gap-2.5">
         @for (item of loginsGithubSugeridos(); track item.login) {
           <button
             type="button"
-            class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-[var(--color-border)] text-xs font-mono text-[var(--color-text)] hover:bg-[var(--color-surface-muted)] transition-colors disabled:opacity-45 disabled:cursor-not-allowed"
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[var(--color-border)] text-xs font-mono text-[var(--color-text)] hover:bg-[var(--color-surface-muted)] transition-colors disabled:opacity-45 disabled:cursor-not-allowed"
             [disabled]="loginJaNoCampo(campo, item.login)"
             (click)="adicionarLoginSugerido(campo, item.login)"
           >
