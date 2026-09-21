@@ -202,6 +202,8 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
     auditoriaHabilitada: [true],
     dsGithubFraseAtivacaoWhatsapp: [''],
     dsGithubStatusDisparo: [''],
+    dsGithubStatusDisparoGatilhos: [''],
+    dsGithubRegrasPorStatus: [''],
     webhookRegistrarFilaSemDestinatario: [true],
     dsGithubTemplateAssuntoWhatsapp: [''],
     dsGithubTemplateMensagemWhatsapp: [''],
@@ -420,6 +422,8 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
     if (abaAtual === 'github') {
       dados.dsGithubFraseAtivacaoWhatsapp = (dados.dsGithubFraseAtivacaoWhatsapp ?? '').trim();
       dados.dsGithubStatusDisparo = (dados.dsGithubStatusDisparo ?? '').trim() || null;
+      dados.dsGithubStatusDisparoGatilhos = (dados.dsGithubStatusDisparoGatilhos ?? '').trim() || null;
+      dados.dsGithubRegrasPorStatus = (dados.dsGithubRegrasPorStatus ?? '').trim() || null;
       dados.dsGithubTemplateAssuntoWhatsapp = (dados.dsGithubTemplateAssuntoWhatsapp ?? '').trim() || null;
       dados.dsGithubTemplateMensagemWhatsapp = (dados.dsGithubTemplateMensagemWhatsapp ?? '').trim() || null;
       dados.dsGithubDestinatariosExtras = (dados.dsGithubDestinatariosExtras ?? '').trim() || null;
@@ -524,6 +528,8 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
     return {
       dsGithubFraseAtivacaoWhatsapp: config.dsGithubFraseAtivacaoWhatsapp ?? '',
       dsGithubStatusDisparo: config.dsGithubStatusDisparo ?? '',
+      dsGithubStatusDisparoGatilhos: config.dsGithubStatusDisparoGatilhos ?? '',
+      dsGithubRegrasPorStatus: config.dsGithubRegrasPorStatus ?? '',
       dsGithubTemplateAssuntoWhatsapp: config.dsGithubTemplateAssuntoWhatsapp ?? '',
       dsGithubTemplateMensagemWhatsapp: config.dsGithubTemplateMensagemWhatsapp ?? '',
       githubNaoNotificarMovimentador: config.githubNaoNotificarMovimentador ?? true,

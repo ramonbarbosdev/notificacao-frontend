@@ -198,6 +198,18 @@ export const orgConfigGithubSchema = z.object({
     .max(500, 'O filtro de status deve ter no maximo 500 caracteres.')
     .optional()
     .default(''),
+  dsGithubStatusDisparoGatilhos: z
+    .string()
+    .trim()
+    .max(500, 'A lista de gatilhos deve ter no maximo 500 caracteres.')
+    .optional()
+    .default(''),
+  dsGithubRegrasPorStatus: z
+    .string()
+    .trim()
+    .max(32000, 'O JSON de regras por coluna deve ter no maximo 32000 caracteres.')
+    .optional()
+    .default(''),
   dsGithubTemplateAssuntoWhatsapp: z
     .string()
     .trim()
@@ -335,6 +347,8 @@ export const CAMPOS_POR_ABA_ORG: Record<AbaConfiguracaoOrganizacao, (keyof Organ
     'githubInstallationId',
     'dsGithubFraseAtivacaoWhatsapp',
     'dsGithubStatusDisparo',
+    'dsGithubStatusDisparoGatilhos',
+    'dsGithubRegrasPorStatus',
     'dsGithubTemplateAssuntoWhatsapp',
     'dsGithubTemplateMensagemWhatsapp',
     'githubNaoNotificarMovimentador',

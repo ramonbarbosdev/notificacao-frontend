@@ -1,0 +1,261 @@
+<div class="space-y-8">
+  <nav class="flex flex-wrap items-center gap-3 text-sm">
+    <button
+      type="button"
+      class="inline-flex items-center gap-2 px-3 py-2 rounded-xl border transition-colors"
+      [class.border-[var(--color-primary)]]="conexaoOk"
+      [class.bg-[var(--color-primary)]/10]="conexaoOk"
+      (click)="irParaSecao.emit('conexao')"
+    >
+      <lucide-icon [img]="linkIcon" class="w-4 h-4" />
+      1. Conexão
+      @if (conexaoOk) {
+        <lucide-icon [img]="checkIcon" class="w-3.5 h-3.5 text-[var(--color-success)]" />
+      }
+    </button>
+    <span class="text-[var(--color-text-muted)]">→</span>
+    <button
+      type="button"
+      class="inline-flex items-center gap-2 px-3 py-2 rounded-xl border transition-colors"
+      [class.border-[var(--color-primary)]]="kanbanOk"
+      [class.bg-[var(--color-primary)]/10]="kanbanOk"
+      (click)="irParaSecao.emit('kanban')"
+    >
+      <lucide-icon [img]="gridIcon" class="w-4 h-4" />
+      2. Kanban
+      @if (kanbanOk) {
+        <lucide-icon [img]="checkIcon" class="w-3.5 h-3.5 text-[var(--color-success)]" />
+      }
+    </button>
+    <span class="text-[var(--color-text-muted)]">→</span>
+    <span class="px-3 py-2 rounded-xl border border-[var(--color-primary)] bg-[var(--color-primary)]/15 font-medium text-[var(--color-text)]">
+      3. Regras por coluna
+    </span>
+  </nav>
+
+  @if (!kanbanOk) {
+    <div class="rounded-2xl border border-dashed border-[var(--color-border)] p-8 text-center space-y-3">
+      <p class="text-sm text-[var(--color-text-muted)]">
+        Vincule um Project v2 na aba Kanban para exibir as colunas de Status aqui.
+      </p>
+      <button
+        type="button"
+        class="px-4 py-2 rounded-xl bg-[var(--color-primary)] text-[var(--color-bg-base)] text-sm font-medium"
+        (click)="irParaSecao.emit('kanban')"
+      >
+        Ir para Kanban
+      </button>
+    </div>
+  } @else {
+    <div class="space-y-4">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h3 class="text-base font-semibold text-[var(--color-text)]">Board — ao entrar na coluna</h3>
+          <p class="text-sm text-[var(--color-text-muted)] mt-1">
+            Clique em uma coluna para configurar WhatsApp, avaliadores e destinatários.
+          </p>
+        </div>
+        <button
+          type="button"
+          class="text-sm px-3 py-2 rounded-xl border border-[var(--color-border)]"
+          (click)="alternarModoMatriz()"
+        >
+          {{ modoMatriz() ? 'Modo colunas' : 'Modo matriz' }}
+        </button>
+      </div>
+
+      @if (!modoMatriz()) {
+        <div class="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory">
+          @for (opcao of colunasOrdenadas(); track opcao.optionId) {
+            <button
+              type="button"
+              class="snap-start shrink-0 w-44 rounded-2xl border p-4 text-left transition-all hover:border-[var(--color-primary)]/50"
+              [class.border-[var(--color-primary)]]="colunaSelecionadaId() === opcao.optionId"
+              [class.opacity-55]="!colunaAtiva(opcao.optionId)"
+              [class.border-[var(--color-border)]]="colunaSelecionadaId() !== opcao.optionId"
+              (click)="selecionarColuna(opcao.optionId)"
+            >
+              <div class="flex items-center gap-2 mb-2">
+                <span class="w-3 h-3 rounded-full shrink-0" [style.background-color]="corStatus(opcao.color)"></span>
+                <span class="text-xs font-medium text-[var(--color-text)] line-clamp-2">{{ opcao.name }}</span>
+              </div>
+              @if (badgesColuna(opcao.optionId).length > 0) {
+                <div class="flex flex-wrap gap-1">
+                  @for (badge of badgesColuna(opcao.optionId); track badge) {
+                    <span class="text-[10px] px-1.5 py-0.5 rounded-md bg-[var(--color-surface-muted)] text-[var(--color-text-muted)]">
+                      {{ badge }}
+                    </span>
+                  }
+                </div>
+              } @else {
+                <span class="text-[10px] text-[var(--color-text-muted)]">Silenciosa</span>
+              }
+            </button>
+          }
+        </div>
+      } @else {
+        <div class="overflow-x-auto rounded-xl border border-[var(--color-border)]">
+          <table class="w-full text-xs text-left">
+            <thead class="bg-[var(--color-bg-base)]/60 text-[var(--color-text-muted)]">
+              <tr>
+                <th class="px-3 py-2">Coluna</th>
+                <th class="px-3 py-2">Geral</th>
+                <th class="px-3 py-2">PR</th>
+                <th class="px-3 py-2">Issue</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-[var(--color-border)]">
+              @for (opcao of colunasOrdenadas(); track opcao.optionId) {
+                @if (regra(opcao.optionId); as r) {
+                  <tr class="hover:bg-[var(--color-surface-muted)]/40">
+                    <td class="px-3 py-2 font-medium text-[var(--color-text)]">{{ opcao.name }}</td>
+                    <td class="px-3 py-2">
+                      <input
+                        type="checkbox"
+                        [checked]="r.aoEntrar.fluxoGeral"
+                        (change)="toggleAoEntrar(opcao.optionId, 'fluxoGeral', $any($event.target).checked)"
+                      />
+                    </td>
+                    <td class="px-3 py-2">
+                      <input
+                        type="checkbox"
+                        [checked]="r.aoEntrar.prAvaliadores"
+                        (change)="toggleAoEntrar(opcao.optionId, 'prAvaliadores', $any($event.target).checked)"
+                      />
+                    </td>
+                    <td class="px-3 py-2">
+                      <input
+                        type="checkbox"
+                        [checked]="r.aoEntrar.issueAvaliadores"
+                        (change)="toggleAoEntrar(opcao.optionId, 'issueAvaliadores', $any($event.target).checked)"
+                      />
+                    </td>
+                  </tr>
+                }
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+  }
+
+  @if (colunaSelecionadaId(); as optionId) {
+    @if (regra(optionId); as col) {
+      <div
+        class="fixed inset-0 z-40 flex justify-end bg-black/40"
+        (click)="fecharDrawer()"
+        role="presentation"
+      >
+        <div
+          class="w-full max-w-md h-full bg-[var(--color-surface)] border-l border-[var(--color-border)] shadow-xl overflow-y-auto p-6 space-y-6"
+          (click)="$event.stopPropagation()"
+        >
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <h3 class="text-lg font-semibold text-[var(--color-text)]">{{ col.nome }}</h3>
+              <p class="text-xs text-[var(--color-text-muted)] mt-1">Quando um card entra nesta coluna Status</p>
+            </div>
+            <button type="button" class="p-2 rounded-lg hover:bg-[var(--color-surface-muted)]" (click)="fecharDrawer()">
+              <lucide-icon [img]="closeIcon" class="w-5 h-5" />
+            </button>
+          </div>
+
+          <div class="space-y-3">
+            <p class="text-xs font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">Fluxos</p>
+            <label class="config-toggle text-sm">
+              Notificação geral (assignees / regras da org)
+              <input
+                type="checkbox"
+                [checked]="col.aoEntrar.fluxoGeral"
+                (change)="toggleAoEntrar(optionId, 'fluxoGeral', $any($event.target).checked)"
+              />
+            </label>
+            <label class="config-toggle text-sm">
+              Avaliadores de PR
+              <input
+                type="checkbox"
+                [checked]="col.aoEntrar.prAvaliadores"
+                (change)="toggleAoEntrar(optionId, 'prAvaliadores', $any($event.target).checked)"
+              />
+            </label>
+            <label class="config-toggle text-sm">
+              Avaliadores de Issue
+              <input
+                type="checkbox"
+                [checked]="col.aoEntrar.issueAvaliadores"
+                (change)="toggleAoEntrar(optionId, 'issueAvaliadores', $any($event.target).checked)"
+              />
+            </label>
+          </div>
+
+          <div class="space-y-3 pt-4 border-t border-[var(--color-border)]">
+            <p class="text-xs font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">Destinatários nesta coluna</p>
+            <select
+              class="form-input-admin text-sm w-full"
+              [value]="col.destinatarios.modo"
+              (change)="alterarDestinatariosModo(optionId, $any($event.target).value)"
+            >
+              <option value="INHERIT">Herdar padrão da organização</option>
+              <option value="RESPONSAVEIS">Responsáveis (assignees)</option>
+              <option value="RESPONSAVEIS_E_MOVIMENTADOR">Responsáveis + quem moveu</option>
+              <option value="LOGINS_CONFIGURADOS">Logins configurados</option>
+            </select>
+            @if (col.destinatarios.modo === 'LOGINS_CONFIGURADOS') {
+              <input
+                class="form-input-admin text-sm"
+                placeholder="login1, login2"
+                [value]="col.destinatarios.extras ?? ''"
+                (input)="alterarDestinatariosExtras(optionId, $any($event.target).value)"
+              />
+            }
+          </div>
+
+          <div class="space-y-3 pt-4 border-t border-[var(--color-border)]">
+            <p class="text-xs font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">Mensagem (fluxo geral)</p>
+            <label class="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                [checked]="col.mensagem.usarTemplatePadrao"
+                (change)="alterarMensagemTemplatePadrao(optionId, $any($event.target).checked)"
+              />
+              Usar template padrão GitHub
+            </label>
+            @if (!col.mensagem.usarTemplatePadrao) {
+              <select
+                class="form-input-admin text-sm w-full"
+                [value]="col.mensagem.cenarioId ?? ''"
+                (change)="alterarMensagemCenario(optionId, $any($event.target).value)"
+              >
+                <option value="">Selecione um cenário</option>
+                @for (c of cenariosPreview; track c.id) {
+                  <option [value]="c.id">{{ c.label }}</option>
+                }
+              </select>
+            }
+          </div>
+
+          <button
+            type="button"
+            class="text-xs text-[var(--color-primary-soft)] hover:underline"
+            (click)="irParaSecao.emit('eventos')"
+          >
+            Ver eventos recentes desta integração
+          </button>
+        </div>
+      </div>
+    }
+  }
+
+  <app-github-regras-global-panel
+    [form]="form"
+    [campoErro]="campoErro"
+    [sugestoesLoginsExtras]="sugestoesLoginsExtras"
+    [sugestoesLoginsPr]="sugestoesLoginsPr"
+  />
+
+  <details class="rounded-xl border border-[var(--color-border)] px-4 py-3 text-xs text-[var(--color-text-muted)]">
+    <summary class="cursor-pointer font-medium text-[var(--color-text)]">Avançado: JSON salvo no servidor</summary>
+    <pre class="mt-3 overflow-x-auto text-[10px] bg-[var(--color-bg-base)] p-3 rounded-lg">{{ form.get('dsGithubRegrasPorStatus')?.value }}</pre>
+  </details>
+</div>

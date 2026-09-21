@@ -750,6 +750,8 @@ export interface OrganizacaoConfiguracao {
   expiracaoFilaHoras: number | null;
   auditoriaHabilitada: boolean;
   dsGithubStatusDisparo?: string | null;
+  dsGithubStatusDisparoGatilhos?: string | null;
+  dsGithubRegrasPorStatus?: string | null;
   webhookRegistrarFilaSemDestinatario?: boolean | null;
   dsGithubTemplateAssuntoWhatsapp?: string | null;
   dsGithubTemplateMensagemWhatsapp?: string | null;

@@ -61,7 +61,7 @@ import {
   GithubIntegracaoStatusStripComponent,
 } from './components/github-integracao-status-strip.component';
 import { GithubProjectV2CardComponent } from './components/github-project-v2-card.component';
-import { GithubStatusDisparoPickerComponent } from './components/github-status-disparo-picker.component';
+import { GithubRegrasBoardComponent } from './components/github-regras-board.component';
 import { GithubWebhookDecisoesPanelComponent } from './components/github-webhook-decisoes-panel.component';
 import { corStatusGithubProject } from './github-status-color.util';
 
@@ -85,9 +85,9 @@ export type GithubSubAba =
     FormFieldComponent,
     GithubWhatsappTemplateModalComponent,
     GithubIntegracaoStatusStripComponent,
-    GithubStatusDisparoPickerComponent,
     GithubProjectV2CardComponent,
     GithubWebhookDecisoesPanelComponent,
+    GithubRegrasBoardComponent,
   ],
   templateUrl: './configuracoes-github-tab.component.html',
 })
@@ -231,6 +231,24 @@ export class ConfiguracoesGithubTabComponent implements OnInit {
 
   readonly subAbaAtivaMeta = computed(() =>
     this.subAbas.find((item) => item.id === this.githubSubAba()) ?? this.subAbas[0]);
+
+  readonly githubConexaoPronta = computed(() => {
+    const appId = this.form.get('githubAppId')?.value;
+    const appOk =
+      appId != null
+      && Number(appId) > 0
+      && (this.githubAppPrivateKeyConfigurado()
+        || !!String(this.form.get('githubAppPrivateKey')?.value ?? '').trim());
+    return !!this.githubIntegracao()?.featureHabilitada && appOk;
+  });
+
+  readonly githubKanbanPronto = computed(() => {
+    const vinculo = this.vinculoKanban();
+    const projectSalvo =
+      !!vinculo?.project?.id
+      || !!String(this.form.get('dsGithubProjectV2NodeId')?.value ?? '').trim();
+    return projectSalvo && this.statusOpcoesKanban().length > 0;
+  });
 
   readonly itensSaudeIntegracao = computed((): GithubIntegracaoStatusItem[] => {
     const gh = this.githubIntegracao();
@@ -591,6 +609,10 @@ export class ConfiguracoesGithubTabComponent implements OnInit {
 
   campoErro(campo: keyof OrganizacaoConfiguracaoFormData): string | null {
     return this.errosFormulario[campo] ?? null;
+  }
+
+  campoErroFormulario(campo: string): string | null {
+    return this.campoErro(campo as keyof OrganizacaoConfiguracaoFormData);
   }
 
   copiarTexto(texto: string, mensagemSucesso = 'Copiado'): void {
