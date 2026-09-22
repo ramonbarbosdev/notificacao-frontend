@@ -393,7 +393,9 @@
             </p>
             <p class="text-xs text-[var(--color-text-muted)] mt-2 leading-relaxed">
               <strong class="text-[var(--color-text)]">Trocou de número?</strong>
-              Refaça o opt-in no WhatsApp novo com o mesmo login GitHub (veja a aba Equipe).
+              Refaça o opt-in no WhatsApp novo com o mesmo login GitHub (veja a aba Equipe). Após a troca, esta lista
+              mostra <strong>avisos</strong> quando um número deixa de receber alertas (opt-in em outro chip ou
+              desativação).
             </p>
           </div>
           <button
@@ -431,7 +433,15 @@
                   @for (item of responsaveisHabilitados(); track item.idGithubResponsavel) {
                     <tr>
                       <td class="px-4 py-3 text-[var(--color-text)] font-mono">{{ '@' + item.githubLogin }}</td>
-                      <td class="px-4 py-3 text-[var(--color-text-muted)]">{{ item.whatsappMascarado }}</td>
+                      <td class="px-4 py-3 text-[var(--color-text-muted)]">
+                        {{ item.whatsappMascarado }}
+                        @if (item.whatsappAnteriorMascarado && item.dtMudancaWhatsapp) {
+                          <span class="block text-[10px] text-amber-600/90 dark:text-amber-400/90 mt-0.5">
+                            antes: {{ item.whatsappAnteriorMascarado }} ·
+                            {{ formatarData(item.dtMudancaWhatsapp) }}
+                          </span>
+                        }
+                      </td>
                       <td class="px-4 py-3 text-[var(--color-text-muted)]">{{ formatarData(item.dtAtualizacao) }}</td>
                       <td class="px-4 py-3 text-right whitespace-nowrap">
                         <button
@@ -452,6 +462,13 @@
                         </button>
                       </td>
                     </tr>
+                    @if (item.alertaAdministrador) {
+                      <tr class="bg-amber-500/5">
+                        <td colspan="4" class="px-4 py-2 text-xs text-amber-800 dark:text-amber-200/90 leading-relaxed">
+                          {{ item.alertaAdministrador }}
+                        </td>
+                      </tr>
+                    }
                   }
                 </tbody>
               </table>
@@ -464,9 +481,12 @@
               <ul class="text-sm space-y-2">
                 @for (item of responsaveisDesativados(); track item.idGithubResponsavel) {
                   <li class="flex flex-wrap items-center justify-between gap-2">
-                    <span class="text-[var(--color-text-muted)]">
+                    <span class="text-[var(--color-text-muted)] max-w-xl">
                       <span class="font-mono text-[var(--color-text)]">{{ '@' + item.githubLogin }}</span>
                       · {{ item.whatsappMascarado }}
+                      @if (item.alertaAdministrador) {
+                        <span class="block text-amber-600/90 dark:text-amber-400/90 mt-1">{{ item.alertaAdministrador }}</span>
+                      }
                     </span>
                     <span class="flex gap-2">
                       <button

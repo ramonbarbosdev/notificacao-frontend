@@ -866,6 +866,9 @@ export interface GithubResponsavel {
   habilitado: boolean;
   ativo: boolean;
   dtAtualizacao: string;
+  whatsappAnteriorMascarado?: string | null;
+  dtMudancaWhatsapp?: string | null;
+  alertaAdministrador?: string | null;
 }
 
 export interface GithubProjectV2Resumo {
