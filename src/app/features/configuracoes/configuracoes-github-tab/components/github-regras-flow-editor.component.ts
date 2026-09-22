@@ -16,6 +16,8 @@ import {
   GithubProjectV2StatusOpcao,
   GithubWebhookTemplateCenario,
 } from '../../../../shared/types/dtos';
+import { GithubLoginSugerido } from '../github-logins-lista.util';
+import { GithubLoginsConfiguradosPickerComponent } from './github-logins-configurados-picker.component';
 import { corStatusGithubProject } from '../github-status-color.util';
 import {
   labelDestinatarios,
@@ -34,6 +36,7 @@ import {
   modoMensagemColuna,
   parseRegrasPorStatus,
   persistirRegrasNoForm,
+  cenariosTemplateEditor,
 } from '../github-regras-por-status.util';
 
 export type GithubFlowNoEdicao = 'tipos' | 'destinatarios' | 'mensagem' | null;
@@ -45,7 +48,7 @@ export type GithubFlowEditarMensagemEvento =
 @Component({
   selector: 'app-github-regras-flow-editor',
   standalone: true,
-  imports: [CommonModule, LucideAngularModule],
+  imports: [CommonModule, LucideAngularModule, GithubLoginsConfiguradosPickerComponent],
   templateUrl: './github-regras-flow-editor.component.html',
 })
 export class GithubRegrasFlowEditorComponent implements OnChanges {
@@ -54,6 +57,8 @@ export class GithubRegrasFlowEditorComponent implements OnChanges {
   @Input() conexaoOk = false;
   @Input() kanbanOk = false;
   @Input() cenariosPreview: GithubWebhookTemplateCenario[] = [];
+  @Input() loginsGithubSugeridos: GithubLoginSugerido[] = [];
+  @Input() carregandoLoginsGithub = false;
 
   readonly irParaSecao = output<'conexao' | 'kanban' | 'mensagem'>();
   readonly editarMensagem = output<GithubFlowEditarMensagemEvento>();
@@ -71,7 +76,9 @@ export class GithubRegrasFlowEditorComponent implements OnChanges {
   readonly buscaColuna = signal('');
   readonly somenteAtivas = signal(false);
 
-  readonly cenariosMap = computed(() => mapaCenariosPorId(this.cenariosPreview));
+  readonly cenariosEditor = computed(() => cenariosTemplateEditor(this.cenariosPreview));
+
+  readonly cenariosMap = computed(() => mapaCenariosPorId(this.cenariosEditor()));
 
   readonly opcoesFiltradas = computed(() =>
     filtrarOpcoesColuna(
@@ -153,17 +160,13 @@ export class GithubRegrasFlowEditorComponent implements OnChanges {
     persistirRegrasNoForm(this.form, doc);
   }
 
-  toggleAoEntrar(
-    optionId: string,
-    campo: 'fluxoGeral' | 'prAvaliadores' | 'issueAvaliadores',
-    valor: boolean,
-  ): void {
+  toggleNotificarAoEntrar(optionId: string, valor: boolean): void {
     const regra = this.regra(optionId);
     if (!regra) {
       return;
     }
     this.patchColuna(optionId, {
-      aoEntrar: { ...regra.aoEntrar, [campo]: valor },
+      aoEntrar: { fluxoGeral: valor, prAvaliadores: false, issueAvaliadores: false },
     });
   }
 
@@ -175,13 +178,14 @@ export class GithubRegrasFlowEditorComponent implements OnChanges {
     this.patchColuna(optionId, { destinatarios: { ...regra.destinatarios, modo } });
   }
 
-  alterarDestinatariosExtras(optionId: string, extras: string): void {
+  alterarDestinatariosExtras(optionId: string, extras: string | null): void {
     const regra = this.regra(optionId);
     if (!regra) {
       return;
     }
+    const valor = extras?.trim() || null;
     this.patchColuna(optionId, {
-      destinatarios: { ...regra.destinatarios, extras: extras.trim() || null },
+      destinatarios: { ...regra.destinatarios, extras: valor },
     });
   }
 

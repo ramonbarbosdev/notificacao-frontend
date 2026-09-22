@@ -15,7 +15,7 @@ export interface GithubIntegracaoStatusItem {
   imports: [CommonModule, LucideAngularModule],
   template: `
     <div
-      class="rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-base)]/40 px-5 py-4 space-y-3"
+      class="rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-base)]/40 px-5 py-4 space-y-3 mb-2"
     >
       <p class="text-xs font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
         Saúde da integração

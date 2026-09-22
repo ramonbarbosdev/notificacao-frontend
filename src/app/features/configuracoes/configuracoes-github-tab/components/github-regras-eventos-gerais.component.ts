@@ -1,22 +1,29 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input, TemplateRef } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { FormGroup, ReactiveFormsModule } from '@angular/forms';
 
 import { FormFieldComponent } from '../../../../shared/components/forms/form-field/app-form-field';
+import { GithubLoginSugerido } from '../github-logins-lista.util';
+import { GithubLoginsConfiguradosPickerComponent } from './github-logins-configurados-picker.component';
 import { GithubStatusDisparoGatilhosComponent } from './github-status-disparo-gatilhos.component';
 
 @Component({
   selector: 'app-github-regras-eventos-gerais',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormFieldComponent, GithubStatusDisparoGatilhosComponent],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    FormFieldComponent,
+    GithubStatusDisparoGatilhosComponent,
+    GithubLoginsConfiguradosPickerComponent,
+  ],
   template: `
     <div class="space-y-6" [formGroup]="form">
       <div class="border border-[var(--color-border)] rounded-2xl p-5 md:p-6 space-y-6">
         <div class="space-y-2">
           <h3 class="text-base font-semibold text-[var(--color-text)]">Padrões da organização</h3>
           <p class="text-sm text-[var(--color-text-muted)] leading-relaxed">
-            Usados no fluxo <strong>Geral</strong> do diagrama quando a coluna estiver com destinatários = “Herdar
-            padrão”, e nos ramos PR/Issue (logins avaliadores).
+            Usados no fluxograma por coluna quando destinatários = “Herdar padrão da organização”.
           </p>
         </div>
 
@@ -45,12 +52,14 @@ import { GithubStatusDisparoGatilhosComponent } from './github-status-disparo-ga
             <span>Logins GitHub configurados (opt-in obrigatório)</span>
           </label>
           @if (form.get('dsGithubDestinatariosModo')?.value === 'LOGINS_CONFIGURADOS') {
-            <app-form-field label="Logins GitHub (vírgula)" [error]="campoErro('dsGithubDestinatariosExtras')">
-              <input formControlName="dsGithubDestinatariosExtras" class="form-input-admin" placeholder="octocat, dev1" />
+            <app-form-field label="Logins GitHub" [error]="campoErro('dsGithubDestinatariosExtras')">
+              <app-github-logins-configurados-picker
+                [extras]="form.get('dsGithubDestinatariosExtras')?.value"
+                [loginsSugeridos]="loginsGithubSugeridos"
+                [carregando]="carregandoLoginsGithub"
+                (extrasChange)="atualizarDestinatariosExtras($event)"
+              />
             </app-form-field>
-            @if (sugestoesLoginsExtras) {
-              <ng-container *ngTemplateOutlet="sugestoesLoginsExtras; context: { campo: 'dsGithubDestinatariosExtras' }" />
-            }
           }
         </div>
         <label class="config-toggle text-sm text-[var(--color-text)]">
@@ -58,27 +67,6 @@ import { GithubStatusDisparoGatilhosComponent } from './github-status-disparo-ga
           <input type="checkbox" formControlName="githubIgnorarSemResponsavel" />
         </label>
 
-        <div class="pt-4 border-t border-[var(--color-border)] space-y-4">
-          <h4 class="text-sm font-semibold text-[var(--color-text)]">Avaliadores (ramos PR / Issue no fluxograma)</h4>
-          <label class="config-toggle text-sm text-[var(--color-text)]">
-            Habilitar aviso a avaliadores em PR
-            <input type="checkbox" formControlName="githubPrAvisarAvaliadores" />
-          </label>
-          <label class="config-toggle text-sm text-[var(--color-text)]">
-            Habilitar aviso a avaliadores em Issue
-            <input type="checkbox" formControlName="githubIssueAvisarAvaliadores" />
-          </label>
-          <app-form-field
-            label="Logins GitHub dos avaliadores"
-            helper="Usados quando uma coluna tiver PR ou Issue ativos no fluxograma"
-            [error]="campoErro('dsGithubPrLoginsAvaliadores')"
-          >
-            <input formControlName="dsGithubPrLoginsAvaliadores" class="form-input-admin" placeholder="reviewer1, tech-lead" />
-          </app-form-field>
-          @if (sugestoesLoginsPr) {
-            <ng-container *ngTemplateOutlet="sugestoesLoginsPr; context: { campo: 'dsGithubPrLoginsAvaliadores' }" />
-          }
-        </div>
       </div>
 
       <div class="border border-[var(--color-border)] rounded-2xl p-5 md:p-6 space-y-6">
@@ -142,6 +130,15 @@ import { GithubStatusDisparoGatilhosComponent } from './github-status-disparo-ga
 export class GithubRegrasEventosGeraisComponent {
   @Input({ required: true }) form!: FormGroup;
   @Input({ required: true }) campoErro!: (campo: string) => string | null;
-  @Input() sugestoesLoginsExtras: TemplateRef<unknown> | null = null;
-  @Input() sugestoesLoginsPr: TemplateRef<unknown> | null = null;
+  @Input() loginsGithubSugeridos: GithubLoginSugerido[] = [];
+  @Input() carregandoLoginsGithub = false;
+
+  atualizarDestinatariosExtras(extras: string | null): void {
+    const control = this.form.get('dsGithubDestinatariosExtras');
+    if (!control) {
+      return;
+    }
+    control.setValue(extras ?? '');
+    control.markAsDirty();
+  }
 }

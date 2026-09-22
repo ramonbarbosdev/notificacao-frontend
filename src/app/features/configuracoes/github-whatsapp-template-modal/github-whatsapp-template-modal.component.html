@@ -116,9 +116,9 @@
               class="form-input-admin text-sm max-w-xs ml-auto"
               [ngModel]="cenarioId()"
               (ngModelChange)="onCenarioChange($event)"
-              [disabled]="!integracao()?.cenariosPreview?.length"
+              [disabled]="!cenariosEditor().length"
             >
-              @for (c of integracao()?.cenariosPreview ?? []; track c.id) {
+              @for (c of cenariosEditor(); track c.id) {
                 <option [value]="c.id">
                   {{ c.label }}{{ cenarioTemTemplateSalvo(c.id) ? ' ✓' : '' }}
                 </option>

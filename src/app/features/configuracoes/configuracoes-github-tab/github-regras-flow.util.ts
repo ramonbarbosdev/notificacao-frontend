@@ -5,7 +5,7 @@ import {
   colunaAtiva,
 } from './github-regras-por-status.util';
 
-export type GithubRegrasColunaResumo = 'silenciosa' | 'geral' | 'pr' | 'issue' | 'misto';
+export type GithubRegrasColunaResumo = 'silenciosa' | 'ativa';
 
 export interface GithubRegrasValidacao {
   ok: boolean;
@@ -16,32 +16,15 @@ export function resumoColuna(regra: GithubRegraColuna | null): GithubRegrasColun
   if (!regra || !colunaAtiva(regra)) {
     return 'silenciosa';
   }
-  const { fluxoGeral, prAvaliadores, issueAvaliadores } = regra.aoEntrar;
-  const count = [fluxoGeral, prAvaliadores, issueAvaliadores].filter(Boolean).length;
-  if (count > 1) {
-    return 'misto';
-  }
-  if (fluxoGeral) {
-    return 'geral';
-  }
-  if (prAvaliadores) {
-    return 'pr';
-  }
-  return 'issue';
+  return 'ativa';
 }
 
 export function labelResumoColuna(resumo: GithubRegrasColunaResumo): string {
   switch (resumo) {
     case 'silenciosa':
       return 'Silenciosa';
-    case 'geral':
-      return 'Geral';
-    case 'pr':
-      return 'PR';
-    case 'issue':
-      return 'Issue';
-    case 'misto':
-      return 'Misto';
+    case 'ativa':
+      return 'Ativa';
   }
 }
 
@@ -79,7 +62,7 @@ export function labelMensagem(regra: GithubRegraColuna, cenarios: Map<string, st
 export function validarDocumentoRegras(doc: GithubRegrasPorStatusDocumento): GithubRegrasValidacao {
   const colunasInvalidas: { optionId: string; nome: string }[] = [];
   for (const [optionId, coluna] of Object.entries(doc.colunas)) {
-    if (!coluna?.aoEntrar.fluxoGeral) {
+    if (!coluna || !colunaAtiva(coluna)) {
       continue;
     }
     if (coluna.mensagem.usarTemplatePadrao) {

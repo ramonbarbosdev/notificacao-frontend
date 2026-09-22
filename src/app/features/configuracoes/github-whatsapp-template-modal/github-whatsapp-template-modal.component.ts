@@ -5,6 +5,7 @@ import {
   ElementRef,
   HostListener,
   OnDestroy,
+  computed,
   effect,
   inject,
   input,
@@ -31,6 +32,10 @@ import {
   GithubWebhookTemplateVariavel,
 } from '../../../shared/types/dtos';
 import { extrairMensagemErroHttp } from '../../../shared/labels/notificacao.labels';
+import {
+  CENARIO_TEMPLATE_PR_AVALIADORES_LEGADO,
+  cenariosTemplateEditor,
+} from '../configuracoes-github-tab/github-regras-por-status.util';
 
 export interface GithubWhatsappTemplateAplicado {
   assunto: string;
@@ -86,13 +91,19 @@ export class GithubWhatsappTemplateModalComponent implements OnDestroy {
   private readonly subscriptions = new Subscription();
   private abertoAnterior = false;
 
+  readonly cenariosEditor = computed(() =>
+    cenariosTemplateEditor(this.integracao()?.cenariosPreview ?? []),
+  );
+
   constructor() {
     effect(() => {
       const aberto = this.aberto();
       if (aberto && !this.abertoAnterior) {
         this.templatesPorCenario.set({ ...this.templatesPorCenarioInicial() });
-        const lista = this.integracao()?.cenariosPreview ?? [];
-        const preferido = this.cenarioIdInicialAoAbrir()?.trim();
+        const lista = this.cenariosEditor();
+        const preferidoRaw = this.cenarioIdInicialAoAbrir()?.trim();
+        const preferido =
+          preferidoRaw === CENARIO_TEMPLATE_PR_AVALIADORES_LEGADO ? 'projects_v2_edited' : preferidoRaw;
         const cen =
           preferido && lista.some((c) => c.id === preferido)
             ? preferido

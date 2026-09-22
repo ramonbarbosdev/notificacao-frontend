@@ -659,6 +659,8 @@
             [conexaoOk]="githubConexaoPronta()"
             [kanbanOk]="githubKanbanPronto()"
             [cenariosPreview]="githubIntegracao()?.cenariosPreview ?? []"
+            [loginsGithubSugeridos]="loginsGithubSugeridos()"
+            [carregandoLoginsGithub]="carregandoResponsaveis()"
             (irParaSecao)="selecionarSubAba($event)"
             (editarMensagem)="editarMensagemDoFluxo($event)"
           />
@@ -666,8 +668,8 @@
           <app-github-regras-eventos-gerais
             [form]="form"
             [campoErro]="campoErroFormulario.bind(this)"
-            [sugestoesLoginsExtras]="sugestoesLoginsGithub"
-            [sugestoesLoginsPr]="sugestoesLoginsGithub"
+            [loginsGithubSugeridos]="loginsGithubSugeridos()"
+            [carregandoLoginsGithub]="carregandoResponsaveis()"
           />
         }
       </div>
@@ -710,39 +712,6 @@
     }
   }
 </section>
-
-<ng-template #sugestoesLoginsGithub let-campo="campo">
-  <div class="space-y-3 pt-1">
-    @if (carregandoResponsaveis() && loginsGithubSugeridos().length === 0) {
-      <p class="text-xs text-[var(--color-text-muted)]">Carregando logins salvos na organização…</p>
-    } @else if (loginsGithubSugeridos().length > 0) {
-      <p class="text-xs text-[var(--color-text-muted)]">
-        Responsáveis GitHub salvos no banco — clique para adicionar à lista:
-      </p>
-      <div class="flex flex-wrap gap-2.5">
-        @for (item of loginsGithubSugeridos(); track item.login) {
-          <button
-            type="button"
-            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[var(--color-border)] text-xs font-mono text-[var(--color-text)] hover:bg-[var(--color-surface-muted)] transition-colors disabled:opacity-45 disabled:cursor-not-allowed"
-            [disabled]="loginJaNoCampo(campo, item.login)"
-            (click)="adicionarLoginSugerido(campo, item.login)"
-          >
-            {{ '@' + item.login }}
-            @if (item.habilitado) {
-              <span class="text-[10px] font-sans font-medium text-[var(--color-success)]">WhatsApp ok</span>
-            } @else {
-              <span class="text-[10px] font-sans text-[var(--color-text-muted)]">sem opt-in</span>
-            }
-          </button>
-        }
-      </div>
-    } @else {
-      <p class="text-xs text-[var(--color-text-muted)]">
-        Nenhum login GitHub salvo ainda. Use a aba Equipe / Habilitados para vincular.
-      </p>
-    }
-  </div>
-</ng-template>
 
 <app-github-whatsapp-template-modal
   [aberto]="modalTemplateGithubAberto()"

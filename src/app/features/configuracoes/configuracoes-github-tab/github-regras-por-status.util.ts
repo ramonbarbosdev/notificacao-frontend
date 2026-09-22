@@ -63,15 +63,33 @@ export function colunaVazia(nome: string): GithubRegraColuna {
   };
 }
 
+function normalizarAoEntrar(ao: GithubRegraColunaAoEntrar): GithubRegraColunaAoEntrar {
+  if (ao.prAvaliadores || ao.issueAvaliadores) {
+    return { fluxoGeral: true, prAvaliadores: false, issueAvaliadores: false };
+  }
+  return ao;
+}
+
+function normalizarColuna(coluna: GithubRegraColuna): GithubRegraColuna {
+  return {
+    ...coluna,
+    aoEntrar: normalizarAoEntrar(coluna.aoEntrar ?? colunaVazia(coluna.nome).aoEntrar),
+  };
+}
+
 export function parseRegrasPorStatus(raw: string | null | undefined): GithubRegrasPorStatusDocumento {
   if (!raw?.trim()) {
     return { versao: VERSAO_REGRAS_POR_STATUS, colunas: {} };
   }
   try {
     const parsed = JSON.parse(raw) as GithubRegrasPorStatusDocumento;
+    const colunas: Record<string, GithubRegraColuna> = {};
+    for (const [id, col] of Object.entries(parsed.colunas ?? {})) {
+      colunas[id] = normalizarColuna(col);
+    }
     return {
       versao: parsed.versao ?? VERSAO_REGRAS_POR_STATUS,
-      colunas: parsed.colunas ?? {},
+      colunas,
     };
   } catch {
     return { versao: VERSAO_REGRAS_POR_STATUS, colunas: {} };
@@ -110,11 +128,14 @@ export function derivarRegrasDoFormLegacy(
     const nome = opcao.name;
     doc.colunas[opcao.optionId] = {
       nome,
-      aoEntrar: {
-        fluxoGeral: listaContemNome(v.dsGithubStatusDisparo ?? '', nome),
-        prAvaliadores: listaContemNome(v.dsGithubPrStatusDisparo ?? '', nome),
-        issueAvaliadores: listaContemNome(v.dsGithubIssueStatusDisparo ?? '', nome),
-      },
+      aoEntrar: normalizarAoEntrar({
+        fluxoGeral:
+          listaContemNome(v.dsGithubStatusDisparo ?? '', nome) ||
+          listaContemNome(v.dsGithubPrStatusDisparo ?? '', nome) ||
+          listaContemNome(v.dsGithubIssueStatusDisparo ?? '', nome),
+        prAvaliadores: false,
+        issueAvaliadores: false,
+      }),
       destinatarios: { modo: 'INHERIT', extras: null },
       mensagem: {
       usarTemplatePadrao: true,
@@ -145,7 +166,15 @@ export function mesclarOpcoesKanban(
 }
 
 export function colunaAtiva(coluna: GithubRegraColuna): boolean {
-  return coluna.aoEntrar.fluxoGeral || coluna.aoEntrar.prAvaliadores || coluna.aoEntrar.issueAvaliadores;
+  return coluna.aoEntrar.fluxoGeral;
+}
+
+export const CENARIO_TEMPLATE_PR_AVALIADORES_LEGADO = 'projects_v2_pr_status';
+
+export function cenariosTemplateEditor(
+  cenarios: { id: string; label: string }[],
+): { id: string; label: string }[] {
+  return cenarios.filter((c) => c.id !== CENARIO_TEMPLATE_PR_AVALIADORES_LEGADO);
 }
 
 export function persistirRegrasNoForm(form: FormGroup, doc: GithubRegrasPorStatusDocumento): void {

@@ -1,337 +1,597 @@
 <div class="space-y-6">
+
   <nav class="flex flex-wrap items-center gap-3 text-sm">
+
     <button
+
       type="button"
+
       class="inline-flex items-center gap-2 px-3 py-2 rounded-xl border transition-colors"
+
       [class.border-[var(--color-primary)]]="conexaoOk"
+
       [class.bg-[var(--color-primary)]/10]="conexaoOk"
+
       (click)="irParaSecao.emit('conexao')"
+
     >
+
       <lucide-icon [img]="linkIcon" class="w-4 h-4" />
+
       Conexão
+
       @if (conexaoOk) {
+
         <lucide-icon [img]="checkIcon" class="w-3.5 h-3.5 text-[var(--color-success)]" />
+
       }
+
     </button>
+
     <span class="text-[var(--color-text-muted)]">→</span>
+
     <button
+
       type="button"
+
       class="inline-flex items-center gap-2 px-3 py-2 rounded-xl border transition-colors"
+
       [class.border-[var(--color-primary)]]="kanbanOk"
+
       [class.bg-[var(--color-primary)]/10]="kanbanOk"
+
       (click)="irParaSecao.emit('kanban')"
+
     >
+
       <lucide-icon [img]="gridIcon" class="w-4 h-4" />
+
       Kanban
+
       @if (kanbanOk) {
+
         <lucide-icon [img]="checkIcon" class="w-3.5 h-3.5 text-[var(--color-success)]" />
+
       }
+
     </button>
+
   </nav>
 
+
+
   @if (!kanbanOk) {
+
     <div class="rounded-2xl border border-dashed border-[var(--color-border)] p-8 text-center space-y-3">
+
       <p class="text-sm text-[var(--color-text-muted)]">Vincule um Project v2 na aba Kanban para montar o fluxograma.</p>
+
       <button
+
         type="button"
+
         class="px-4 py-2 rounded-xl bg-[var(--color-primary)] text-[var(--color-bg-base)] text-sm font-medium"
+
         (click)="irParaSecao.emit('kanban')"
+
       >
+
         Ir para Kanban
+
       </button>
+
     </div>
+
   } @else {
+
     <div class="flex flex-col lg:flex-row gap-6 min-h-[420px]">
+
       <aside class="lg:w-56 shrink-0 space-y-3">
+
         <input
+
           class="form-input-admin text-sm w-full"
+
           placeholder="Buscar coluna…"
+
           [value]="buscaColuna()"
+
           (input)="buscaColuna.set($any($event.target).value)"
+
         />
+
         <label class="flex items-center gap-2 text-xs text-[var(--color-text-muted)]">
+
           <input type="checkbox" [checked]="somenteAtivas()" (change)="somenteAtivas.set($any($event.target).checked)" />
+
           Só colunas ativas
+
         </label>
+
         <ul class="space-y-1 max-h-[480px] overflow-y-auto pr-1">
+
           @for (opcao of opcoesFiltradas(); track opcao.optionId) {
+
             <li>
+
               <button
+
                 type="button"
+
                 class="w-full text-left px-3 py-2.5 rounded-xl border text-sm transition-colors flex items-center gap-2"
+
                 [class.border-[var(--color-primary)]]="colunaSelecionadaId() === opcao.optionId"
+
                 [class.bg-[var(--color-primary)]/10]="colunaSelecionadaId() === opcao.optionId"
+
                 [class.border-[var(--color-border)]]="colunaSelecionadaId() !== opcao.optionId"
+
                 (click)="selecionarColuna(opcao.optionId)"
+
               >
+
                 <span class="w-2.5 h-2.5 rounded-full shrink-0" [style.background-color]="corStatus(opcao.color)"></span>
+
                 <span class="flex-1 min-w-0 truncate">{{ opcao.name }}</span>
+
                 <span class="text-[10px] text-[var(--color-text-muted)]">{{ resumo(opcao.optionId) }}</span>
+
               </button>
+
             </li>
+
           }
+
         </ul>
+
       </aside>
 
+
+
       @if (colunaSelecionadaId(); as optionId) {
+
         @if (regraSelecionada(); as col) {
+
           @if (opcaoSelecionada(); as opcao) {
+
             <div class="flex-1 min-w-0 space-y-6">
+
               <div>
+
                 <h3 class="text-base font-semibold text-[var(--color-text)]">Fluxo — {{ opcao.name }}</h3>
+
                 <p class="text-sm text-[var(--color-text-muted)] mt-1">
-                  Leia da esquerda para a direita. Clique em um nó para editar.
+
+                  Ao entrar nesta coluna, escolha quem recebe a notificação e qual mensagem usar.
+
                 </p>
+
               </div>
+
+
 
               <div class="overflow-x-auto pb-2">
+
                 <div class="flex items-stretch gap-2 min-w-max">
+
                   <div
+
                     class="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-base)]/50 px-4 py-3 min-w-[9rem] max-w-[14rem]"
+
                   >
+
                     <span class="block text-[10px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)] mb-1"
+
                       >Gatilho</span
+
                     >
+
                     <span class="block text-sm text-[var(--color-text)] leading-snug">Card entrou na coluna Status</span>
+
                   </div>
+
                   <lucide-icon [img]="arrowIcon" class="w-5 h-5 text-[var(--color-text-muted)] self-center shrink-0" />
+
                   <div
+
                     class="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3 min-w-[9rem] max-w-[14rem]"
+
                   >
+
                     <span class="block text-[10px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)] mb-1"
+
                       >Coluna</span
+
                     >
+
                     <span class="block text-sm text-[var(--color-text)] leading-snug flex items-center gap-2">
+
                       <span class="w-2.5 h-2.5 rounded-full" [style.background-color]="corStatus(opcao.color)"></span>
+
                       {{ opcao.name }}
+
                     </span>
+
                   </div>
+
                   <lucide-icon [img]="arrowIcon" class="w-5 h-5 text-[var(--color-text-muted)] self-center shrink-0" />
+
                   <button
+
                     type="button"
+
                     class="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3 min-w-[9rem] max-w-[14rem] text-left transition-colors hover:border-[var(--color-primary)]/40"
+
                     [class.border-[var(--color-primary)]]="noEdicao() === 'tipos'"
+
                     [class.ring-1]="noEdicao() === 'tipos'"
+
                     [class.ring-[var(--color-primary)]/30]="noEdicao() === 'tipos'"
+
                     (click)="abrirNo('tipos')"
+
                   >
+
                     <span class="block text-[10px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)] mb-1"
-                      >Tipos ativos</span
+
+                      >Notificação</span
+
                     >
+
                     <span class="block text-xs text-[var(--color-text)] leading-snug">
-                      @if (col.aoEntrar.fluxoGeral) { Geral }
-                      @if (col.aoEntrar.prAvaliadores) { · PR }
-                      @if (col.aoEntrar.issueAvaliadores) { · Issue }
-                      @if (!col.aoEntrar.fluxoGeral && !col.aoEntrar.prAvaliadores && !col.aoEntrar.issueAvaliadores) {
+
+                      @if (col.aoEntrar.fluxoGeral) {
+
+                        Ativa
+
+                      } @else {
+
                         Silenciosa
+
                       }
+
                     </span>
+
                   </button>
+
                 </div>
+
               </div>
 
+
+
               @if (noEdicao() === 'tipos') {
+
                 <div class="rounded-xl border border-[var(--color-border)] p-4 space-y-3 bg-[var(--color-surface-muted)]/30">
-                  <p class="text-xs font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">Editar tipos</p>
+
                   <label class="config-toggle text-sm">
-                    Fluxo geral (assignees / padrão da org)
+
+                    Notificar ao entrar nesta coluna
+
                     <input
+
                       type="checkbox"
+
                       [checked]="col.aoEntrar.fluxoGeral"
-                      (change)="toggleAoEntrar(optionId, 'fluxoGeral', $any($event.target).checked)"
+
+                      (change)="toggleNotificarAoEntrar(optionId, $any($event.target).checked)"
+
                     />
+
                   </label>
-                  <label class="config-toggle text-sm">
-                    PR — avaliadores
-                    <input
-                      type="checkbox"
-                      [checked]="col.aoEntrar.prAvaliadores"
-                      (change)="toggleAoEntrar(optionId, 'prAvaliadores', $any($event.target).checked)"
-                    />
-                  </label>
-                  <label class="config-toggle text-sm">
-                    Issue — avaliadores
-                    <input
-                      type="checkbox"
-                      [checked]="col.aoEntrar.issueAvaliadores"
-                      (change)="toggleAoEntrar(optionId, 'issueAvaliadores', $any($event.target).checked)"
-                    />
-                  </label>
+
                 </div>
+
               }
 
-              @if (col.aoEntrar.fluxoGeral || col.aoEntrar.prAvaliadores || col.aoEntrar.issueAvaliadores) {
+
+
+              @if (col.aoEntrar.fluxoGeral) {
+
                 <div class="overflow-x-auto pb-2">
+
                   <div class="flex flex-wrap items-stretch gap-2">
-                    @if (col.aoEntrar.fluxoGeral) {
-                      <div class="flex items-center gap-2">
-                        <button
-                          type="button"
-                          class="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3 min-w-[9rem] max-w-[14rem] text-left transition-colors hover:border-[var(--color-primary)]/40"
-                          [class.border-[var(--color-primary)]]="noEdicao() === 'destinatarios'"
-                          (click)="abrirNo('destinatarios')"
-                        >
-                          <span class="block text-[10px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)] mb-1"
-                            >Destinatários (Geral)</span
-                          >
-                          <span class="block text-sm text-[var(--color-text)]">{{ destinatariosLabel(col) }}</span>
-                        </button>
-                        <lucide-icon [img]="arrowIcon" class="w-5 h-5 text-[var(--color-text-muted)] shrink-0" />
-                        <button
-                          type="button"
-                          class="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3 min-w-[9rem] max-w-[14rem] text-left transition-colors hover:border-[var(--color-primary)]/40"
-                          [class.border-[var(--color-primary)]]="noEdicao() === 'mensagem'"
-                          (click)="abrirNo('mensagem')"
-                        >
-                          <span class="block text-[10px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)] mb-1"
-                            >Mensagem</span
-                          >
-                          <span class="block text-sm text-[var(--color-text)]">{{ mensagemLabel(col) }}</span>
-                        </button>
-                      </div>
-                    }
-                    @if (col.aoEntrar.prAvaliadores) {
-                      <div
-                        class="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-base)]/50 px-4 py-3 min-w-[10rem]"
+
+                    <div class="flex items-center gap-2">
+
+                      <button
+
+                        type="button"
+
+                        class="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3 min-w-[9rem] max-w-[14rem] text-left transition-colors hover:border-[var(--color-primary)]/40"
+
+                        [class.border-[var(--color-primary)]]="noEdicao() === 'destinatarios'"
+
+                        (click)="abrirNo('destinatarios')"
+
                       >
+
                         <span class="block text-[10px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)] mb-1"
-                          >PR → avaliadores</span
+
+                          >Destinatários</span
+
                         >
-                        <span class="block text-xs text-[var(--color-text)]">Logins em Eventos gerais</span>
-                      </div>
-                    }
-                    @if (col.aoEntrar.issueAvaliadores) {
-                      <div
-                        class="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-base)]/50 px-4 py-3 min-w-[10rem]"
+
+                        <span class="block text-sm text-[var(--color-text)]">{{ destinatariosLabel(col) }}</span>
+
+                      </button>
+
+                      <lucide-icon [img]="arrowIcon" class="w-5 h-5 text-[var(--color-text-muted)] shrink-0" />
+
+                      <button
+
+                        type="button"
+
+                        class="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3 min-w-[9rem] max-w-[14rem] text-left transition-colors hover:border-[var(--color-primary)]/40"
+
+                        [class.border-[var(--color-primary)]]="noEdicao() === 'mensagem'"
+
+                        (click)="abrirNo('mensagem')"
+
                       >
+
                         <span class="block text-[10px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)] mb-1"
-                          >Issue → avaliadores</span
+
+                          >Mensagem</span
+
                         >
-                        <span class="block text-xs text-[var(--color-text)]">Mesmos logins do PR</span>
-                      </div>
-                    }
+
+                        <span class="block text-sm text-[var(--color-text)]">{{ mensagemLabel(col) }}</span>
+
+                      </button>
+
+                    </div>
+
                   </div>
+
                 </div>
+
               }
+
+
 
               @if (noEdicao() === 'destinatarios' && col.aoEntrar.fluxoGeral) {
+
                 <div class="rounded-xl border border-[var(--color-border)] p-4 space-y-3">
+
                   <p class="text-xs text-[var(--color-text-muted)]">
-                    Modo <strong>Herdar</strong> usa o padrão da aba Eventos gerais.
+
+                    <strong>Herdar padrão</strong> usa os destinatários da aba Eventos gerais. Nos demais modos, esta coluna
+
+                    define quem recebe.
+
                   </p>
+
                   <select
+
                     class="form-input-admin text-sm w-full max-w-md"
+
                     [value]="col.destinatarios.modo"
+
                     (change)="alterarDestinatariosModo(optionId, $any($event.target).value)"
+
                   >
+
                     <option value="INHERIT">Herdar padrão da organização</option>
+
                     <option value="RESPONSAVEIS">Responsáveis (assignees)</option>
+
                     <option value="RESPONSAVEIS_E_MOVIMENTADOR">Responsáveis + quem moveu</option>
+
                     <option value="LOGINS_CONFIGURADOS">Logins configurados</option>
+
                   </select>
+
                   @if (col.destinatarios.modo === 'LOGINS_CONFIGURADOS') {
-                    <input
-                      class="form-input-admin text-sm max-w-md"
-                      placeholder="login1, login2"
-                      [value]="col.destinatarios.extras ?? ''"
-                      (input)="alterarDestinatariosExtras(optionId, $any($event.target).value)"
+
+                    <app-github-logins-configurados-picker
+
+                      [extras]="col.destinatarios.extras"
+
+                      [loginsSugeridos]="loginsGithubSugeridos"
+
+                      [carregando]="carregandoLoginsGithub"
+
+                      (extrasChange)="alterarDestinatariosExtras(optionId, $event)"
+
                     />
+
                   }
+
                 </div>
+
               }
 
+
+
               @if (noEdicao() === 'mensagem' && col.aoEntrar.fluxoGeral) {
+
                 <div class="rounded-xl border border-[var(--color-border)] p-4 space-y-3">
+
                   <p class="text-sm font-medium text-[var(--color-text)] m-0">Origem do texto</p>
+
                   <div class="flex flex-col gap-2 text-sm">
+
                     <label class="flex items-center gap-2">
+
                       <input
+
                         type="radio"
+
                         name="modo-mensagem-{{ optionId }}"
+
                         [checked]="modoMensagem(col) === 'padrao'"
+
                         (change)="alterarModoMensagem(optionId, 'padrao')"
+
                       />
+
                       Template padrão (global)
+
                     </label>
+
                     <label class="flex items-center gap-2">
+
                       <input
+
                         type="radio"
+
                         name="modo-mensagem-{{ optionId }}"
+
                         [checked]="modoMensagem(col) === 'cenario'"
+
                         (change)="alterarModoMensagem(optionId, 'cenario')"
+
                       />
+
                       Tipo de evento (compartilhado entre colunas)
+
                     </label>
+
                     <label class="flex items-center gap-2">
+
                       <input
+
                         type="radio"
+
                         name="modo-mensagem-{{ optionId }}"
+
                         [checked]="modoMensagem(col) === 'coluna'"
+
                         (change)="alterarModoMensagem(optionId, 'coluna')"
+
                       />
+
                       Texto só desta coluna
+
                     </label>
+
                   </div>
+
                   @if (modoMensagem(col) === 'cenario') {
+
                     <select
+
                       class="form-input-admin text-sm w-full max-w-md"
+
                       [value]="col.mensagem.cenarioId ?? ''"
+
                       (change)="alterarMensagemCenario(optionId, $any($event.target).value)"
+
                     >
+
                       <option value="">Selecione um cenário</option>
-                      @for (c of cenariosPreview; track c.id) {
+
+                      @for (c of cenariosEditor(); track c.id) {
+
                         <option [value]="c.id">{{ c.label }}</option>
+
                       }
+
                     </select>
+
                   }
+
                   @if (modoMensagem(col) === 'coluna') {
+
                     <p class="text-xs text-[var(--color-text-muted)] m-0">
+
                       Use variáveis como <code class="text-[11px]">{{'{{titulo}}'}}</code>,
+
                       <code class="text-[11px]">{{'{{status}}'}}</code>,
+
                       <code class="text-[11px]">{{'{{url}}'}}</code>. Só dispara ao entrar nesta coluna.
+
                     </p>
+
                     <input
+
                       class="form-input-admin text-sm w-full max-w-md font-mono"
+
                       placeholder="Assunto (opcional)"
+
                       [value]="col.mensagem.assuntoColuna ?? ''"
+
                       (input)="alterarMensagemColunaAssunto(optionId, $any($event.target).value)"
+
                     />
+
                     <textarea
+
                       rows="6"
+
                       class="form-input-admin text-xs w-full font-mono"
+
                       placeholder="Mensagem WhatsApp desta coluna"
+
                       [value]="col.mensagem.mensagemColuna ?? ''"
+
                       (input)="alterarMensagemColunaCorpo(optionId, $any($event.target).value)"
+
                     ></textarea>
+
                   }
+
                   @if (modoMensagem(col) !== 'coluna') {
+
                     <p class="text-xs text-[var(--color-text-muted)] m-0">
+
                       @if (modoMensagem(col) === 'padrao') {
+
                         O texto vem do template global da organização (aba Mensagem).
+
                       } @else {
+
                         O texto é o template salvo para o tipo de evento; o mesmo cenário em outra coluna usa o mesmo texto.
+
                       }
+
                     </p>
+
                     <button
+
                       type="button"
+
                       class="px-3 py-2 rounded-xl border border-[var(--color-border)] text-sm flex items-center gap-2 text-[var(--color-text)] hover:bg-[var(--color-surface-muted)] disabled:opacity-45 disabled:cursor-not-allowed"
+
                       [disabled]="!podeEditarTextoMensagem(col)"
+
                       (click)="solicitarEditarTextoMensagem(col)"
+
                     >
+
                       <lucide-icon [img]="editIcon" class="w-4 h-4" />
+
                       @if (modoMensagem(col) === 'padrao') {
+
                         Editar template padrão
+
                       } @else {
+
                         Editar texto do cenário
+
                       }
+
                     </button>
+
                   }
+
                 </div>
+
               }
+
             </div>
+
           }
+
         }
+
       }
+
     </div>
+
   }
+
 </div>
+
+
