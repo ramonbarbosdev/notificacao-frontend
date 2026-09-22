@@ -64,7 +64,23 @@ export const GITHUB_GATILHOS_FILTRO_STATUS_GERAL: GithubGatilhoFiltroOpcao[] = [
   },
 ];
 
-const PADRAO_GATILHOS = 'STATUS_ALTERADO,REORDENADO';
+export const PADRAO_GATILHOS_FILTRO_STATUS_GERAL = 'STATUS_ALTERADO,REORDENADO';
+
+const PADRAO_GATILHOS = PADRAO_GATILHOS_FILTRO_STATUS_GERAL;
+
+/** Gatilhos globais que podem usar filtro por coluna (Eventos gerais). */
+export function parseGatilhosComFiltroStatusGeral(raw: unknown): Set<string> {
+  const texto = String(raw ?? '').trim();
+  const fonte = texto || PADRAO_GATILHOS;
+  const set = new Set<string>();
+  for (const parte of fonte.split(/[,;]+/)) {
+    const t = parte.trim();
+    if (t) {
+      set.add(t);
+    }
+  }
+  return set;
+}
 
 @Component({
   selector: 'app-github-status-disparo-gatilhos',
@@ -75,9 +91,9 @@ const PADRAO_GATILHOS = 'STATUS_ALTERADO,REORDENADO';
       <div>
         <p class="text-sm font-medium text-[var(--color-text)]">Gatilhos que respeitam o fluxograma de colunas</p>
         <p class="text-xs text-[var(--color-text-muted)] leading-relaxed mt-1">
-          Para os gatilhos marcados abaixo, o fluxo geral só dispara se a coluna de destino tiver
-          <strong>Geral</strong> ativo no fluxograma (aba Fluxos). Os demais disparam sem essa checagem (ex.:
-          responsável alterado).
+          Para os gatilhos marcados aqui, a API só envia WhatsApp se a <strong>coluna de destino</strong> estiver com
+          “Notificar ao entrar” na aba <strong>Fluxos por coluna</strong> (ou no padrão herdado). Gatilhos não marcados
+          ignoram o fluxograma (ex.: responsável alterado, se você não marcar o filtro).
         </p>
       </div>
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">

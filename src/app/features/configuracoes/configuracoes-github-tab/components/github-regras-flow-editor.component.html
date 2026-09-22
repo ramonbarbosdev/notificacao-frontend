@@ -162,7 +162,11 @@
 
                 <p class="text-sm text-[var(--color-text-muted)] mt-1">
 
-                  Ao entrar nesta coluna, escolha quem recebe a notificação e qual mensagem usar.
+                  Cada coluna do kanban tem regras independentes. Só dispara WhatsApp ao entrar aqui se
+
+                  <strong>Notificar</strong> estiver ligado. Use <strong>Personalizar</strong> para destinatários e mensagem
+
+                  diferentes das outras colunas.
 
                 </p>
 
@@ -260,107 +264,119 @@
 
 
 
-              @if (noEdicao() === 'tipos') {
+              <div class="rounded-xl border border-[var(--color-border)] p-4 md:p-5 space-y-4 bg-[var(--color-surface-muted)]/20">
 
-                <div class="rounded-xl border border-[var(--color-border)] p-4 space-y-3 bg-[var(--color-surface-muted)]/30">
+                <h4 class="text-sm font-semibold text-[var(--color-text)] mb-2">Regras desta coluna</h4>
 
-                  <label class="config-toggle text-sm">
+                <label class="config-toggle text-sm">
 
-                    Notificar ao entrar nesta coluna
+                  Notificar ao entrar nesta coluna
 
-                    <input
+                  <input
 
-                      type="checkbox"
+                    type="checkbox"
 
-                      [checked]="col.aoEntrar.fluxoGeral"
+                    [checked]="col.aoEntrar.fluxoGeral"
 
-                      (change)="toggleNotificarAoEntrar(optionId, $any($event.target).checked)"
+                    (change)="toggleNotificarAoEntrar(optionId, $any($event.target).checked)"
 
-                    />
+                  />
 
-                  </label>
+                </label>
 
-                </div>
+                @if (!col.aoEntrar.fluxoGeral) {
 
-              }
+                  <p class="text-xs text-[var(--color-text-muted)] m-0">Coluna silenciosa — nenhum WhatsApp ao mover o card para aqui.</p>
 
+                } @else {
 
+                  <div class="space-y-2 pt-1">
 
-              @if (col.aoEntrar.fluxoGeral) {
+                    <p class="text-xs font-medium text-[var(--color-text)] mb-2">Eventos nesta coluna</p>
 
-                <div class="overflow-x-auto pb-2">
+                    <p class="text-[11px] text-[var(--color-text-muted)] leading-relaxed mb-2">
 
-                  <div class="flex flex-wrap items-stretch gap-2">
+                      Marque quais gatilhos (já ligados em
 
-                    <div class="flex items-center gap-2">
+                      <button type="button" class="text-[var(--color-primary)] underline" (click)="abrirEventosGerais.emit()">
 
-                      <button
-
-                        type="button"
-
-                        class="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3 min-w-[9rem] max-w-[14rem] text-left transition-colors hover:border-[var(--color-primary)]/40"
-
-                        [class.border-[var(--color-primary)]]="noEdicao() === 'destinatarios'"
-
-                        (click)="abrirNo('destinatarios')"
-
-                      >
-
-                        <span class="block text-[10px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)] mb-1"
-
-                          >Destinatários</span
-
-                        >
-
-                        <span class="block text-sm text-[var(--color-text)]">{{ destinatariosLabel(col) }}</span>
+                        Eventos gerais
 
                       </button>
 
-                      <lucide-icon [img]="arrowIcon" class="w-5 h-5 text-[var(--color-text-muted)] shrink-0" />
+                      ) disparam WhatsApp quando o card está nesta coluna.
 
-                      <button
+                    </p>
 
-                        type="button"
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
 
-                        class="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3 min-w-[9rem] max-w-[14rem] text-left transition-colors hover:border-[var(--color-primary)]/40"
+                      @for (op of gatilhosColunaOpcoes; track op.codigo) {
 
-                        [class.border-[var(--color-primary)]]="noEdicao() === 'mensagem'"
+                        <label
 
-                        (click)="abrirNo('mensagem')"
+                          class="flex items-start gap-2 rounded-lg border border-[var(--color-border)] px-2.5 py-2 text-left"
 
-                      >
-
-                        <span class="block text-[10px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)] mb-1"
-
-                          >Mensagem</span
+                          [class.opacity-45]="!gatilhoConfiguravelNaColuna(op)"
 
                         >
 
-                        <span class="block text-sm text-[var(--color-text)]">{{ mensagemLabel(col) }}</span>
+                          <input
 
-                      </button>
+                            type="checkbox"
+
+                            class="mt-0.5 shrink-0"
+
+                            [checked]="gatilhoColunaMarcado(col, op.codigo)"
+
+                            [disabled]="!gatilhoConfiguravelNaColuna(op)"
+
+                            (change)="alternarGatilhoColuna(optionId, $any(op.codigo), $any($event.target).checked)"
+
+                          />
+
+                          <span class="min-w-0">
+
+                            <span class="text-xs text-[var(--color-text)] block">{{ op.label }}</span>
+
+                            <span class="text-[10px] text-[var(--color-text-muted)] leading-snug block">{{ op.hint }}</span>
+
+                          </span>
+
+                        </label>
+
+                      }
 
                     </div>
 
                   </div>
 
-                </div>
+                }
 
-              }
+              </div>
 
 
 
-              @if (noEdicao() === 'destinatarios' && col.aoEntrar.fluxoGeral) {
+              @if (col.aoEntrar.fluxoGeral) {
 
-                <div class="rounded-xl border border-[var(--color-border)] p-4 space-y-3">
+                <div class="rounded-xl border border-[var(--color-border)] p-4 md:p-5 space-y-5">
 
-                  <p class="text-xs text-[var(--color-text-muted)]">
+                  <div class="space-y-2">
 
-                    <strong>Herdar padrão</strong> usa os destinatários da aba Eventos gerais. Nos demais modos, esta coluna
+                    <p class="text-sm font-medium text-[var(--color-text)] mb-2">Destinatários</p>
 
-                    define quem recebe.
+                    <p class="text-xs text-[var(--color-text-muted)] mb-2">
 
-                  </p>
+                      Escolha <strong>Mesmo que Eventos gerais</strong> para herdar o padrão da org, ou outro modo só para
+
+                      esta coluna.
+
+                      <button type="button" class="text-[var(--color-primary)] hover:underline ml-1" (click)="abrirEventosGerais.emit()">
+
+                        Ver Eventos gerais
+
+                      </button>
+
+                    </p>
 
                   <select
 
@@ -372,7 +388,7 @@
 
                   >
 
-                    <option value="INHERIT">Herdar padrão da organização</option>
+                    <option value="INHERIT">Mesmo que Eventos gerais (padrão)</option>
 
                     <option value="RESPONSAVEIS">Responsáveis (assignees)</option>
 
@@ -398,17 +414,13 @@
 
                   }
 
-                </div>
-
-              }
+                  </div>
 
 
 
-              @if (noEdicao() === 'mensagem' && col.aoEntrar.fluxoGeral) {
+                  <div class="space-y-3 pt-4 border-t border-[var(--color-border)]">
 
-                <div class="rounded-xl border border-[var(--color-border)] p-4 space-y-3">
-
-                  <p class="text-sm font-medium text-[var(--color-text)] m-0">Origem do texto</p>
+                  <p class="text-sm font-medium text-[var(--color-text)] mb-2">Mensagem</p>
 
                   <div class="flex flex-col gap-2 text-sm">
 
@@ -494,7 +506,7 @@
 
                   @if (modoMensagem(col) === 'coluna') {
 
-                    <p class="text-xs text-[var(--color-text-muted)] m-0">
+                    <p class="text-xs text-[var(--color-text-muted)] mb-2">
 
                       Use variáveis como <code class="text-[11px]">{{'{{titulo}}'}}</code>,
 
@@ -534,7 +546,7 @@
 
                   @if (modoMensagem(col) !== 'coluna') {
 
-                    <p class="text-xs text-[var(--color-text-muted)] m-0">
+                    <p class="text-xs text-[var(--color-text-muted)] mb-2">
 
                       @if (modoMensagem(col) === 'padrao') {
 
@@ -575,6 +587,8 @@
                     </button>
 
                   }
+
+                  </div>
 
                 </div>
 

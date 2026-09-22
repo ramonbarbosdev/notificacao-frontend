@@ -28,16 +28,24 @@ import {
   filtrarOpcoesColuna,
 } from '../github-regras-flow.util';
 import {
+  GithubGatilhoColunaCodigo,
   GithubRegraColuna,
   GithubRegraMensagemModo,
   GithubRegrasPorStatusDocumento,
+  GATILHOS_PADRAO_COLUNA,
   derivarRegrasDoFormLegacy,
+  gatilhosEfetivosColuna,
   mesclarOpcoesKanban,
   modoMensagemColuna,
   parseRegrasPorStatus,
   persistirRegrasNoForm,
   cenariosTemplateEditor,
 } from '../github-regras-por-status.util';
+import {
+  GITHUB_GATILHOS_FILTRO_STATUS_GERAL,
+  GithubGatilhoFiltroOpcao,
+  parseGatilhosComFiltroStatusGeral,
+} from './github-status-disparo-gatilhos.component';
 
 export type GithubFlowNoEdicao = 'tipos' | 'destinatarios' | 'mensagem' | null;
 
@@ -61,6 +69,7 @@ export class GithubRegrasFlowEditorComponent implements OnChanges {
   @Input() carregandoLoginsGithub = false;
 
   readonly irParaSecao = output<'conexao' | 'kanban' | 'mensagem'>();
+  readonly abrirEventosGerais = output<void>();
   readonly editarMensagem = output<GithubFlowEditarMensagemEvento>();
 
   protected readonly linkIcon = Link2;
@@ -69,6 +78,8 @@ export class GithubRegrasFlowEditorComponent implements OnChanges {
   protected readonly arrowIcon = ArrowRight;
   protected readonly editIcon = PencilLine;
   protected readonly corStatus = corStatusGithubProject;
+
+  protected readonly gatilhosColunaOpcoes = GITHUB_GATILHOS_FILTRO_STATUS_GERAL;
 
   readonly documento = signal<GithubRegrasPorStatusDocumento>({ versao: 1, colunas: {} });
   readonly colunaSelecionadaId = signal<string | null>(null);
@@ -113,7 +124,11 @@ export class GithubRegrasFlowEditorComponent implements OnChanges {
     }
     doc = mesclarOpcoesKanban(doc, this.statusOpcoes);
     this.documento.set(doc);
-    if (temJson || this.form.get('dsGithubRegrasPorStatus')?.dirty) {
+    const devePersistir =
+      temJson ||
+      this.form.get('dsGithubRegrasPorStatus')?.dirty ||
+      (!temJson && this.statusOpcoes.length > 0);
+    if (devePersistir) {
       persistirRegrasNoForm(this.form, doc);
     }
   }
@@ -170,8 +185,47 @@ export class GithubRegrasFlowEditorComponent implements OnChanges {
     if (!regra) {
       return;
     }
+    const gatilhos =
+      valor && (regra.gatilhos?.length ?? 0) === 0
+        ? [...GATILHOS_PADRAO_COLUNA]
+        : regra.gatilhos;
     this.patchColuna(optionId, {
       aoEntrar: { fluxoGeral: valor, prAvaliadores: false, issueAvaliadores: false },
+      ...(gatilhos ? { gatilhos } : {}),
+    });
+  }
+
+  gatilhoColunaMarcado(regra: GithubRegraColuna, codigo: string): boolean {
+    return gatilhosEfetivosColuna(regra).includes(codigo as GithubGatilhoColunaCodigo);
+  }
+
+  gatilhoConfiguravelNaColuna(op: GithubGatilhoFiltroOpcao): boolean {
+    const noFiltroGlobal = parseGatilhosComFiltroStatusGeral(
+      this.form.get('dsGithubStatusDisparoGatilhos')?.value,
+    ).has(op.codigo);
+    if (!noFiltroGlobal) {
+      return false;
+    }
+    if (!op.requerGatilho) {
+      return true;
+    }
+    return !!this.form.get(op.requerGatilho)?.value;
+  }
+
+  alternarGatilhoColuna(optionId: string, codigo: GithubGatilhoColunaCodigo, marcado: boolean): void {
+    const regra = this.regra(optionId);
+    if (!regra) {
+      return;
+    }
+    const set = new Set(gatilhosEfetivosColuna(regra));
+    if (marcado) {
+      set.add(codigo);
+    } else {
+      set.delete(codigo);
+    }
+    const ordenados = [...set].sort() as GithubGatilhoColunaCodigo[];
+    this.patchColuna(optionId, {
+      gatilhos: ordenados.length > 0 ? ordenados : [...GATILHOS_PADRAO_COLUNA],
     });
   }
 

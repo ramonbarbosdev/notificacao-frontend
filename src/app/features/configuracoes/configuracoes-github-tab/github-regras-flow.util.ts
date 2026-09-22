@@ -31,7 +31,7 @@ export function labelResumoColuna(resumo: GithubRegrasColunaResumo): string {
 export function labelDestinatarios(regra: GithubRegraColuna): string {
   switch (regra.destinatarios.modo) {
     case 'INHERIT':
-      return 'Herdar padrão';
+      return 'Padrão (Eventos gerais)';
     case 'RESPONSAVEIS':
       return 'Responsáveis';
     case 'RESPONSAVEIS_E_MOVIMENTADOR':

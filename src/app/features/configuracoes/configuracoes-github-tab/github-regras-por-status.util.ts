@@ -34,9 +34,23 @@ export function modoMensagemColuna(mensagem: GithubRegraColunaMensagem): GithubR
   return 'cenario';
 }
 
+/** Códigos de gatilho (mesmos nomes da API Java). */
+export type GithubGatilhoColunaCodigo =
+  | 'STATUS_ALTERADO'
+  | 'REORDENADO'
+  | 'TAREFA_CRIADA'
+  | 'RESPONSAVEL_ALTERADO'
+  | 'TAREFA_ATRIBUIDA'
+  | 'ISSUE_FECHADA_REABERTA'
+  | 'ISSUE_LABEL';
+
+export const GATILHOS_PADRAO_COLUNA: GithubGatilhoColunaCodigo[] = ['STATUS_ALTERADO'];
+
 export interface GithubRegraColuna {
   nome: string;
   aoEntrar: GithubRegraColunaAoEntrar;
+  /** Vazio na persistência = só STATUS_ALTERADO na API. */
+  gatilhos?: GithubGatilhoColunaCodigo[];
   destinatarios: GithubRegraColunaDestinatarios;
   mensagem: GithubRegraColunaMensagem;
 }
@@ -48,10 +62,16 @@ export interface GithubRegrasPorStatusDocumento {
 
 export const VERSAO_REGRAS_POR_STATUS = 1;
 
+export function gatilhosEfetivosColuna(col: GithubRegraColuna): GithubGatilhoColunaCodigo[] {
+  const lista = col.gatilhos?.filter(Boolean) ?? [];
+  return lista.length > 0 ? lista : GATILHOS_PADRAO_COLUNA;
+}
+
 export function colunaVazia(nome: string): GithubRegraColuna {
   return {
     nome,
     aoEntrar: { fluxoGeral: false, prAvaliadores: false, issueAvaliadores: false },
+    gatilhos: [...GATILHOS_PADRAO_COLUNA],
     destinatarios: { modo: 'INHERIT', extras: null },
     mensagem: {
       usarTemplatePadrao: true,

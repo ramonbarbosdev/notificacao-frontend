@@ -23,7 +23,9 @@ import { GithubStatusDisparoGatilhosComponent } from './github-status-disparo-ga
         <div class="space-y-2">
           <h3 class="text-base font-semibold text-[var(--color-text)]">Padrões da organização</h3>
           <p class="text-sm text-[var(--color-text-muted)] leading-relaxed">
-            Usados no fluxograma por coluna quando destinatários = “Herdar padrão da organização”.
+            Valores padrão da organização. Quem recebe em cada coluna do kanban você define em
+
+            <strong>Fluxos por coluna</strong> (padrão ou personalizado por status).
           </p>
         </div>
 
@@ -73,7 +75,9 @@ import { GithubStatusDisparoGatilhosComponent } from './github-status-disparo-ga
         <div class="space-y-2">
           <h3 class="text-base font-semibold text-[var(--color-text)]">Eventos sem coluna</h3>
           <p class="text-sm text-[var(--color-text-muted)] leading-relaxed">
-            Não passam pelo fluxograma de colunas (ex.: responsável alterado, label, issue fechada).
+            Ligam ou desligam <em>tipos</em> de evento na integração. Quais <strong>colunas</strong> do board disparam ao
+
+            mover card ficam em <strong>Fluxos por coluna</strong> (não marque todas as colunas aqui).
           </p>
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
