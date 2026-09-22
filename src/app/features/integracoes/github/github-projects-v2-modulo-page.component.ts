@@ -184,6 +184,7 @@ export class GithubProjectsV2ModuloPageComponent implements OnInit {
   }
 
   salvar(): void {
+    this.githubTab?.sincronizarRegrasFluxoNoFormulario();
     this.githubTab?.sincronizarTemplateEditorNoFormulario();
     const resultado = githubIntegracaoFormSchema.safeParse(this.form.getRawValue());
     if (!resultado.success) {

@@ -23,7 +23,7 @@
     </div>
   }
 
-  <form class="space-y-6" (ngSubmit)="salvar()">
+  <form [formGroup]="form" class="space-y-6" (ngSubmit)="salvar()">
     <app-configuracoes-github-tab
       escopo="modulo"
       [exibirCabecalhoIntegracao]="false"
@@ -39,7 +39,12 @@
     />
 
     <div class="flex justify-end">
-      <button type="submit" class="ui-btn ui-btn-primary !flex-none" [disabled]="salvando() || !form.dirty">
+      <button
+        type="button"
+        class="ui-btn ui-btn-primary !flex-none"
+        [disabled]="salvando() || !form.dirty"
+        (click)="salvar()"
+      >
         @if (salvando()) {
           <lucide-icon [img]="loaderIcon" class="w-4 h-4 animate-spin" />
         }

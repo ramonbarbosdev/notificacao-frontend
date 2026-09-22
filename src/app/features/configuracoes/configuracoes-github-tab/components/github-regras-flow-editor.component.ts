@@ -99,6 +99,11 @@ export class GithubRegrasFlowEditorComponent implements OnChanges {
     }
   }
 
+  /** Garante que o JSON do fluxograma está no form antes do PATCH. */
+  persistirDocumentoAtualNoForm(): void {
+    persistirRegrasNoForm(this.form, this.documento());
+  }
+
   recarregarDocumento(): void {
     const raw = String(this.form.get('dsGithubRegrasPorStatus')?.value ?? '');
     let doc = parseRegrasPorStatus(raw);

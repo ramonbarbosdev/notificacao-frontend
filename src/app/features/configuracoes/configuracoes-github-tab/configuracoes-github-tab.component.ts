@@ -118,6 +118,7 @@ export class ConfiguracoesGithubTabComponent implements OnInit {
   readonly secaoChange = output<GithubSubAba>();
 
   private readonly templateModal = viewChild(GithubWhatsappTemplateModalComponent);
+  private readonly regrasFlowEditor = viewChild(GithubRegrasFlowEditorComponent);
 
   readonly githubDefaultGraphqlUrl = GITHUB_DEFAULT_GRAPHQL_URL;
   readonly githubDefaultApiBaseUrl = GITHUB_DEFAULT_API_BASE_URL;
@@ -654,6 +655,11 @@ export class ConfiguracoesGithubTabComponent implements OnInit {
     this.publicarTemplatesPorCenario(dados.templatesPorCenario);
     this.form.markAsDirty();
     this.toast.success('Templates por tipo atualizados — salve as configurações');
+  }
+
+  /** Copia o fluxograma de regras por coluna para o campo JSON antes do PATCH. */
+  sincronizarRegrasFluxoNoFormulario(): void {
+    this.regrasFlowEditor()?.persistirDocumentoAtualNoForm();
   }
 
   /** Copia mapa do editor aberto antes do PUT. */
