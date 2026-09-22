@@ -12,6 +12,7 @@ import {
   viewChild,
 } from '@angular/core';
 import { FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { Observable } from 'rxjs';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import {
   Bell,
@@ -157,6 +158,12 @@ export class ConfiguracoesGithubTabComponent implements OnInit {
     this.responsaveisGithub().filter((item) => item.habilitado));
   readonly responsaveisPendentes = computed(() =>
     this.responsaveisGithub().filter((item) => item.ativo && !item.habilitado));
+  readonly responsaveisDesativados = computed(() =>
+    this.responsaveisGithub().filter(
+      (item) => !!item.githubLogin?.trim() && !item.ativo,
+    ));
+
+  readonly responsavelAcaoId = signal<number | null>(null);
 
   /** Logins GitHub persistidos em organizacao_github_responsavel (para sugestões em Regras). */
   readonly loginsGithubSugeridos = computed(() => {
@@ -499,6 +506,50 @@ export class ConfiguracoesGithubTabComponent implements OnInit {
         this.responsaveisGithub.set([]);
         this.erroResponsaveis.set('Não foi possível carregar a lista de habilitados.');
         this.carregandoResponsaveis.set(false);
+      },
+    });
+  }
+
+  desativarResponsavelGithub(item: GithubResponsavel): void {
+    if (!confirm(`Desativar notificações para @${item.githubLogin}? O login deixa de receber alertas até reativar.`)) {
+      return;
+    }
+    this.executarAcaoResponsavel(item.idGithubResponsavel, () =>
+      this.githubIntegracaoService.atualizarResponsavelAtivo(item.idGithubResponsavel, false),
+    );
+  }
+
+  reativarResponsavelGithub(item: GithubResponsavel): void {
+    this.executarAcaoResponsavel(item.idGithubResponsavel, () =>
+      this.githubIntegracaoService.atualizarResponsavelAtivo(item.idGithubResponsavel, true),
+    );
+  }
+
+  excluirResponsavelGithub(item: GithubResponsavel): void {
+    const ident = item.githubLogin ? `@${item.githubLogin}` : `WhatsApp ${item.whatsappMascarado}`;
+    if (!confirm(`Excluir o vínculo ${ident}? Será necessário refazer o opt-in pelo WhatsApp.`)) {
+      return;
+    }
+    this.executarAcaoResponsavel(item.idGithubResponsavel, () =>
+      this.githubIntegracaoService.excluirResponsavel(item.idGithubResponsavel),
+    );
+  }
+
+  responsavelEmAcao(id: number): boolean {
+    return this.responsavelAcaoId() === id;
+  }
+
+  private executarAcaoResponsavel(id: number, chamada: () => Observable<unknown>): void {
+    this.responsavelAcaoId.set(id);
+    chamada().subscribe({
+      next: () => {
+        this.responsavelAcaoId.set(null);
+        this.toast.success('Lista atualizada');
+        this.carregarResponsaveisGithub();
+      },
+      error: () => {
+        this.responsavelAcaoId.set(null);
+        this.toast.error('Não foi possível atualizar o responsável');
       },
     });
   }

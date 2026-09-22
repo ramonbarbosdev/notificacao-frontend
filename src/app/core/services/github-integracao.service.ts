@@ -29,6 +29,14 @@ export class GithubIntegracaoService {
     return this.http.get<GithubResponsavel[]>(`${this.base}/responsaveis`);
   }
 
+  atualizarResponsavelAtivo(idGithubResponsavel: number, ativo: boolean): Observable<GithubResponsavel> {
+    return this.http.patch<GithubResponsavel>(`${this.base}/responsaveis/${idGithubResponsavel}`, { ativo });
+  }
+
+  excluirResponsavel(idGithubResponsavel: number): Observable<void> {
+    return this.http.delete<void>(`${this.base}/responsaveis/${idGithubResponsavel}`);
+  }
+
   consultarGraphql(body: GithubGraphqlConsultaRequest): Observable<GithubGraphqlConsultaResponse> {
     return this.http.post<GithubGraphqlConsultaResponse>(`${this.base}/graphql/consulta`, body);
   }
