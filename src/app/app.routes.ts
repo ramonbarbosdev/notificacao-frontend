@@ -161,9 +161,33 @@ export const routes: Routes = [
         canActivate: [roleGuard],
         data: { roles: ['ADMIN'] },
         loadComponent: () =>
-          import('./features/integracoes/github/github-integracao-page.component').then(
-            (m) => m.GithubIntegracaoPageComponent,
+          import('./features/integracoes/github/github-integracao-shell.component').then(
+            (m) => m.GithubIntegracaoShellComponent,
           ),
+        children: [
+          { path: '', redirectTo: 'compartilhado/conexao', pathMatch: 'full' },
+          {
+            path: 'compartilhado/:secao',
+            loadComponent: () =>
+              import('./features/integracoes/github/github-compartilhado-page.component').then(
+                (m) => m.GithubCompartilhadoPageComponent,
+              ),
+          },
+          {
+            path: 'modulos',
+            loadComponent: () =>
+              import('./features/integracoes/github/github-modulos-hub.component').then(
+                (m) => m.GithubModulosHubComponent,
+              ),
+          },
+          {
+            path: 'modulos/projects-v2/:secao',
+            loadComponent: () =>
+              import('./features/integracoes/github/github-projects-v2-modulo-page.component').then(
+                (m) => m.GithubProjectsV2ModuloPageComponent,
+              ),
+          },
+        ],
       },
       {
         path: 'configuracoes',

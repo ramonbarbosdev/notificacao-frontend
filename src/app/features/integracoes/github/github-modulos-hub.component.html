@@ -1,0 +1,55 @@
+@if (carregando()) {
+  <div class="flex items-center justify-center gap-3 py-16 text-[var(--color-text-muted)]">
+    <lucide-icon [img]="loaderIcon" class="w-5 h-5 animate-spin" />
+    Carregando módulos…
+  </div>
+} @else {
+  @if (erro()) {
+    <div class="mb-4 rounded-xl border border-[var(--color-danger-border)] bg-[var(--color-danger-bg)] px-4 py-3">
+      <p class="text-[var(--color-danger)] text-sm m-0">{{ erro() }}</p>
+    </div>
+  }
+
+  <div class="grid gap-4 sm:grid-cols-2">
+    @for (modulo of modulos(); track modulo.codigo) {
+      <div class="ui-card">
+        <div class="ui-card-head">
+          <span class="ui-eyebrow">Módulo</span>
+          <h2 class="ui-card-title">{{ modulo.titulo }}</h2>
+        </div>
+        <div class="ui-card-body space-y-4">
+          <p class="text-xs text-[var(--color-text-muted)] m-0 leading-relaxed">
+            @if (modulo.implementado) {
+              Regras, kanban e templates específicos deste tipo de evento GitHub.
+            } @else {
+              Em desenvolvimento — você poderá ativar quando estiver disponível.
+            }
+          </p>
+          <div class="flex items-center justify-between gap-3">
+            <label class="inline-flex items-center gap-2 text-sm text-[var(--color-text)] cursor-pointer">
+              <input
+                type="checkbox"
+                class="accent-[var(--color-primary)]"
+                [checked]="modulo.habilitado"
+                [disabled]="estaAlternando(modulo.codigo)"
+                (change)="alternarHabilitado(modulo, $event)"
+              />
+              {{ modulo.habilitado ? 'Ativo' : 'Inativo' }}
+            </label>
+            @if (modulo.implementado) {
+              <a
+                [routerLink]="rotaModulo(modulo)"
+                class="ui-btn ui-btn-ghost text-xs !py-2 !px-3 no-underline"
+              >
+                <lucide-icon [img]="settingsIcon" class="w-3.5 h-3.5" />
+                Configurar
+              </a>
+            } @else {
+              <span class="text-[11px] uppercase tracking-wide text-[var(--color-text-faint)] font-mono">Em breve</span>
+            }
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+}

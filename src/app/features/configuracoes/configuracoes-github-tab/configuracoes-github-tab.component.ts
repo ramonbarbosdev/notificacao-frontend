@@ -112,6 +112,10 @@ export class ConfiguracoesGithubTabComponent implements OnInit {
   readonly templatesPorCenarioServidor = input<Record<string, GithubTemplatePorCenario>>({});
   readonly templatesPorCenarioChange = output<Record<string, GithubTemplatePorCenario>>();
   readonly salvarSolicitado = output<void>();
+  readonly escopo = input<'compartilhado' | 'modulo'>('compartilhado');
+  readonly exibirCabecalhoIntegracao = input(true);
+  readonly secaoAtiva = input<GithubSubAba | null>(null);
+  readonly secaoChange = output<GithubSubAba>();
 
   private readonly templateModal = viewChild(GithubWhatsappTemplateModalComponent);
 
@@ -156,6 +160,18 @@ export class ConfiguracoesGithubTabComponent implements OnInit {
       const mapa = this.templatesPorCenarioServidor();
       this.templatesPorCenario.set(mapa ? { ...mapa } : {});
     });
+    effect(() => {
+      const secao = this.secaoAtiva();
+      if (!secao) {
+        return;
+      }
+      if (secao === 'kanban' || secao === 'regras') {
+        this.carregarVinculoKanban();
+      }
+      if (secao === 'habilitados' || secao === 'regras') {
+        this.carregarResponsaveisGithub();
+      }
+    });
   }
 
   readonly responsaveisHabilitados = computed(() =>
@@ -195,58 +211,73 @@ export class ConfiguracoesGithubTabComponent implements OnInit {
 
   readonly fraseAtivacaoGithubPadrao = FRASE_ATIVACAO_GITHUB_PADRAO;
 
-  readonly subAbas: {
+  private readonly todasSubAbas: {
     id: GithubSubAba;
     label: string;
     icon: LucideIconData;
     descricaoCurta: string;
+    escopo: 'compartilhado' | 'modulo';
   }[] = [
     {
       id: 'conexao',
       label: 'Conexão',
       icon: Link2,
       descricaoCurta: 'Webhook no GitHub App e credenciais de instalação.',
+      escopo: 'compartilhado',
     },
     {
       id: 'kanban',
       label: 'Kanban',
       icon: LayoutGrid,
       descricaoCurta: 'Vincule o Project v2 usado no board da organização.',
+      escopo: 'modulo',
     },
     {
       id: 'equipe',
       label: 'Equipe',
       icon: Users,
       descricaoCurta: 'Frase e link de ativação WhatsApp para o time.',
+      escopo: 'compartilhado',
     },
     {
       id: 'habilitados',
       label: 'Habilitados',
       icon: UserCheck,
       descricaoCurta: 'Quem já vinculou login GitHub e recebe alertas.',
+      escopo: 'compartilhado',
     },
     {
       id: 'regras',
       label: 'Regras',
       icon: Bell,
       descricaoCurta: 'Gatilhos, destinatários e status que disparam WhatsApp.',
+      escopo: 'modulo',
     },
     {
       id: 'mensagem',
       label: 'Mensagem',
       icon: MessageSquare,
       descricaoCurta: 'Template WhatsApp e textos por tipo de evento.',
+      escopo: 'modulo',
     },
     {
       id: 'eventos',
       label: 'Eventos',
       icon: ScrollText,
       descricaoCurta: 'Histórico visual de cada webhook processado e motivo da decisão.',
+      escopo: 'compartilhado',
     },
   ];
 
-  readonly subAbaAtivaMeta = computed(() =>
-    this.subAbas.find((item) => item.id === this.githubSubAba()) ?? this.subAbas[0]);
+  readonly subAbas = computed(() =>
+    this.todasSubAbas.filter((item) => item.escopo === this.escopo()));
+
+  readonly secaoEfetiva = computed(() => this.secaoAtiva() ?? this.githubSubAba());
+
+  readonly subAbaAtivaMeta = computed(() => {
+    const lista = this.subAbas();
+    return lista.find((item) => item.id === this.secaoEfetiva()) ?? lista[0];
+  });
 
   readonly githubConexaoPronta = computed(() => {
     const appId = this.form.get('githubAppId')?.value;
@@ -370,16 +401,20 @@ export class ConfiguracoesGithubTabComponent implements OnInit {
 
   selecionarSubAba(id: GithubSubAba): void {
     this.githubSubAba.set(id);
-    const queryParams: Record<string, string> = { githubSecao: id };
-    if (id === 'regras') {
-      queryParams['regrasView'] = this.githubRegrasView();
+    if (this.secaoAtiva() != null) {
+      this.secaoChange.emit(id);
+    } else {
+      const queryParams: Record<string, string> = { githubSecao: id };
+      if (id === 'regras') {
+        queryParams['regrasView'] = this.githubRegrasView();
+      }
+      void this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams,
+        queryParamsHandling: 'merge',
+        replaceUrl: true,
+      });
     }
-    void this.router.navigate([], {
-      relativeTo: this.route,
-      queryParams,
-      queryParamsHandling: 'merge',
-      replaceUrl: true,
-    });
     if (id === 'kanban' || id === 'regras') {
       this.carregarVinculoKanban();
     }

@@ -20,6 +20,7 @@ import {
   GithubIntegracaoProjectsV2Response,
   GithubIntegracaoProjectsV2PatchRequest,
   GithubIntegracaoIssueCommentModuloResponse,
+  GithubIntegracaoModuloStatus,
 } from '../../shared/types/dtos';
 
 @Injectable({ providedIn: 'root' })
@@ -53,6 +54,12 @@ export class GithubIntegracaoService {
 
   obterModuloIssueComment(): Observable<GithubIntegracaoIssueCommentModuloResponse> {
     return this.http.get<GithubIntegracaoIssueCommentModuloResponse>(`${this.base}/modulos/issue-comment`);
+  }
+
+  patchModuloHabilitado(codigo: string, habilitado: boolean): Observable<GithubIntegracaoModuloStatus> {
+    return this.http.patch<GithubIntegracaoModuloStatus>(`${this.base}/modulos/${codigo}/habilitado`, {
+      habilitado,
+    });
   }
 
   buscarInstrucoesWebhook(): Observable<GithubWebhookIntegracaoResponse> {

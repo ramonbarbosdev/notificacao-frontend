@@ -1,0 +1,39 @@
+@if (carregando()) {
+  <div class="flex items-center justify-center gap-3 py-16 text-[var(--color-text-muted)]">
+    <lucide-icon [img]="loaderIcon" class="w-5 h-5 animate-spin" />
+    Carregando…
+  </div>
+} @else {
+  @if (erro()) {
+    <div class="mb-6 bg-[var(--color-danger-bg)] border border-[var(--color-danger-border)] rounded-xl px-4 py-3">
+      <p class="text-[var(--color-danger)] text-sm m-0">{{ erro() }}</p>
+    </div>
+  }
+
+  <form class="space-y-6" (ngSubmit)="salvar()">
+    <app-configuracoes-github-tab
+      escopo="compartilhado"
+      [exibirCabecalhoIntegracao]="false"
+      [secaoAtiva]="secao()"
+      (secaoChange)="navegarSecao($event)"
+      [form]="form"
+      [errosFormulario]="errosFormulario()"
+      [graphqlTokenConfigurado]="graphqlTokenConfigurado()"
+      [githubAppPrivateKeyConfigurado]="githubAppPrivateKeyConfigurado()"
+      (salvarSolicitado)="salvar()"
+    />
+
+    <div class="flex justify-end">
+      <button
+        type="submit"
+        class="ui-btn ui-btn-primary !flex-none"
+        [disabled]="salvando() || !form.dirty"
+      >
+        @if (salvando()) {
+          <lucide-icon [img]="loaderIcon" class="w-4 h-4 animate-spin" />
+        }
+        Salvar compartilhado
+      </button>
+    </div>
+  </form>
+}

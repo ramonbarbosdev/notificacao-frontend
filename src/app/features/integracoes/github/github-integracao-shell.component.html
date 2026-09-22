@@ -1,0 +1,32 @@
+<div class="ui-page-wrap mb-6 space-y-5">
+  <div>
+    <h1 class="ui-page-title m-0">Integração GitHub</h1>
+    <p class="text-sm text-[var(--color-text-muted)] mt-1 m-0">
+      Configuração compartilhada e módulos de evento (Project v2, comentários, etc.).
+    </p>
+    @if (!featureHabilitada()) {
+      <p class="mt-2 text-sm text-[var(--color-warning)] m-0">
+        O recurso GitHub Webhook não está habilitado no plano desta organização.
+      </p>
+    }
+  </div>
+
+  <div class="ui-mode-toggle max-w-md">
+    <a
+      routerLink="/app/integracoes/github/compartilhado/conexao"
+      class="no-underline text-center"
+      [class.active]="areaAtiva() === 'compartilhado'"
+    >
+      Compartilhado
+    </a>
+    <a
+      routerLink="/app/integracoes/github/modulos"
+      class="no-underline text-center"
+      [class.active]="areaAtiva() === 'modulos'"
+    >
+      Módulos
+    </a>
+  </div>
+
+  <router-outlet />
+</div>

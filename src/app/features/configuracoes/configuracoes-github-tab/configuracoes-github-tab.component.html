@@ -1,12 +1,14 @@
 <section class="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-6 md:p-8 space-y-8" [formGroup]="form">
-  <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-    <div class="space-y-2">
-      <h2 class="text-[var(--color-text)] font-semibold text-xl tracking-tight">GitHub → WhatsApp</h2>
-      <p class="text-sm text-[var(--color-text-muted)] max-w-2xl leading-relaxed">
-        Configure webhook, board e regras. Salve as alterações no botão ao final da página.
-      </p>
+  @if (exibirCabecalhoIntegracao()) {
+    <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+      <div class="space-y-2">
+        <h2 class="text-[var(--color-text)] font-semibold text-xl tracking-tight">GitHub → WhatsApp</h2>
+        <p class="text-sm text-[var(--color-text-muted)] max-w-2xl leading-relaxed">
+          Configure webhook, board e regras. Salve as alterações no botão ao final da página.
+        </p>
+      </div>
     </div>
-  </div>
+  }
 
   @if (form.dirty) {
     <div class="app-alert-warning border rounded-xl px-4 py-3 text-sm flex items-start gap-2">
@@ -15,21 +17,23 @@
     </div>
   }
 
-  <app-github-integracao-status-strip [itens]="itensSaudeIntegracao()" />
+  @if (escopo() === 'compartilhado') {
+    <app-github-integracao-status-strip [itens]="itensSaudeIntegracao()" />
+  }
 
   <div class="space-y-4 pb-1 border-b border-[var(--color-border)]">
   <div class="flex flex-wrap gap-2.5">
-    @for (item of subAbas; track item.id) {
+    @for (item of subAbas(); track item.id) {
       <button
         type="button"
         (click)="selecionarSubAba(item.id)"
         class="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl border text-sm transition-colors"
-        [class.bg-[var(--color-primary)]]="githubSubAba() === item.id"
-        [class.text-[var(--color-bg-base)]]="githubSubAba() === item.id"
-        [class.border-[var(--color-primary)]]="githubSubAba() === item.id"
-        [class.border-[var(--color-border)]]="githubSubAba() !== item.id"
-        [class.text-[var(--color-text-muted)]]="githubSubAba() !== item.id"
-        [class.hover:bg-[var(--color-surface-muted)]]="githubSubAba() !== item.id"
+        [class.bg-[var(--color-primary)]]="secaoEfetiva() === item.id"
+        [class.text-[#06140e]]="secaoEfetiva() === item.id"
+        [class.border-[var(--color-primary)]]="secaoEfetiva() === item.id"
+        [class.border-[var(--color-border)]]="secaoEfetiva() !== item.id"
+        [class.text-[var(--color-text-muted)]]="secaoEfetiva() !== item.id"
+        [class.hover:bg-[var(--color-surface-muted)]]="secaoEfetiva() !== item.id"
       >
         <lucide-icon [img]="item.icon" class="w-4 h-4 shrink-0" />
         {{ item.label }}
@@ -42,7 +46,7 @@
   }
   </div>
 
-  @switch (githubSubAba()) {
+  @switch (secaoEfetiva()) {
     @case ('conexao') {
       @if (carregandoGithubIntegracao()) {
         <div class="flex items-center gap-2 text-sm text-[var(--color-text-muted)]">

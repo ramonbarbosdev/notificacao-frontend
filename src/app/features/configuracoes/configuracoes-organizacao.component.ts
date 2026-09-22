@@ -254,11 +254,13 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
     if (abaParam === 'github') {
       const githubSecao = this.route.snapshot.queryParamMap.get('githubSecao');
       const regrasView = this.route.snapshot.queryParamMap.get('regrasView');
-      void this.router.navigate(['/app/integracoes/github'], {
-        queryParams: {
-          ...(githubSecao ? { githubSecao } : {}),
-          ...(regrasView ? { regrasView } : {}),
-        },
+      const secoesModulo = new Set(['kanban', 'regras', 'mensagem']);
+      const secao = githubSecao ?? 'conexao';
+      const destino = secoesModulo.has(secao)
+        ? ['/app/integracoes/github/modulos/projects-v2', secao]
+        : ['/app/integracoes/github/compartilhado', secao];
+      void this.router.navigate(destino, {
+        ...(regrasView ? { queryParams: { regrasView } } : {}),
       });
       return;
     }
