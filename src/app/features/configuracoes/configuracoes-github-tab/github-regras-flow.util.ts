@@ -62,6 +62,13 @@ export function labelMensagem(regra: GithubRegraColuna, cenarios: Map<string, st
   if (regra.mensagem.usarTemplatePadrao) {
     return 'Template padrão';
   }
+  if (regra.mensagem.textoProprioColuna) {
+    const trecho = (regra.mensagem.mensagemColuna ?? '').trim();
+    if (!trecho) {
+      return 'Texto da coluna (vazio)';
+    }
+    return trecho.length > 48 ? `${trecho.slice(0, 45)}…` : trecho;
+  }
   const id = regra.mensagem.cenarioId;
   if (!id) {
     return 'Cenário não escolhido';
@@ -75,7 +82,16 @@ export function validarDocumentoRegras(doc: GithubRegrasPorStatusDocumento): Git
     if (!coluna?.aoEntrar.fluxoGeral) {
       continue;
     }
-    if (!coluna.mensagem.usarTemplatePadrao && !coluna.mensagem.cenarioId?.trim()) {
+    if (coluna.mensagem.usarTemplatePadrao) {
+      continue;
+    }
+    if (coluna.mensagem.textoProprioColuna) {
+      if (!coluna.mensagem.mensagemColuna?.trim()) {
+        colunasInvalidas.push({ optionId, nome: coluna.nome });
+      }
+      continue;
+    }
+    if (!coluna.mensagem.cenarioId?.trim()) {
       colunasInvalidas.push({ optionId, nome: coluna.nome });
     }
   }

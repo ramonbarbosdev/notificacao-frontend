@@ -14,9 +14,24 @@ export interface GithubRegraColunaDestinatarios {
   extras: string | null;
 }
 
+export type GithubRegraMensagemModo = 'padrao' | 'cenario' | 'coluna';
+
 export interface GithubRegraColunaMensagem {
   usarTemplatePadrao: boolean;
   cenarioId: string | null;
+  textoProprioColuna?: boolean;
+  assuntoColuna?: string | null;
+  mensagemColuna?: string | null;
+}
+
+export function modoMensagemColuna(mensagem: GithubRegraColunaMensagem): GithubRegraMensagemModo {
+  if (mensagem.usarTemplatePadrao) {
+    return 'padrao';
+  }
+  if (mensagem.textoProprioColuna) {
+    return 'coluna';
+  }
+  return 'cenario';
 }
 
 export interface GithubRegraColuna {
@@ -38,7 +53,13 @@ export function colunaVazia(nome: string): GithubRegraColuna {
     nome,
     aoEntrar: { fluxoGeral: false, prAvaliadores: false, issueAvaliadores: false },
     destinatarios: { modo: 'INHERIT', extras: null },
-    mensagem: { usarTemplatePadrao: true, cenarioId: null },
+    mensagem: {
+      usarTemplatePadrao: true,
+      cenarioId: null,
+      textoProprioColuna: false,
+      assuntoColuna: null,
+      mensagemColuna: null,
+    },
   };
 }
 
@@ -95,7 +116,13 @@ export function derivarRegrasDoFormLegacy(
         issueAvaliadores: listaContemNome(v.dsGithubIssueStatusDisparo ?? '', nome),
       },
       destinatarios: { modo: 'INHERIT', extras: null },
-      mensagem: { usarTemplatePadrao: true, cenarioId: null },
+      mensagem: {
+      usarTemplatePadrao: true,
+      cenarioId: null,
+      textoProprioColuna: false,
+      assuntoColuna: null,
+      mensagemColuna: null,
+    },
     };
   }
   return doc;

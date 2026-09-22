@@ -27,9 +27,11 @@ import {
 } from '../github-regras-flow.util';
 import {
   GithubRegraColuna,
+  GithubRegraMensagemModo,
   GithubRegrasPorStatusDocumento,
   derivarRegrasDoFormLegacy,
   mesclarOpcoesKanban,
+  modoMensagemColuna,
   parseRegrasPorStatus,
   persistirRegrasNoForm,
 } from '../github-regras-por-status.util';
@@ -183,12 +185,49 @@ export class GithubRegrasFlowEditorComponent implements OnChanges {
     });
   }
 
-  alterarMensagemTemplatePadrao(optionId: string, usarTemplatePadrao: boolean): void {
+  modoMensagem(regra: GithubRegraColuna): GithubRegraMensagemModo {
+    return modoMensagemColuna(regra.mensagem);
+  }
+
+  alterarModoMensagem(optionId: string, modo: GithubRegraMensagemModo): void {
     const regra = this.regra(optionId);
     if (!regra) {
       return;
     }
-    this.patchColuna(optionId, { mensagem: { ...regra.mensagem, usarTemplatePadrao } });
+    const base = { ...regra.mensagem };
+    if (modo === 'padrao') {
+      this.patchColuna(optionId, {
+        mensagem: {
+          ...base,
+          usarTemplatePadrao: true,
+          textoProprioColuna: false,
+          cenarioId: null,
+          assuntoColuna: null,
+          mensagemColuna: null,
+        },
+      });
+      return;
+    }
+    if (modo === 'cenario') {
+      this.patchColuna(optionId, {
+        mensagem: {
+          ...base,
+          usarTemplatePadrao: false,
+          textoProprioColuna: false,
+          assuntoColuna: null,
+          mensagemColuna: null,
+        },
+      });
+      return;
+    }
+    this.patchColuna(optionId, {
+      mensagem: {
+        ...base,
+        usarTemplatePadrao: false,
+        textoProprioColuna: true,
+        cenarioId: null,
+      },
+    });
   }
 
   alterarMensagemCenario(optionId: string, cenarioId: string): void {
@@ -197,7 +236,34 @@ export class GithubRegrasFlowEditorComponent implements OnChanges {
       return;
     }
     this.patchColuna(optionId, {
-      mensagem: { ...regra.mensagem, cenarioId: cenarioId.trim() || null },
+      mensagem: {
+        ...regra.mensagem,
+        usarTemplatePadrao: false,
+        textoProprioColuna: false,
+        cenarioId: cenarioId.trim() || null,
+        assuntoColuna: null,
+        mensagemColuna: null,
+      },
+    });
+  }
+
+  alterarMensagemColunaAssunto(optionId: string, assunto: string): void {
+    const regra = this.regra(optionId);
+    if (!regra) {
+      return;
+    }
+    this.patchColuna(optionId, {
+      mensagem: { ...regra.mensagem, assuntoColuna: assunto.trim() || null },
+    });
+  }
+
+  alterarMensagemColunaCorpo(optionId: string, corpo: string): void {
+    const regra = this.regra(optionId);
+    if (!regra) {
+      return;
+    }
+    this.patchColuna(optionId, {
+      mensagem: { ...regra.mensagem, mensagemColuna: corpo.trim() ? corpo : null },
     });
   }
 
@@ -210,20 +276,27 @@ export class GithubRegrasFlowEditorComponent implements OnChanges {
   }
 
   podeEditarTextoMensagem(regra: GithubRegraColuna): boolean {
-    if (regra.mensagem.usarTemplatePadrao) {
+    const modo = this.modoMensagem(regra);
+    if (modo === 'coluna') {
+      return false;
+    }
+    if (modo === 'padrao') {
       return true;
     }
     return !!regra.mensagem.cenarioId?.trim();
   }
 
   solicitarEditarTextoMensagem(regra: GithubRegraColuna): void {
-    if (regra.mensagem.usarTemplatePadrao) {
+    const modo = this.modoMensagem(regra);
+    if (modo === 'padrao') {
       this.editarMensagem.emit({ modo: 'padrao' });
       return;
     }
-    const cenarioId = regra.mensagem.cenarioId?.trim();
-    if (cenarioId) {
-      this.editarMensagem.emit({ modo: 'cenario', cenarioId });
+    if (modo === 'cenario') {
+      const cenarioId = regra.mensagem.cenarioId?.trim();
+      if (cenarioId) {
+        this.editarMensagem.emit({ modo: 'cenario', cenarioId });
+      }
     }
   }
 }

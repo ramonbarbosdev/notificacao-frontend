@@ -242,15 +242,37 @@
 
               @if (noEdicao() === 'mensagem' && col.aoEntrar.fluxoGeral) {
                 <div class="rounded-xl border border-[var(--color-border)] p-4 space-y-3">
-                  <label class="flex items-center gap-2 text-sm">
-                    <input
-                      type="checkbox"
-                      [checked]="col.mensagem.usarTemplatePadrao"
-                      (change)="alterarMensagemTemplatePadrao(optionId, $any($event.target).checked)"
-                    />
-                    Usar template padrão GitHub
-                  </label>
-                  @if (!col.mensagem.usarTemplatePadrao) {
+                  <p class="text-sm font-medium text-[var(--color-text)] m-0">Origem do texto</p>
+                  <div class="flex flex-col gap-2 text-sm">
+                    <label class="flex items-center gap-2">
+                      <input
+                        type="radio"
+                        name="modo-mensagem-{{ optionId }}"
+                        [checked]="modoMensagem(col) === 'padrao'"
+                        (change)="alterarModoMensagem(optionId, 'padrao')"
+                      />
+                      Template padrão (global)
+                    </label>
+                    <label class="flex items-center gap-2">
+                      <input
+                        type="radio"
+                        name="modo-mensagem-{{ optionId }}"
+                        [checked]="modoMensagem(col) === 'cenario'"
+                        (change)="alterarModoMensagem(optionId, 'cenario')"
+                      />
+                      Tipo de evento (compartilhado entre colunas)
+                    </label>
+                    <label class="flex items-center gap-2">
+                      <input
+                        type="radio"
+                        name="modo-mensagem-{{ optionId }}"
+                        [checked]="modoMensagem(col) === 'coluna'"
+                        (change)="alterarModoMensagem(optionId, 'coluna')"
+                      />
+                      Texto só desta coluna
+                    </label>
+                  </div>
+                  @if (modoMensagem(col) === 'cenario') {
                     <select
                       class="form-input-admin text-sm w-full max-w-md"
                       [value]="col.mensagem.cenarioId ?? ''"
@@ -262,26 +284,48 @@
                       }
                     </select>
                   }
-                  <p class="text-xs text-[var(--color-text-muted)] m-0">
-                    @if (col.mensagem.usarTemplatePadrao) {
-                      O texto vem do template global da organização (aba Mensagem).
-                    } @else {
-                      O texto é o template salvo para o tipo de evento escolhido; vazio usa o padrão global.
-                    }
-                  </p>
-                  <button
-                    type="button"
-                    class="px-3 py-2 rounded-xl border border-[var(--color-border)] text-sm flex items-center gap-2 text-[var(--color-text)] hover:bg-[var(--color-surface-muted)] disabled:opacity-45 disabled:cursor-not-allowed"
-                    [disabled]="!podeEditarTextoMensagem(col)"
-                    (click)="solicitarEditarTextoMensagem(col)"
-                  >
-                    <lucide-icon [img]="editIcon" class="w-4 h-4" />
-                    @if (col.mensagem.usarTemplatePadrao) {
-                      Editar template padrão
-                    } @else {
-                      Editar texto do cenário
-                    }
-                  </button>
+                  @if (modoMensagem(col) === 'coluna') {
+                    <p class="text-xs text-[var(--color-text-muted)] m-0">
+                      Use variáveis como <code class="text-[11px]">{{'{{titulo}}'}}</code>,
+                      <code class="text-[11px]">{{'{{status}}'}}</code>,
+                      <code class="text-[11px]">{{'{{url}}'}}</code>. Só dispara ao entrar nesta coluna.
+                    </p>
+                    <input
+                      class="form-input-admin text-sm w-full max-w-md font-mono"
+                      placeholder="Assunto (opcional)"
+                      [value]="col.mensagem.assuntoColuna ?? ''"
+                      (input)="alterarMensagemColunaAssunto(optionId, $any($event.target).value)"
+                    />
+                    <textarea
+                      rows="6"
+                      class="form-input-admin text-xs w-full font-mono"
+                      placeholder="Mensagem WhatsApp desta coluna"
+                      [value]="col.mensagem.mensagemColuna ?? ''"
+                      (input)="alterarMensagemColunaCorpo(optionId, $any($event.target).value)"
+                    ></textarea>
+                  }
+                  @if (modoMensagem(col) !== 'coluna') {
+                    <p class="text-xs text-[var(--color-text-muted)] m-0">
+                      @if (modoMensagem(col) === 'padrao') {
+                        O texto vem do template global da organização (aba Mensagem).
+                      } @else {
+                        O texto é o template salvo para o tipo de evento; o mesmo cenário em outra coluna usa o mesmo texto.
+                      }
+                    </p>
+                    <button
+                      type="button"
+                      class="px-3 py-2 rounded-xl border border-[var(--color-border)] text-sm flex items-center gap-2 text-[var(--color-text)] hover:bg-[var(--color-surface-muted)] disabled:opacity-45 disabled:cursor-not-allowed"
+                      [disabled]="!podeEditarTextoMensagem(col)"
+                      (click)="solicitarEditarTextoMensagem(col)"
+                    >
+                      <lucide-icon [img]="editIcon" class="w-4 h-4" />
+                      @if (modoMensagem(col) === 'padrao') {
+                        Editar template padrão
+                      } @else {
+                        Editar texto do cenário
+                      }
+                    </button>
+                  }
                 </div>
               }
             </div>
