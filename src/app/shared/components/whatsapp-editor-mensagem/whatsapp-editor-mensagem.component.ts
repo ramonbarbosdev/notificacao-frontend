@@ -18,8 +18,12 @@ import {
 export class WhatsappEditorMensagemComponent {
   readonly control = input.required<FormControl<string | null>>();
   readonly rows = input(5);
-  readonly placeholder = input('Digite a mensagem...');
+  readonly placeholder = input('Digite a mensagem…');
   readonly exibirPreview = input(true);
+  readonly estiloCompose = input(false);
+  readonly labelPreview = input('Pré-visualização');
+
+  protected readonly variaveisRapidas = ['{{nome}}', '{{telefone}}', '{{mensagem}}'];
 
   protected readonly boldIcon = Bold;
   protected readonly italicIcon = Italic;
@@ -59,5 +63,14 @@ export class WhatsappEditorMensagemComponent {
 
   alternarPreview(): void {
     this.mostrarPreview.update((atual) => !atual);
+  }
+
+  inserirVariavel(token: string): void {
+    const valorAtual = this.control().value ?? '';
+    const separador = valorAtual.length > 0 && !valorAtual.endsWith(' ') ? ' ' : '';
+    this.control().setValue(`${valorAtual}${separador}${token}`);
+    this.control().markAsDirty();
+    const elemento = this.textareaRef()?.nativeElement;
+    elemento?.focus();
   }
 }

@@ -52,7 +52,7 @@ import {
   GITHUB_DEFAULT_READ_TIMEOUT_MS,
   OrganizacaoConfiguracaoFormData,
   OrganizacaoConfiguracaoFormErrors,
-} from '../schemas/organizacao-configuracao-form.schema';
+} from '../../integracoes/github/schemas/github-integracao-form.schema';
 import {
   GithubWhatsappTemplateAplicado,
   GithubWhatsappTemplateModalComponent,
@@ -353,7 +353,7 @@ export class ConfiguracoesGithubTabComponent implements OnInit {
     this.githubRegrasView.set(view);
     void this.router.navigate([], {
       relativeTo: this.route,
-      queryParams: { aba: 'github', githubSecao: 'regras', regrasView: view },
+      queryParams: { githubSecao: 'regras', regrasView: view },
       queryParamsHandling: 'merge',
       replaceUrl: true,
     });
@@ -370,7 +370,7 @@ export class ConfiguracoesGithubTabComponent implements OnInit {
 
   selecionarSubAba(id: GithubSubAba): void {
     this.githubSubAba.set(id);
-    const queryParams: Record<string, string> = { aba: 'github', githubSecao: id };
+    const queryParams: Record<string, string> = { githubSecao: id };
     if (id === 'regras') {
       queryParams['regrasView'] = this.githubRegrasView();
     }

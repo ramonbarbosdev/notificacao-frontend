@@ -1,309 +1,39 @@
-/* WhatsApp — paleta inspirada no WhatsApp Web (modo escuro) */
+/* Paleta padrão — alinhada ao mock whatsapp-envio-mensagens.html */
 @theme {
-  /* Neutrals (WhatsApp Web dark) */
-  --color-bg-base:        #0b141a;
-  --color-surface:        #111b21;
-  --color-surface-muted:  #202c33;
-  --color-border:         #2a3942;
-  --color-border-strong:  #3b4a54;
+  --color-bg-base:        #0a0e14;
+  --color-surface:        #10151f;
+  --color-surface-muted:  #161c28;
+  --color-border:         #232a38;
+  --color-border-strong:  #2f3848;
+  --color-border-soft:    #1a2029;
 
-  /* Text */
-  --color-text:           #e9edef;
-  --color-text-muted:     #8696a0;
-  --color-text-subtle:    #667781;
-  --color-text-faint:     #54656f;
+  --color-text:           #e7eaf0;
+  --color-text-muted:     #8b93a3;
+  --color-text-subtle:    #6d7689;
+  --color-text-faint:     #5a6273;
 
-  /* Brand / primary — verde WhatsApp */
-  --color-primary:        #25d366;
-  --color-primary-hover:  #20bd5a;
-  --color-primary-soft:   #00a884;
+  --color-primary:        #34d399;
+  --color-primary-hover:  #2dd4a0;
+  --color-primary-soft:   #4ade80;
 
-  /* Success (alinhado ao verde WhatsApp) */
-  --color-success:        #25d366;
-  --color-success-bg:     #0d2b1a;
-  --color-success-border: #128c7e;
+  --color-success:        #34d399;
+  --color-success-bg:     #16302a;
+  --color-success-border: #235240;
 
-  /* Danger */
-  --color-danger:         #ea0038;
-  --color-danger-bg:      #2c0a12;
-  --color-danger-border:  #7a2030;
+  --color-danger:         #ef7676;
+  --color-danger-bg:      #2a1818;
+  --color-danger-border:  #5c3030;
 
-  /* Sidebar */
-  --color-sidebar-bg:     #111b21;
-  --color-sidebar-border: #2a3942;
-  --color-sidebar-active: #0d2b1a;
-  --color-sidebar-active-text: #25d366;
-  --color-sidebar-text:   #8696a0;
+  --color-sidebar-bg:     #10151f;
+  --color-sidebar-border: #232a38;
+  --color-sidebar-active: #16302a;
+  --color-sidebar-active-text: #34d399;
+  --color-sidebar-text:   #8b93a3;
 
-  /* Accent soft (badge bg, icon bg) */
-  --color-accent-soft:    #0d3324;
+  --color-accent-soft:    #16302a;
 
-  /* Info / warning */
   --color-info:           #53bdeb;
   --color-info-bg:        #0a2530;
-  --color-warning:        #ffd279;
-  --color-warning-bg:     #2a2410;
-}
-
-:root {
-  color-scheme: dark;
-  --app-bg:               var(--color-bg-base);
-  --app-surface:          var(--color-surface);
-  --app-surface-muted:    var(--color-surface-muted);
-  --app-border:           var(--color-border);
-  --app-border-strong:    var(--color-border-strong);
-  --app-text:             var(--color-text);
-  --app-text-muted:       var(--color-text-muted);
-  --app-text-subtle:      var(--color-text-subtle);
-  --app-text-faint:       var(--color-text-faint);
-  --app-primary:          var(--color-primary);
-  --app-primary-hover:    var(--color-primary-hover);
-  --app-primary-muted:    var(--color-primary-soft);
-  --app-success:          var(--color-success);
-  --app-success-bg:       var(--color-success-bg);
-  --app-success-border:   var(--color-success-border);
-  --app-danger:           var(--color-danger);
-  --app-danger-bg:        var(--color-danger-bg);
-  --app-danger-border:    var(--color-danger-border);
-}
-
-@layer components {
-  .app-page {
-    background: var(--app-bg);
-    color: var(--app-text);
-  }
-
-  .app-header-surface {
-    background: color-mix(in srgb, var(--app-bg) 80%, transparent);
-  }
-
-  .app-surface {
-    background: var(--app-surface);
-    border-color: var(--app-border);
-  }
-
-  .app-surface-muted {
-    background: var(--app-surface-muted);
-    border-color: var(--app-border-strong);
-  }
-
-  .app-title {
-    color: var(--app-text);
-  }
-
-  .app-muted {
-    color: var(--app-text-muted);
-  }
-
-  .app-subtle {
-    color: var(--app-text-subtle);
-  }
-
-  .app-faint {
-    color: var(--app-text-faint);
-  }
-
-  .app-input {
-    background: var(--app-surface-muted);
-    border-color: var(--app-border-strong);
-    color: var(--app-text);
-  }
-
-  .app-input::placeholder {
-    color: var(--app-text-subtle);
-  }
-
-  .form-input-admin {
-    width: 100%;
-    border-radius: 0.75rem;
-    border: 1px solid var(--app-border-strong);
-    background: var(--app-surface-muted);
-    color: var(--app-text);
-    padding: 0.75rem 1rem;
-    font-size: 0.875rem;
-    outline: none;
-    transition: box-shadow 150ms ease, border-color 150ms ease;
-  }
-
-  .form-input-admin::placeholder {
-    color: var(--app-text-subtle);
-  }
-
-  .form-input-admin:focus {
-    border-color: transparent;
-    box-shadow: 0 0 0 2px var(--app-primary);
-  }
-
-  .config-toggle {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.75rem;
-    border: 1px solid var(--app-border);
-    border-radius: 0.75rem;
-    padding: 0.75rem 1rem;
-    color: var(--app-text);
-    font-size: 0.875rem;
-  }
-
-  .config-toggle input[type='checkbox'] {
-    width: 1rem;
-    height: 1rem;
-    accent-color: var(--app-primary);
-    cursor: pointer;
-  }
-
-  .form-checkbox-label {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.5rem 0.75rem;
-    border-radius: 0.75rem;
-    border: 1px solid var(--app-border);
-    font-size: 0.75rem;
-    color: var(--app-text);
-    cursor: pointer;
-  }
-
-  .form-checkbox-label input[type='checkbox'] {
-    accent-color: var(--app-primary);
-  }
-
-  .app-button-primary {
-    background: var(--app-primary);
-    color: #ffffff;
-  }
-
-  .app-button-primary:hover:not(:disabled) {
-    background: var(--app-primary-hover);
-  }
-
-  .app-button-success {
-    background: var(--color-success);
-    color: #ffffff;
-  }
-
-  .app-button-success:hover:not(:disabled) {
-    background: var(--color-primary-hover);
-  }
-
-  .app-alert-danger {
-    background: var(--app-danger-bg);
-    border-color: var(--app-danger-border);
-    color: var(--app-danger);
-  }
-
-  .app-alert-danger-text {
-    color: var(--app-danger);
-  }
-
-  .app-alert-info {
-    background: var(--app-bg);
-    border-color: var(--app-border);
-    color: var(--color-text-muted);
-  }
-
-  .app-text-warning {
-    color: var(--color-warning);
-  }
-
-  .app-text-success {
-    color: var(--color-primary);
-  }
-
-  .app-text-info {
-    color: var(--color-info);
-  }
-
-  .app-alert-warning {
-    background: color-mix(in srgb, var(--color-warning) 10%, transparent);
-    border-color: color-mix(in srgb, var(--color-warning) 30%, transparent);
-  }
-
-  .app-alert-warning-subtle {
-    background: color-mix(in srgb, var(--color-warning) 5%, transparent);
-    border-color: color-mix(in srgb, var(--color-warning) 20%, transparent);
-  }
-
-  .app-badge-warning {
-    background: color-mix(in srgb, var(--color-warning) 10%, transparent);
-    color: var(--color-warning);
-    border-color: color-mix(in srgb, var(--color-warning) 30%, transparent);
-  }
-
-  .app-badge-success {
-    background: var(--color-success-bg);
-    color: var(--color-success);
-    border-color: var(--color-success-border);
-  }
-
-  .app-badge-info {
-    background: color-mix(in srgb, var(--color-info) 10%, transparent);
-    color: var(--color-info);
-    border-color: color-mix(in srgb, var(--color-info) 30%, transparent);
-  }
-
-  .site-nav-link {
-    display: inline-flex;
-    align-items: center;
-    padding: 0.5rem 0.75rem;
-    border-radius: 0.75rem;
-    font-size: 0.875rem;
-    color: var(--color-text-muted);
-    text-decoration: none;
-    transition: color 150ms ease, background 150ms ease;
-  }
-
-  .site-nav-link:hover,
-  .site-nav-active {
-    color: var(--color-text);
-    background: color-mix(in srgb, var(--color-primary) 10%, transparent);
-  }
-
-  .site-btn-primary {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0.625rem 1rem;
-    border-radius: 0.75rem;
-    background: var(--color-primary);
-    color: #0b141a;
-    font-size: 0.875rem;
-    font-weight: 600;
-    text-decoration: none;
-    transition: background 150ms ease;
-  }
-
-  .site-btn-primary:hover {
-    background: var(--color-primary-hover);
-  }
-
-  .site-btn-ghost {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0.625rem 1rem;
-    border-radius: 0.75rem;
-    border: 1px solid var(--color-border);
-    color: var(--color-text);
-    font-size: 0.875rem;
-    font-weight: 500;
-    text-decoration: none;
-    transition: border-color 150ms ease, background 150ms ease;
-  }
-
-  .site-btn-ghost:hover {
-    border-color: var(--color-border-strong);
-    background: var(--color-surface-muted);
-  }
-
-  .site-footer-link {
-    color: var(--color-text-muted);
-    font-size: 0.875rem;
-    text-decoration: none;
-  }
-
-  .site-footer-link:hover {
-    color: var(--color-primary-soft);
-  }
+  --color-warning:        #f0b458;
+  --color-warning-bg:     #332813;
 }

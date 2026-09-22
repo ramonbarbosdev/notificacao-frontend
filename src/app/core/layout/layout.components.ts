@@ -187,6 +187,14 @@ export class SidebarComponent {
       roles: ['ADMIN', 'USER'],
     },
     {
+      label: 'GitHub',
+      rota: '/app/integracoes/github',
+      icon: Share2,
+      scope: 'ORG',
+      roles: ['ADMIN'],
+      recurso: 'GITHUB_WEBHOOK',
+    },
+    {
       label: 'Configurações',
       rota: '/app/configuracoes',
       icon: Settings,

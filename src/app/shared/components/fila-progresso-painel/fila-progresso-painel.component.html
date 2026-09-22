@@ -1,10 +1,8 @@
-<div class="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-[14px] overflow-hidden h-full">
-  <div class="px-[18px] pt-4 pb-3 border-b border-[var(--color-border)]">
-    <span class="block font-mono text-[10.5px] uppercase tracking-[0.08em] text-[var(--color-text-faint)] mb-1">
-      Disparo
-    </span>
+<div class="ui-card h-full">
+  <div class="ui-card-head">
+    <span class="ui-eyebrow">Disparo</span>
     <div class="flex items-center justify-between gap-2">
-      <h2 class="m-0 text-[15px] font-semibold text-[var(--color-text)]">Fila de envio</h2>
+      <h2 class="ui-card-title">Fila de envio</h2>
       @if (aoVivo()) {
         <span class="inline-flex items-center gap-1 text-[11px] app-text-success font-medium">
           <lucide-icon [img]="aoVivoIcon" class="w-3 h-3" />
@@ -14,13 +12,13 @@
     </div>
   </div>
 
-  <div class="px-[18px] py-4 space-y-4">
+  <div class="ui-card-body space-y-4">
     <div>
-      <label class="block text-[11.5px] text-[var(--color-text-muted)] font-medium mb-2">
+      <label class="ui-field-label">
         Intervalo entre mensagens
       </label>
       <p class="m-0 text-xs text-[var(--color-text)] font-mono">{{ intervaloTexto() }}</p>
-      <p class="m-0 mt-2 text-[11px] text-[var(--color-text-faint)] leading-relaxed">
+      <p class="ui-hint m-0">
         Evita picos de envio que podem sinalizar o numero como spam na sessao do WhatsApp.
       </p>
     </div>
@@ -36,7 +34,7 @@
     }
 
     <div>
-      <label class="block text-[11.5px] text-[var(--color-text-muted)] font-medium mb-2">
+      <label class="ui-field-label">
         Progresso da fila
       </label>
 

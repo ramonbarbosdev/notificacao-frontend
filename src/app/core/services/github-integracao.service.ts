@@ -14,12 +14,46 @@ import {
   GithubWebhookIntegracaoResponse,
   GithubWebhookTemplatePreviewRequest,
   GithubWebhookTemplatePreviewResponse,
+  GithubIntegracaoHubResponse,
+  GithubIntegracaoCompartilhadoResponse,
+  GithubIntegracaoCompartilhadoPatchRequest,
+  GithubIntegracaoProjectsV2Response,
+  GithubIntegracaoProjectsV2PatchRequest,
+  GithubIntegracaoIssueCommentModuloResponse,
 } from '../../shared/types/dtos';
 
 @Injectable({ providedIn: 'root' })
 export class GithubIntegracaoService {
   private readonly http = inject(HttpClient);
   private readonly base = `${environment.apiUrl}/app/integracao/github`;
+
+  obterHub(): Observable<GithubIntegracaoHubResponse> {
+    return this.http.get<GithubIntegracaoHubResponse>(this.base);
+  }
+
+  obterCompartilhado(): Observable<GithubIntegracaoCompartilhadoResponse> {
+    return this.http.get<GithubIntegracaoCompartilhadoResponse>(`${this.base}/compartilhado`);
+  }
+
+  patchCompartilhado(
+    body: GithubIntegracaoCompartilhadoPatchRequest,
+  ): Observable<GithubIntegracaoCompartilhadoResponse> {
+    return this.http.patch<GithubIntegracaoCompartilhadoResponse>(`${this.base}/compartilhado`, body);
+  }
+
+  obterProjectsV2(): Observable<GithubIntegracaoProjectsV2Response> {
+    return this.http.get<GithubIntegracaoProjectsV2Response>(`${this.base}/modulos/projects-v2`);
+  }
+
+  patchProjectsV2(
+    body: GithubIntegracaoProjectsV2PatchRequest,
+  ): Observable<GithubIntegracaoProjectsV2Response> {
+    return this.http.patch<GithubIntegracaoProjectsV2Response>(`${this.base}/modulos/projects-v2`, body);
+  }
+
+  obterModuloIssueComment(): Observable<GithubIntegracaoIssueCommentModuloResponse> {
+    return this.http.get<GithubIntegracaoIssueCommentModuloResponse>(`${this.base}/modulos/issue-comment`);
+  }
 
   buscarInstrucoesWebhook(): Observable<GithubWebhookIntegracaoResponse> {
     return this.http.get<GithubWebhookIntegracaoResponse>(`${this.base}/webhook`);

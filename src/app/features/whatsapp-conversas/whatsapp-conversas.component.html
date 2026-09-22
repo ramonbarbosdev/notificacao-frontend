@@ -1,6 +1,39 @@
-<div class="max-w-6xl mx-auto flex flex-col gap-4 h-[calc(100vh-7rem)] min-h-[32rem]">
+<div class="ui-page-wrap flex flex-col gap-4 h-[calc(100vh-7rem)] min-h-[32rem]">
 
-  <h1 class="text-lg font-semibold text-[var(--color-text)] m-0 shrink-0">Conversas WhatsApp</h1>
+  <div class="ui-topbar shrink-0">
+    <h1 class="ui-page-title m-0">Conversas WhatsApp</h1>
+    <div class="flex flex-wrap items-center gap-2">
+      <div class="ui-session-chip">
+        <span class="ui-status-dot" [class.ui-status-dot--off]="!sessaoConectada()"></span>
+        @if (telefoneSessao()) {
+          {{ formatarTelefone(telefoneSessao()!) }}
+          {{ sessaoConectada() ? 'conectado' : 'desconectado' }}
+        } @else {
+          Sem número na sessão
+        }
+      </div>
+      <button
+        type="button"
+        (click)="abrirEnvioLote()"
+        [disabled]="!sessaoConectada()"
+        class="ui-btn ui-btn-primary !flex-none !py-2 !px-4 text-xs sm:text-sm"
+      >
+        <lucide-icon [img]="plusIcon" class="w-3.5 h-3.5" />
+        Nova mensagem
+      </button>
+      <button
+        type="button"
+        (click)="carregarStatusSessao()"
+        [disabled]="carregandoStatus()"
+        class="ui-btn ui-btn-ghost !py-2 !px-3 text-xs"
+      >
+        <lucide-icon [img]="refreshIcon" class="w-3.5 h-3.5" [class.animate-spin]="carregandoStatus()" />
+      </button>
+      <a routerLink="/app/whatsapp" class="ui-btn ui-btn-ghost !py-2 !px-3 text-xs no-underline">
+        {{ sessaoConectada() ? 'Gerenciar' : 'Conectar' }}
+      </a>
+    </div>
+  </div>
 
   @if (mensagemSucesso()) {
     <div class="rounded-xl border border-[var(--color-success-border)] bg-[var(--color-success-bg)] px-4 py-3 shrink-0">
@@ -14,62 +47,8 @@
     </div>
   }
 
-  <!-- Status da sessao -->
-  <div class="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl px-5 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 shrink-0">
-    <div class="flex items-center gap-2.5 min-w-0">
-      <span
-        class="w-2.5 h-2.5 rounded-full shrink-0"
-        [class.bg-[var(--color-success)]]="sessaoConectada()"
-        [class.bg-[var(--color-danger)]]="!sessaoConectada()"
-      ></span>
-      <div class="min-w-0">
-        <p class="font-semibold text-[15px] text-[var(--color-text)] m-0">
-          {{ sessaoConectada() ? 'Sessao conectada' : 'Sessao desconectada' }}
-        </p>
-        <p class="text-[13px] text-[var(--color-text-muted)] mt-0.5 m-0 truncate">
-          @if (telefoneSessao()) {
-            {{ formatarTelefone(telefoneSessao()!) }}
-            @if (sessaoConectada()) {
-              · pronta para receber mensagens
-            } @else {
-              · reconecte para sincronizar conversas
-            }
-          } @else {
-            Nenhum numero vinculado na sessao
-          }
-        </p>
-      </div>
-    </div>
-    <div class="flex items-center gap-2 shrink-0">
-      <button
-        type="button"
-        (click)="abrirEnvioLote()"
-        [disabled]="!sessaoConectada()"
-        class="inline-flex items-center gap-1.5 text-[13px] px-3 py-1.5 rounded-[10px] border border-[var(--color-primary)] bg-[var(--color-primary)] text-[var(--color-bg-base)] hover:bg-[var(--color-primary-hover)] disabled:opacity-50 font-semibold"
-      >
-        <lucide-icon [img]="plusIcon" class="w-3.5 h-3.5" />
-        Envio em lote
-      </button>
-      <button
-        type="button"
-        (click)="carregarStatusSessao()"
-        [disabled]="carregandoStatus()"
-        class="inline-flex items-center gap-1.5 text-[13px] px-3 py-1.5 rounded-[10px] border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] hover:bg-[var(--color-surface-muted)] disabled:opacity-50"
-      >
-        <lucide-icon [img]="refreshIcon" class="w-3.5 h-3.5" [class.animate-spin]="carregandoStatus()" />
-        Atualizar
-      </button>
-      <a
-        routerLink="/app/whatsapp"
-        class="inline-flex items-center gap-1.5 text-[13px] px-3 py-1.5 rounded-[10px] border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] hover:bg-[var(--color-surface-muted)] no-underline"
-      >
-        {{ sessaoConectada() ? 'Gerenciar' : 'Conectar' }}
-      </a>
-    </div>
-  </div>
-
   <!-- Master-detail -->
-  <div class="flex-1 min-h-0 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl overflow-hidden flex">
+  <div class="flex-1 min-h-0 ui-card overflow-hidden flex !rounded-[var(--app-radius-lg)]">
 
     <!-- Lista (esquerda) -->
     <div
@@ -541,6 +520,7 @@
   <app-whatsapp-nova-mensagem-modal
     [aberto]="modalNovaMensagemAberto()"
     [sessaoConectada]="sessaoConectada()"
+    [telefoneSessao]="telefoneSessao()"
     [conversasDisponiveis]="conversas()"
     [destinatariosIniciais]="destinatariosModal()"
     (fechado)="fecharNovaMensagem()"

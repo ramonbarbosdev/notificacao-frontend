@@ -157,6 +157,15 @@ export const routes: Routes = [
           import('./features/historico-fila/historico-fila.component').then((m) => m.HistoricoFilaComponent),
       },
       {
+        path: 'integracoes/github',
+        canActivate: [roleGuard],
+        data: { roles: ['ADMIN'] },
+        loadComponent: () =>
+          import('./features/integracoes/github/github-integracao-page.component').then(
+            (m) => m.GithubIntegracaoPageComponent,
+          ),
+      },
+      {
         path: 'configuracoes',
         canActivate: [roleGuard],
         data: { roles: ['ADMIN', 'USER'] },

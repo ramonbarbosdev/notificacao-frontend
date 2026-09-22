@@ -25,7 +25,6 @@ import {
   ApiKey,
   ApiKeyCreatedResponse,
   ApiKeyScope,
-  GithubTemplatePorCenario,
   OrganizacaoConfiguracao,
   OrganizacaoConfiguracaoRequest,
   AlertaOperacional,
@@ -46,8 +45,6 @@ import {
 } from '../../shared/labels/whatsapp-operacional.labels';
 
 import { FOCO_WHATSAPP } from '../../shared/config/product.config';
-import { validarDocumentoRegras } from './configuracoes-github-tab/github-regras-flow.util';
-import { parseRegrasPorStatus } from './configuracoes-github-tab/github-regras-por-status.util';
 import { getZodFieldErrors } from '../../shared/helper/zod-form.helper';
 import {
   AbaConfiguracaoOrganizacao,
@@ -56,7 +53,6 @@ import {
   OrganizacaoConfiguracaoFormErrors,
   schemaOrganizacaoConfigPorAba,
 } from './schemas/organizacao-configuracao-form.schema';
-import { ConfiguracoesGithubTabComponent } from './configuracoes-github-tab/configuracoes-github-tab.component';
 import {
   apiKeyFormSchema,
   ApiKeyFormData,
@@ -80,7 +76,6 @@ type AbaConfiguracao =
     LucideAngularModule,
     EmptyStateComponent,
     FormFieldComponent,
-    ConfiguracoesGithubTabComponent,
   ],
   templateUrl: './configuracoes-organizacao.component.html',
 })
@@ -102,8 +97,6 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
   protected readonly checkIcon = Check;
   protected readonly keyIcon = KeyRound;
   protected readonly webhookIcon = Webhook;
-  @ViewChild(ConfiguracoesGithubTabComponent) private githubTab?: ConfiguracoesGithubTabComponent;
-
   readonly abas: {
     id: AbaConfiguracao;
     label: string;
@@ -114,7 +107,6 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
     { id: 'geral', label: 'Geral' },
     { id: 'whatsapp', label: 'WhatsApp Sessão', recurso: 'WHATSAPP_GATEWAY' },
     { id: 'templates', label: 'Templates', recurso: 'TEMPLATES' },
-    { id: 'github', label: 'GitHub', recurso: 'GITHUB_WEBHOOK' },
     { id: 'notificacoes', label: 'Notificacoes', ocultoModoWhatsapp: true },
     { id: 'apiKeys', label: 'API Keys', adminOnly: true, recurso: 'API_PUBLICA' },
     { id: 'webhooks', label: 'Webhooks', adminOnly: true, ocultoModoWhatsapp: true, recurso: 'WEBHOOK' },
@@ -126,12 +118,6 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
     this.abas.filter((aba) => {
       if (FOCO_WHATSAPP && aba.ocultoModoWhatsapp) {
         return false;
-      }
-      if (aba.id === 'github') {
-        return (
-          this.featureFlags.habilitado('GITHUB_WEBHOOK') ||
-          this.featureFlags.habilitado('WEBHOOK_GENERICO')
-        );
       }
       if (aba.recurso && !this.featureFlags.habilitado(aba.recurso)) {
         return false;
@@ -154,9 +140,6 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
   readonly whatsappStatus = signal<WhatsappStatusResponse | null>(null);
   readonly alertasOperacionais = signal<AlertaOperacional[]>([]);
   readonly carregandoAlertas = signal(false);
-  /** Fonte de verdade dos templates por cenário (filho pode não estar montado no carregar). */
-  readonly githubTemplatesPorCenario = signal<Record<string, GithubTemplatePorCenario>>({});
-
   readonly scopes: { value: ApiKeyScope; label: string }[] = [
     { value: 'NOTIFICACOES_ENVIAR', label: 'Enviar notificacoes' },
     { value: 'NOTIFICACOES_ENVIAR_LOTE', label: 'Enviar notificacoes em lote' },
@@ -202,42 +185,7 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
     prioridadePadrao: ['NORMAL'],
     expiracaoFilaHoras: [24],
     auditoriaHabilitada: [true],
-    dsGithubFraseAtivacaoWhatsapp: [''],
-    dsGithubStatusDisparo: [''],
-    dsGithubStatusDisparoGatilhos: [''],
-    dsGithubRegrasPorStatus: [''],
     webhookRegistrarFilaSemDestinatario: [true],
-    dsGithubTemplateAssuntoWhatsapp: [''],
-    dsGithubTemplateMensagemWhatsapp: [''],
-    githubNaoNotificarMovimentador: [true],
-    githubNotificarStatusAlterado: [true],
-    githubNotificarTarefaCriada: [false],
-    githubNotificarResponsavelAlterado: [false],
-    githubNotificarTarefaAtribuida: [false],
-    githubIgnorarSemResponsavel: [true],
-    dsGithubDestinatariosModo: ['RESPONSAVEIS'],
-    dsGithubDestinatariosExtras: [''],
-    githubNotificarIssueFechadaReaberta: [false],
-    githubNotificarIssueLabel: [false],
-    githubNotificarSomenteCampoStatus: [false],
-    githubNotificarReordenacao: [false],
-    githubPrAvisarAvaliadores: [false],
-    dsGithubPrStatusDisparo: [''],
-    dsGithubPrLoginsAvaliadores: [''],
-    githubIssueAvisarAvaliadores: [false],
-    dsGithubIssueStatusDisparo: [''],
-    dsGithubOrganizationLogin: [''],
-    dsGithubProjectV2NodeId: [''],
-    nuGithubProjectV2Number: [null as number | null],
-    githubAppId: [null as number | null],
-    githubAppPrivateKey: [''],
-    githubInstallationId: [null as number | null],
-    githubGraphqlUrl: [''],
-    githubApiBaseUrl: [''],
-    githubHttpConnectTimeoutMs: [null as number | null],
-    githubHttpReadTimeoutMs: [null as number | null],
-    githubInstallationTokenSkewSegundos: [null as number | null],
-    githubGraphqlToken: [''],
   });
 
   readonly apiKeyForm = this.fb.group({
@@ -258,9 +206,6 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
 
   readonly webhookInboundHabilitadoNoPlano = () => this.featureFlags.habilitado('WEBHOOK');
   readonly webhookInboundSecretConfigurado = signal(false);
-  readonly githubGraphqlTokenConfigurado = signal(false);
-  readonly githubAppPrivateKeyConfigurado = signal(false);
-
   campoErro(campo: keyof OrganizacaoConfiguracaoFormData): string | null {
     return this.errosFormulario()[campo] ?? null;
   }
@@ -306,13 +251,23 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
       void this.router.navigateByUrl('/app/whatsapp-cloud');
       return;
     }
+    if (abaParam === 'github') {
+      const githubSecao = this.route.snapshot.queryParamMap.get('githubSecao');
+      const regrasView = this.route.snapshot.queryParamMap.get('regrasView');
+      void this.router.navigate(['/app/integracoes/github'], {
+        queryParams: {
+          ...(githubSecao ? { githubSecao } : {}),
+          ...(regrasView ? { regrasView } : {}),
+        },
+      });
+      return;
+    }
 
     const abasValidas: AbaConfiguracao[] = [
       'geral',
       'whatsapp',
       'templates',
       'notificacoes',
-      'github',
       'apiKeys',
       'webhooks',
       'usuarios',
@@ -340,12 +295,7 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
     this.configService.buscar().subscribe({
       next: (config) => {
         this.webhookInboundSecretConfigurado.set(!!config.webhookInboundSecretConfigurado);
-        this.githubGraphqlTokenConfigurado.set(!!config.githubGraphqlTokenConfigurado);
-        this.githubAppPrivateKeyConfigurado.set(!!config.githubAppPrivateKeyConfigurado);
         this.form.patchValue(this.patchConfigForm(config));
-        this.githubTemplatesPorCenario.set(config.githubTemplatesPorCenario ?? {});
-        this.githubTab?.definirTemplatesPorCenario(this.githubTemplatesPorCenario());
-        this.githubTab?.bloquearCamposConexaoAvancada();
         if (!this.isAdmin()) this.form.disable();
         this.carregando.set(false);
       },
@@ -363,12 +313,8 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
     }
 
     const abaAtual = this.aba();
-    if (!['geral', 'whatsapp', 'templates', 'notificacoes', 'github'].includes(abaAtual)) {
+    if (!['geral', 'whatsapp', 'templates', 'notificacoes'].includes(abaAtual)) {
       return;
-    }
-
-    if (abaAtual === 'github') {
-      this.githubTab?.sincronizarTemplateEditorNoFormulario();
     }
 
     this.form.markAllAsTouched();
@@ -390,21 +336,6 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
 
     this.errosFormulario.set({});
 
-    if (abaAtual === 'github') {
-      const rawRegras = String(this.form.get('dsGithubRegrasPorStatus')?.value ?? '');
-      if (rawRegras.trim()) {
-        const validacao = validarDocumentoRegras(parseRegrasPorStatus(rawRegras));
-        if (!validacao.ok) {
-          const nomes = validacao.colunasInvalidas.map((c) => c.nome).join(', ');
-          this.erro.set(
-            `No fluxograma, colunas com fluxo Geral precisam de template padrão ou cenário: ${nomes}.`,
-          );
-          this.toast.error('Regras GitHub incompletas', this.erro() ?? undefined);
-          return;
-        }
-      }
-    }
-
     if (abaAtual === 'whatsapp') {
       const webhookInboundHabilitado = this.form.controls.webhookInboundHabilitado.value;
       const webhookInboundSecret = this.form.controls.webhookInboundSecret.value;
@@ -424,53 +355,19 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
 
     const dados = this.form.getRawValue() as OrganizacaoConfiguracao & {
       webhookInboundSecret?: string;
-      githubGraphqlToken?: string;
-      githubAppPrivateKey?: string;
     };
 
     if (dados.nuTelefoneOperacional) {
       dados.nuTelefoneOperacional = normalizeBrazilWhatsappMobile(dados.nuTelefoneOperacional);
     }
 
-    if (abaAtual === 'github' || abaAtual === 'notificacoes') {
+    if (abaAtual === 'notificacoes') {
       dados.webhookRegistrarFilaSemDestinatario = !!this.form.get('webhookRegistrarFilaSemDestinatario')?.value;
     }
 
-    if (abaAtual === 'github') {
-      dados.dsGithubFraseAtivacaoWhatsapp = (dados.dsGithubFraseAtivacaoWhatsapp ?? '').trim();
-      dados.dsGithubStatusDisparo = (dados.dsGithubStatusDisparo ?? '').trim() || null;
-      dados.dsGithubStatusDisparoGatilhos = (dados.dsGithubStatusDisparoGatilhos ?? '').trim() || null;
-      dados.dsGithubRegrasPorStatus = (dados.dsGithubRegrasPorStatus ?? '').trim() || null;
-      dados.dsGithubTemplateAssuntoWhatsapp = (dados.dsGithubTemplateAssuntoWhatsapp ?? '').trim() || null;
-      dados.dsGithubTemplateMensagemWhatsapp = (dados.dsGithubTemplateMensagemWhatsapp ?? '').trim() || null;
-      dados.dsGithubDestinatariosExtras = (dados.dsGithubDestinatariosExtras ?? '').trim() || null;
-      dados.dsGithubPrStatusDisparo = (dados.dsGithubPrStatusDisparo ?? '').trim() || null;
-      dados.dsGithubPrLoginsAvaliadores = (dados.dsGithubPrLoginsAvaliadores ?? '').trim() || null;
-      dados.dsGithubIssueStatusDisparo = (dados.dsGithubIssueStatusDisparo ?? '').trim() || null;
-      dados.dsGithubOrganizationLogin = (dados.dsGithubOrganizationLogin ?? '').trim() || null;
-      dados.dsGithubProjectV2NodeId = (dados.dsGithubProjectV2NodeId ?? '').trim() || null;
-      dados.nuGithubProjectV2Number =
-        dados.nuGithubProjectV2Number != null && dados.nuGithubProjectV2Number > 0
-          ? dados.nuGithubProjectV2Number
-          : null;
-    }
-
-    const appPrivateKeyDirty = this.form.controls.githubAppPrivateKey.dirty;
     const payload: OrganizacaoConfiguracaoRequest = {
       ...dados,
       webhookInboundSecret: dados.webhookInboundSecret?.trim() || null,
-      githubAppPrivateKey: appPrivateKeyDirty ? (dados.githubAppPrivateKey?.trim() ?? '') : null,
-      ...(abaAtual === 'github'
-        ? {
-            githubAppId:
-              dados.githubAppId != null && dados.githubAppId > 0 ? dados.githubAppId : null,
-            githubInstallationId:
-              dados.githubInstallationId != null && dados.githubInstallationId > 0
-                ? dados.githubInstallationId
-                : null,
-            githubTemplatesPorCenario: this.resolverGithubTemplatesPorCenarioParaSalvar(),
-          }
-        : {}),
     };
 
     this.salvando.set(true);
@@ -479,19 +376,10 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
     this.configService.atualizar(payload).subscribe({
       next: (config) => {
         this.webhookInboundSecretConfigurado.set(!!config.webhookInboundSecretConfigurado);
-        this.githubGraphqlTokenConfigurado.set(!!config.githubGraphqlTokenConfigurado);
-        this.githubAppPrivateKeyConfigurado.set(!!config.githubAppPrivateKeyConfigurado);
         this.form.patchValue(this.patchConfigForm(config));
-        this.githubTemplatesPorCenario.set(config.githubTemplatesPorCenario ?? {});
-        this.githubTab?.definirTemplatesPorCenario(this.githubTemplatesPorCenario());
-        this.githubTab?.bloquearCamposConexaoAvancada();
         this.sucesso.set('Configurações salvas.');
         this.toast.success('Configurações salvas');
         this.salvando.set(false);
-        if (abaAtual === 'github') {
-          this.githubTab?.carregarGithubIntegracao();
-          this.githubTab?.carregarVinculoKanban();
-        }
       },
       error: (err: HttpErrorResponse) => {
         this.erro.set(this.mensagemErro(err, 'Não foi possível salvar configurações.'));
@@ -505,21 +393,6 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
     this.whatsappService.status().subscribe({ next: (status) => this.whatsappStatus.set(status) });
   }
 
-  onGithubTemplatesPorCenarioChange(mapa: Record<string, GithubTemplatePorCenario>): void {
-    this.githubTemplatesPorCenario.set({ ...mapa });
-  }
-
-  private resolverGithubTemplatesPorCenarioParaSalvar(): Record<string, GithubTemplatePorCenario> {
-    if (this.aba() === 'github') {
-      this.githubTab?.sincronizarTemplateEditorNoFormulario();
-      const doFilho = this.githubTab?.obterTemplatesPorCenarioParaSalvar();
-      if (doFilho) {
-        return doFilho;
-      }
-    }
-    return { ...this.githubTemplatesPorCenario() };
-  }
-
   private patchConfigForm(config: OrganizacaoConfiguracao): Partial<OrganizacaoConfiguracaoFormData> {
     return {
       ...(config as Partial<OrganizacaoConfiguracaoFormData>),
@@ -528,51 +401,6 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
         : '',
       webhookRegistrarFilaSemDestinatario: config.webhookRegistrarFilaSemDestinatario ?? true,
       webhookInboundSecret: '',
-      githubGraphqlToken: '',
-      githubAppPrivateKey: '',
-      githubAppId: config.githubAppId ?? null,
-      githubInstallationId: config.githubInstallationId ?? null,
-      githubGraphqlUrl: config.githubGraphqlUrl ?? '',
-      githubApiBaseUrl: config.githubApiBaseUrl ?? '',
-      githubHttpConnectTimeoutMs: config.githubHttpConnectTimeoutMs ?? null,
-      githubHttpReadTimeoutMs: config.githubHttpReadTimeoutMs ?? null,
-      githubInstallationTokenSkewSegundos: config.githubInstallationTokenSkewSegundos ?? null,
-      ...this.valoresGithubForm(config),
-    };
-  }
-
-  private valoresGithubForm(config: OrganizacaoConfiguracao): Partial<OrganizacaoConfiguracaoFormData> {
-    return {
-      dsGithubFraseAtivacaoWhatsapp: config.dsGithubFraseAtivacaoWhatsapp ?? '',
-      dsGithubStatusDisparo: config.dsGithubStatusDisparo ?? '',
-      dsGithubStatusDisparoGatilhos: config.dsGithubStatusDisparoGatilhos ?? '',
-      dsGithubRegrasPorStatus: config.dsGithubRegrasPorStatus ?? '',
-      dsGithubTemplateAssuntoWhatsapp: config.dsGithubTemplateAssuntoWhatsapp ?? '',
-      dsGithubTemplateMensagemWhatsapp: config.dsGithubTemplateMensagemWhatsapp ?? '',
-      githubNaoNotificarMovimentador: config.githubNaoNotificarMovimentador ?? true,
-      githubNotificarStatusAlterado: config.githubNotificarStatusAlterado ?? true,
-      githubNotificarTarefaCriada: config.githubNotificarTarefaCriada ?? false,
-      githubNotificarResponsavelAlterado: config.githubNotificarResponsavelAlterado ?? false,
-      githubNotificarTarefaAtribuida: config.githubNotificarTarefaAtribuida ?? false,
-      githubIgnorarSemResponsavel: config.githubIgnorarSemResponsavel ?? true,
-      dsGithubDestinatariosModo:
-        config.dsGithubDestinatariosModo === 'RESPONSAVEIS_E_MOVIMENTADOR'
-        || config.dsGithubDestinatariosModo === 'LOGINS_CONFIGURADOS'
-          ? config.dsGithubDestinatariosModo
-          : 'RESPONSAVEIS',
-      dsGithubDestinatariosExtras: config.dsGithubDestinatariosExtras ?? '',
-      githubNotificarIssueFechadaReaberta: config.githubNotificarIssueFechadaReaberta ?? false,
-      githubNotificarIssueLabel: config.githubNotificarIssueLabel ?? false,
-      githubNotificarSomenteCampoStatus: config.githubNotificarSomenteCampoStatus ?? false,
-      githubNotificarReordenacao: config.githubNotificarReordenacao ?? false,
-      githubPrAvisarAvaliadores: config.githubPrAvisarAvaliadores ?? false,
-      dsGithubPrStatusDisparo: config.dsGithubPrStatusDisparo ?? '',
-      dsGithubPrLoginsAvaliadores: config.dsGithubPrLoginsAvaliadores ?? '',
-      githubIssueAvisarAvaliadores: config.githubIssueAvisarAvaliadores ?? false,
-      dsGithubIssueStatusDisparo: config.dsGithubIssueStatusDisparo ?? '',
-      dsGithubOrganizationLogin: config.dsGithubOrganizationLogin ?? '',
-      dsGithubProjectV2NodeId: config.dsGithubProjectV2NodeId ?? '',
-      nuGithubProjectV2Number: config.nuGithubProjectV2Number ?? null,
     };
   }
 

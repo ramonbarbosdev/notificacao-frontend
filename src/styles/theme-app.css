@@ -1,0 +1,719 @@
+:root {
+  color-scheme: dark;
+  --app-bg-gradient: radial-gradient(1200px 600px at 15% -10%, rgba(52, 211, 153, 0.06), transparent 60%);
+  --app-bg:               var(--color-bg-base);
+  --app-surface:          var(--color-surface);
+  --app-surface-muted:    var(--color-surface-muted);
+  --app-border:           var(--color-border);
+  --app-border-strong:    var(--color-border-strong);
+  --app-border-soft:      var(--color-border-soft);
+  --app-text:             var(--color-text);
+  --app-text-muted:       var(--color-text-muted);
+  --app-text-subtle:      var(--color-text-subtle);
+  --app-text-faint:       var(--color-text-faint);
+  --app-primary:          var(--color-primary);
+  --app-primary-hover:    var(--color-primary-hover);
+  --app-primary-muted:    var(--color-primary-soft);
+  --app-success:          var(--color-success);
+  --app-success-bg:       var(--color-success-bg);
+  --app-success-border:   var(--color-success-border);
+  --app-danger:           var(--color-danger);
+  --app-danger-bg:        var(--color-danger-bg);
+  --app-danger-border:    var(--color-danger-border);
+  --app-radius-lg:        14px;
+  --app-font-display:     'Space Grotesk', system-ui, sans-serif;
+  --app-font-body:        'Inter', system-ui, sans-serif;
+  --app-font-mono:        'JetBrains Mono', ui-monospace, monospace;
+}
+
+@layer base {
+  body {
+    margin: 0;
+    font-family: var(--app-font-body);
+    color: var(--app-text);
+    background-color: var(--color-bg-base);
+    background-image: var(--app-bg-gradient);
+    background-attachment: fixed;
+    min-height: 100vh;
+  }
+}
+
+@layer utilities {
+  .app-page-bg {
+    min-height: 100vh;
+    background-color: var(--color-bg-base);
+    background-image: var(--app-bg-gradient);
+    background-attachment: fixed;
+  }
+
+  .font-display {
+    font-family: var(--app-font-display);
+  }
+}
+
+@layer components {
+  .app-page {
+    background-color: var(--color-bg-base);
+    background-image: var(--app-bg-gradient);
+    background-attachment: fixed;
+    color: var(--app-text);
+  }
+
+  .app-header-surface {
+    background: color-mix(in srgb, var(--color-bg-base) 80%, transparent);
+  }
+
+  .app-surface {
+    background: var(--app-surface);
+    border-color: var(--app-border);
+  }
+
+  .app-surface-muted {
+    background: var(--app-surface-muted);
+    border-color: var(--app-border-strong);
+  }
+
+  .app-title {
+    color: var(--app-text);
+    font-family: var(--app-font-display);
+  }
+
+  .app-muted {
+    color: var(--app-text-muted);
+  }
+
+  .app-subtle {
+    color: var(--app-text-subtle);
+  }
+
+  .app-faint {
+    color: var(--app-text-faint);
+  }
+
+  .app-input {
+    background: var(--app-surface-muted);
+    border-color: var(--app-border-soft);
+    color: var(--app-text);
+  }
+
+  .app-input::placeholder {
+    color: var(--app-text-subtle);
+  }
+
+  .form-input-admin {
+    width: 100%;
+    border-radius: 0.75rem;
+    border: 1px solid var(--app-border-soft);
+    background: var(--app-surface-muted);
+    color: var(--app-text);
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+    outline: none;
+    transition: box-shadow 150ms ease, border-color 150ms ease;
+  }
+
+  .form-input-admin::placeholder {
+    color: var(--app-text-subtle);
+  }
+
+  .form-input-admin:focus {
+    border-color: transparent;
+    box-shadow: 0 0 0 2px var(--app-primary);
+  }
+
+  .config-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    border: 1px solid var(--app-border);
+    border-radius: 0.75rem;
+    padding: 0.75rem 1rem;
+    color: var(--app-text);
+    font-size: 0.875rem;
+  }
+
+  .config-toggle input[type='checkbox'] {
+    width: 1rem;
+    height: 1rem;
+    accent-color: var(--app-primary);
+    cursor: pointer;
+  }
+
+  .form-checkbox-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.75rem;
+    border: 1px solid var(--app-border);
+    font-size: 0.75rem;
+    color: var(--app-text);
+    cursor: pointer;
+  }
+
+  .form-checkbox-label input[type='checkbox'] {
+    accent-color: var(--app-primary);
+  }
+
+  .app-button-primary {
+    background: var(--app-primary);
+    color: #06140e;
+  }
+
+  .app-button-primary:hover:not(:disabled) {
+    background: var(--app-primary-hover);
+  }
+
+  .app-button-success {
+    background: var(--color-success);
+    color: #06140e;
+  }
+
+  .app-button-success:hover:not(:disabled) {
+    background: var(--color-primary-hover);
+  }
+
+  .app-alert-danger {
+    background: var(--app-danger-bg);
+    border-color: var(--app-danger-border);
+    color: var(--app-danger);
+  }
+
+  .app-alert-danger-text {
+    color: var(--app-danger);
+  }
+
+  .app-alert-info {
+    background: var(--app-bg);
+    border-color: var(--app-border);
+    color: var(--color-text-muted);
+  }
+
+  .app-text-warning {
+    color: var(--color-warning);
+  }
+
+  .app-text-success {
+    color: var(--color-primary);
+  }
+
+  .app-text-info {
+    color: var(--color-info);
+  }
+
+  .app-alert-warning {
+    background: color-mix(in srgb, var(--color-warning) 10%, transparent);
+    border-color: color-mix(in srgb, var(--color-warning) 30%, transparent);
+  }
+
+  .app-alert-warning-subtle {
+    background: color-mix(in srgb, var(--color-warning) 5%, transparent);
+    border-color: color-mix(in srgb, var(--color-warning) 20%, transparent);
+  }
+
+  .app-badge-warning {
+    background: var(--color-warning-bg);
+    color: var(--color-warning);
+    border-color: color-mix(in srgb, var(--color-warning) 30%, transparent);
+  }
+
+  .app-badge-success {
+    background: var(--color-success-bg);
+    color: var(--color-success);
+    border-color: var(--color-success-border);
+  }
+
+  .app-badge-info {
+    background: color-mix(in srgb, var(--color-info) 10%, transparent);
+    color: var(--color-info);
+    border-color: color-mix(in srgb, var(--color-info) 30%, transparent);
+  }
+
+  .site-nav-link {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.75rem;
+    font-size: 0.875rem;
+    color: var(--color-text-muted);
+    text-decoration: none;
+    transition: color 150ms ease, background 150ms ease;
+  }
+
+  .site-nav-link:hover,
+  .site-nav-active {
+    color: var(--color-text);
+    background: var(--color-accent-soft);
+    box-shadow: inset 0 0 0 1px var(--color-success-border);
+  }
+
+  .site-btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.625rem 1rem;
+    border-radius: 0.75rem;
+    background: var(--color-primary);
+    color: #06140e;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background 150ms ease;
+  }
+
+  .site-btn-primary:hover {
+    background: var(--color-primary-hover);
+  }
+
+  .site-btn-ghost {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.625rem 1rem;
+    border-radius: 0.75rem;
+    border: 1px solid var(--color-border-soft);
+    color: var(--color-text-muted);
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: border-color 150ms ease, background 150ms ease;
+  }
+
+  .site-btn-ghost:hover {
+    border-color: var(--color-border);
+    background: var(--color-surface-muted);
+    color: var(--color-text);
+  }
+
+  .site-footer-link {
+    color: var(--color-text-muted);
+    font-size: 0.875rem;
+    text-decoration: none;
+  }
+
+  .site-footer-link:hover {
+    color: var(--color-primary);
+  }
+
+  /* --- UI kit (whatsapp-envio-mensagens.html) --- */
+  .ui-page-wrap {
+    max-width: 1180px;
+    margin-left: auto;
+    margin-right: auto;
+    width: 100%;
+  }
+
+  .ui-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.375rem;
+    flex-wrap: wrap;
+  }
+
+  .ui-page-title {
+    font-family: var(--app-font-display);
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    color: var(--color-text);
+  }
+
+  .ui-session-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.4375rem 0.875rem;
+    border: 1px solid var(--color-border);
+    border-radius: 999px;
+    font-size: 0.8125rem;
+    color: var(--color-text-muted);
+    background: var(--color-surface);
+  }
+
+  .ui-status-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--color-primary);
+    box-shadow: 0 0 0 3px var(--color-success-bg);
+    flex-shrink: 0;
+  }
+
+  .ui-status-dot--off {
+    background: var(--color-danger);
+    box-shadow: 0 0 0 3px var(--color-danger-bg);
+  }
+
+  .ui-compose-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.125rem;
+    align-items: start;
+  }
+
+  @media (min-width: 1024px) {
+    .ui-compose-grid {
+      grid-template-columns: minmax(260px, 300px) minmax(0, 1fr) minmax(260px, 300px);
+    }
+  }
+
+  .ui-card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--app-radius-lg);
+    overflow: hidden;
+  }
+
+  .ui-card-head {
+    padding: 1rem 1.125rem 0.75rem;
+    border-bottom: 1px solid var(--color-border-soft);
+  }
+
+  .ui-eyebrow {
+    font-family: var(--app-font-mono);
+    font-size: 10.5px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-text-faint);
+    margin-bottom: 0.25rem;
+    display: block;
+  }
+
+  .ui-card-title {
+    margin: 0;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    font-family: var(--app-font-display);
+    color: var(--color-text);
+  }
+
+  .ui-card-body {
+    padding: 1rem 1.125rem;
+  }
+
+  .ui-card-footer {
+    padding: 0.75rem 1.125rem;
+    border-top: 1px solid var(--color-border-soft);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+  }
+
+  .ui-card-footer strong,
+  .ui-card-footer b {
+    color: var(--color-primary);
+    font-family: var(--app-font-mono);
+    font-weight: 600;
+  }
+
+  .ui-mode-toggle {
+    display: flex;
+    background: var(--color-surface-muted);
+    border: 1px solid var(--color-border-soft);
+    border-radius: 10px;
+    padding: 3px;
+    margin-bottom: 0.875rem;
+  }
+
+  .ui-mode-toggle button {
+    flex: 1;
+    border: none;
+    background: transparent;
+    color: var(--color-text-muted);
+    font-family: var(--app-font-body);
+    font-size: 12.5px;
+    font-weight: 500;
+    padding: 0.5rem 0;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 150ms ease, color 150ms ease, box-shadow 150ms ease;
+  }
+
+  .ui-mode-toggle button.active {
+    background: var(--color-success-bg);
+    color: var(--color-primary);
+    box-shadow: inset 0 0 0 1px var(--color-success-border);
+  }
+
+  .ui-search-mini {
+    width: 100%;
+    background: var(--color-surface-muted);
+    border: 1px solid var(--color-border-soft);
+    border-radius: 9px;
+    padding: 0.5625rem 0.75rem;
+    color: var(--color-text);
+    font-size: 12.5px;
+    margin-bottom: 0.75rem;
+    font-family: var(--app-font-body);
+    outline: none;
+  }
+
+  .ui-search-mini::placeholder {
+    color: var(--color-text-faint);
+  }
+
+  .ui-search-mini:focus {
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 35%, transparent);
+  }
+
+  .ui-contact-row {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    padding: 0.5625rem 0.5rem;
+    border-radius: 9px;
+    cursor: pointer;
+    border: none;
+    width: 100%;
+    text-align: left;
+    background: transparent;
+    color: inherit;
+  }
+
+  .ui-contact-row:hover {
+    background: var(--color-surface-muted);
+  }
+
+  .ui-check-box {
+    width: 17px;
+    height: 17px;
+    border-radius: 5px;
+    border: 1.5px solid var(--color-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .ui-check-box.checked {
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+    color: #06140e;
+  }
+
+  .ui-contact-badge {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: var(--color-success-bg);
+    color: var(--color-primary);
+    font-size: 10px;
+    font-weight: 600;
+    font-family: var(--app-font-mono);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .ui-divider-label {
+    font-size: 10.5px;
+    color: var(--color-text-faint);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin: 0.875rem 0 0.5rem;
+    font-family: var(--app-font-mono);
+  }
+
+  .ui-csv-drop {
+    border: 1.5px dashed var(--color-border);
+    border-radius: 10px;
+    padding: 1rem 0.75rem;
+    text-align: center;
+    color: var(--color-text-faint);
+    font-size: 11.5px;
+    line-height: 1.5;
+  }
+
+  .ui-var-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    background: var(--color-success-bg);
+    color: var(--color-primary);
+    border: 1px solid var(--color-success-border);
+    border-radius: 6px;
+    padding: 0.1875rem 0.5rem;
+    font-size: 11px;
+    font-family: var(--app-font-mono);
+    margin-right: 0.375rem;
+    margin-bottom: 0.375rem;
+    cursor: pointer;
+  }
+
+  .ui-compose-textarea {
+    width: 100%;
+    min-height: 8.125rem;
+    background: var(--color-surface-muted);
+    border: 1px solid var(--color-border-soft);
+    border-radius: 10px;
+    padding: 0.75rem 0.875rem;
+    color: var(--color-text);
+    font-family: var(--app-font-body);
+    font-size: 13.5px;
+    line-height: 1.6;
+    resize: vertical;
+    outline: none;
+  }
+
+  .ui-compose-textarea::placeholder {
+    color: var(--color-text-faint);
+  }
+
+  .ui-compose-textarea:focus {
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 35%, transparent);
+  }
+
+  .ui-preview-label {
+    font-size: 10.5px;
+    color: var(--color-text-faint);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin: 1rem 0 0.5rem;
+    font-family: var(--app-font-mono);
+  }
+
+  .ui-bubble-wrap {
+    background: #0d1219;
+    border: 1px solid var(--color-border-soft);
+    border-radius: 10px;
+    padding: 1rem;
+  }
+
+  .ui-bubble {
+    background: var(--color-surface-muted);
+    border-radius: 10px 10px 10px 2px;
+    padding: 0.625rem 0.75rem;
+    font-size: 13px;
+    line-height: 1.55;
+    max-width: 88%;
+    color: var(--color-text);
+  }
+
+  .ui-bubble-time {
+    font-size: 10px;
+    color: var(--color-text-faint);
+    margin-top: 0.375rem;
+    font-family: var(--app-font-mono);
+  }
+
+  .ui-send-row {
+    display: flex;
+    gap: 0.625rem;
+    margin-top: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .ui-btn {
+    border: none;
+    border-radius: 10px;
+    padding: 0.6875rem 1.125rem;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: var(--app-font-body);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4375rem;
+    transition: background 150ms ease, opacity 150ms ease;
+  }
+
+  .ui-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .ui-btn-primary {
+    background: var(--color-primary);
+    color: #06140e;
+    flex: 1;
+    min-width: 10rem;
+  }
+
+  .ui-btn-primary:hover:not(:disabled) {
+    background: var(--color-primary-hover);
+  }
+
+  .ui-btn-ghost {
+    background: var(--color-surface-muted);
+    color: var(--color-text-muted);
+    border: 1px solid var(--color-border-soft);
+  }
+
+  .ui-btn-ghost:hover:not(:disabled) {
+    color: var(--color-text);
+    border-color: var(--color-border);
+  }
+
+  .ui-field-label {
+    display: block;
+    font-size: 11.5px;
+    color: var(--color-text-muted);
+    margin-bottom: 0.4375rem;
+    font-weight: 500;
+  }
+
+  .ui-hint {
+    font-size: 11px;
+    color: var(--color-text-faint);
+    margin-top: 0.5rem;
+    line-height: 1.5;
+  }
+
+  .ui-queue-strip {
+    display: flex;
+    gap: 5px;
+    align-items: flex-end;
+    height: 36px;
+  }
+
+  .ui-queue-tick {
+    flex: 1;
+    background: var(--color-border-soft);
+    border-radius: 3px;
+    height: 10px;
+    transition: background 0.3s ease, height 0.3s ease;
+  }
+
+  .ui-queue-tick--pending {
+    height: 14px;
+    background: color-mix(in srgb, var(--color-warning) 55%, var(--color-border-soft));
+  }
+
+  .ui-queue-tick--sent {
+    background: var(--color-primary);
+    height: 26px;
+  }
+
+  .ui-status-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11.5px;
+    margin-top: 0.625rem;
+    color: var(--color-text-muted);
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+
+  .ui-status-row .n {
+    font-family: var(--app-font-mono);
+    font-weight: 500;
+  }
+
+  .ui-status-row .ok .n {
+    color: var(--color-primary);
+  }
+
+  .ui-status-row .wait .n {
+    color: var(--color-warning);
+  }
+}

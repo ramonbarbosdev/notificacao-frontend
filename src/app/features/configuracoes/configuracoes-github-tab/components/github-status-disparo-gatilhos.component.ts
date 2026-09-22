@@ -1,7 +1,7 @@
 import { Component, Input, inject } from '@angular/core';
 import { FormGroup, ReactiveFormsModule } from '@angular/forms';
 
-import { OrganizacaoConfiguracaoFormData } from '../../schemas/organizacao-configuracao-form.schema';
+import { OrganizacaoConfiguracaoFormData } from '../../../integracoes/github/schemas/github-integracao-form.schema';
 
 export interface GithubGatilhoFiltroOpcao {
   id: keyof OrganizacaoConfiguracaoFormData | string;

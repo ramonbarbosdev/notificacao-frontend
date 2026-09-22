@@ -12,7 +12,7 @@ import { FeatureFlagStore } from '../services/feature-flag.store';
   standalone: true,
   imports: [RouterModule, SidebarComponent, HeaderComponent, StatusEnvioBannerComponent],
   template: `
-    <div class="min-h-screen bg-[var(--color-bg-base)]">
+    <div class="app-page-bg">
       @if (layout.sidebarAberta()) {
         <button
           type="button"

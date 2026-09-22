@@ -6,6 +6,8 @@ import {
 
   Component,
 
+  computed,
+
   effect,
 
   inject,
@@ -112,9 +114,15 @@ export class WhatsappNovaMensagemModalComponent {
 
   readonly sessaoConectada = input(false);
 
+  readonly telefoneSessao = input<string | null>(null);
+
   readonly conversasDisponiveis = input<WhatsappConversaResponse[]>([]);
 
   readonly destinatariosIniciais = input<DestinatarioNovaMensagem[]>([]);
+
+  readonly delayMinSegundos = input<number | null>(3);
+
+  readonly delayMaxSegundos = input<number | null>(8);
 
 
 
@@ -144,6 +152,8 @@ export class WhatsappNovaMensagemModalComponent {
 
   readonly telefonesSelecionados = signal<Set<string>>(new Set());
 
+  readonly buscaContato = signal('');
+
 
 
   readonly formLote = this.fb.group({
@@ -159,6 +169,46 @@ export class WhatsappNovaMensagemModalComponent {
   readonly limiteLote = LIMITE_DESTINATARIOS_LOTE;
 
   readonly formatarTelefone = formatPhone;
+
+  readonly conversasFiltradas = computed(() => {
+    const termo = this.buscaContato().trim().toLowerCase();
+    const lista = this.conversasDisponiveis();
+    if (!termo) {
+      return lista;
+    }
+    return lista.filter((conversa) => {
+      const nome = (conversa.nmContato ?? '').toLowerCase();
+      const telefone = conversa.telefone.toLowerCase();
+      return nome.includes(termo) || telefone.includes(termo);
+    });
+  });
+
+  readonly totalSelecionados = computed(() => this.destinatariosLote().length);
+
+  readonly totalLista = computed(() => this.conversasDisponiveis().length);
+
+  readonly ticksPrevia = computed(() => {
+    const total = Math.min(this.totalSelecionados(), 14);
+    return Array.from({ length: total }, (_, indice) => indice);
+  });
+
+  readonly previewLabel = computed(() => {
+    const primeiro = this.destinatariosLote()[0];
+    if (!primeiro) {
+      return 'Pré-visualização';
+    }
+    const alvo = primeiro.nome?.trim() || this.formatarTelefone(primeiro.telefone);
+    return `Pré-visualização · ${alvo}`;
+  });
+
+  readonly textoIntervaloFila = computed(() => {
+    const min = this.delayMinSegundos();
+    const max = this.delayMaxSegundos();
+    if (min != null && max != null) {
+      return `${min} a ${max} segundos, aleatório`;
+    }
+    return 'Configurado pela organização (aleatório entre envios)';
+  });
 
 
 
@@ -229,6 +279,26 @@ export class WhatsappNovaMensagemModalComponent {
     this.modoLote.set(modo);
 
     this.erro.set(null);
+
+  }
+
+
+
+  atualizarBusca(event: Event): void {
+
+    const valor = (event.target as HTMLInputElement).value;
+
+    this.buscaContato.set(valor);
+
+  }
+
+
+
+  badgeTelefone(telefone: string): string {
+
+    const canonico = normalizeBrazilWhatsappMobile(telefone);
+
+    return canonico.slice(0, 2) || '—';
 
   }
 
@@ -553,6 +623,8 @@ export class WhatsappNovaMensagemModalComponent {
     this.telefonesSelecionados.set(new Set());
 
     this.modoLote.set('selecao');
+
+    this.buscaContato.set('');
 
     this.erro.set(null);
 

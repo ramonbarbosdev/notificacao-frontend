@@ -798,6 +798,87 @@ export type GithubDestinatariosModo =
   | 'RESPONSAVEIS_E_MOVIMENTADOR'
   | 'LOGINS_CONFIGURADOS';
 
+export interface GithubIntegracaoModuloStatus {
+  codigo: string;
+  titulo: string;
+  habilitado: boolean;
+  implementado: boolean;
+}
+
+export interface GithubIntegracaoHubResponse {
+  idOrganizacao: number;
+  featureHabilitada: boolean;
+  modulos: GithubIntegracaoModuloStatus[];
+}
+
+export interface GithubIntegracaoCompartilhadoResponse {
+  idOrganizacao: number;
+  dsGithubFraseAtivacaoWhatsapp: string | null;
+  dsGithubOrganizationLogin: string | null;
+  githubGraphqlTokenConfigurado: boolean;
+  githubAppId: number | null;
+  githubInstallationId: number | null;
+  githubAppPrivateKeyConfigurado: boolean;
+  githubGraphqlUrl: string | null;
+  githubApiBaseUrl: string | null;
+  githubHttpConnectTimeoutMs: number | null;
+  githubHttpReadTimeoutMs: number | null;
+  githubInstallationTokenSkewSegundos: number | null;
+}
+
+export type GithubIntegracaoCompartilhadoPatchRequest = Partial<{
+  dsGithubFraseAtivacaoWhatsapp: string | null;
+  dsGithubOrganizationLogin: string | null;
+  githubGraphqlToken: string | null;
+  githubAppId: number | null;
+  githubInstallationId: number | null;
+  githubAppPrivateKey: string | null;
+  githubGraphqlUrl: string | null;
+  githubApiBaseUrl: string | null;
+  githubHttpConnectTimeoutMs: number | null;
+  githubHttpReadTimeoutMs: number | null;
+  githubInstallationTokenSkewSegundos: number | null;
+}>;
+
+export interface GithubIntegracaoProjectsV2Response {
+  habilitado: boolean;
+  dsGithubProjectV2NodeId: string | null;
+  nuGithubProjectV2Number: number | null;
+  dsGithubStatusDisparo: string | null;
+  dsGithubStatusDisparoGatilhos: string | null;
+  dsGithubRegrasPorStatus: string | null;
+  dsGithubTemplateAssuntoWhatsapp: string | null;
+  dsGithubTemplateMensagemWhatsapp: string | null;
+  githubTemplatesPorCenario: Record<string, GithubTemplatePorCenario> | null;
+  githubNaoNotificarMovimentador: boolean | null;
+  githubNotificarStatusAlterado: boolean | null;
+  githubNotificarTarefaCriada: boolean | null;
+  githubNotificarResponsavelAlterado: boolean | null;
+  githubNotificarTarefaAtribuida: boolean | null;
+  githubIgnorarSemResponsavel: boolean | null;
+  dsGithubDestinatariosModo: GithubDestinatariosModo | string | null;
+  dsGithubDestinatariosExtras: string | null;
+  githubNotificarIssueFechadaReaberta: boolean | null;
+  githubNotificarIssueLabel: boolean | null;
+  githubNotificarSomenteCampoStatus: boolean | null;
+  githubNotificarReordenacao: boolean | null;
+  githubPrAvisarAvaliadores: boolean | null;
+  dsGithubPrStatusDisparo: string | null;
+  dsGithubPrLoginsAvaliadores: string | null;
+  githubIssueAvisarAvaliadores: boolean | null;
+  dsGithubIssueStatusDisparo: string | null;
+}
+
+export type GithubIntegracaoProjectsV2PatchRequest = Partial<
+  Omit<GithubIntegracaoProjectsV2Response, 'habilitado'>
+>;
+
+export interface GithubIntegracaoIssueCommentModuloResponse {
+  habilitado: boolean;
+  implementado: boolean;
+  versao: number;
+}
+
 export interface GithubWebhookTemplateVariavel {
   chave: string;
   titulo: string;

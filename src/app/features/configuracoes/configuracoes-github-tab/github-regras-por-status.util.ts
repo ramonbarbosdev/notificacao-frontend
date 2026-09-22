@@ -1,7 +1,7 @@
 import { FormGroup } from '@angular/forms';
 
 import { GithubProjectV2StatusOpcao } from '../../../shared/types/dtos';
-import { OrganizacaoConfiguracaoFormData } from '../schemas/organizacao-configuracao-form.schema';
+import { OrganizacaoConfiguracaoFormData } from '../../integracoes/github/schemas/github-integracao-form.schema';
 
 export interface GithubRegraColunaAoEntrar {
   fluxoGeral: boolean;
