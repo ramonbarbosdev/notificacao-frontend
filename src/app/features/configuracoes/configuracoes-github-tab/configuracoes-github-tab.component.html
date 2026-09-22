@@ -663,7 +663,6 @@
             [carregandoLoginsGithub]="carregandoResponsaveis()"
             (irParaSecao)="selecionarSubAba($event)"
             (abrirEventosGerais)="selecionarRegrasView('eventos')"
-            (editarMensagem)="editarMensagemDoFluxo($event)"
           />
         } @else {
           <app-github-regras-eventos-gerais
@@ -680,49 +679,5 @@
       <app-github-webhook-decisoes-panel />
     }
 
-    @case ('mensagem') {
-      <div class="border border-[var(--color-border)] rounded-2xl p-5 md:p-6 space-y-6 max-w-xl">
-        <h3 class="text-base font-semibold text-[var(--color-text)]">Template WhatsApp (GitHub)</h3>
-        <p class="text-xs text-[var(--color-text-muted)]">
-          Variáveis <code class="text-[11px]">{{'{{variavel}}'}}</code> são substituídas no envio.
-          {{ quantidadeTemplatesPorCenarioSalvos() }} tipo(s) com template dedicado no editor.
-        </p>
-        <div class="rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-base)] p-4 space-y-3">
-          <div class="max-w-[85%] ml-auto rounded-xl rounded-tr-sm bg-[#005c4b] px-3 py-2 text-sm text-[#e9edef] shadow-sm">
-            <p class="text-[10px] uppercase tracking-wide text-[#99beb3] mb-1 font-sans">Assunto</p>
-            <p class="font-sans text-sm leading-snug">{{ resumoGithubTemplateAssunto() }}</p>
-          </div>
-          <div class="max-w-[90%] rounded-xl rounded-tl-sm bg-[#202c33] px-3 py-2 text-sm text-[#e9edef] font-sans leading-relaxed whitespace-pre-wrap">
-            {{ resumoGithubTemplateMensagem() }}
-          </div>
-        </div>
-        @if (campoErro('dsGithubTemplateAssuntoWhatsapp') || campoErro('dsGithubTemplateMensagemWhatsapp')) {
-          <p class="text-xs text-[var(--color-danger)]">
-            {{ campoErro('dsGithubTemplateAssuntoWhatsapp') || campoErro('dsGithubTemplateMensagemWhatsapp') }}
-          </p>
-        }
-        <button
-          type="button"
-          class="px-4 py-2 rounded-xl border border-[var(--color-border)] text-sm flex items-center gap-2 text-[var(--color-text)] hover:bg-[var(--color-surface-muted)]"
-          (click)="abrirEditorTemplateGithub()"
-        >
-          <lucide-icon [img]="editTemplateIcon" class="w-4 h-4" />
-          Abrir editor de template
-        </button>
-      </div>
-    }
   }
 </section>
-
-<app-github-whatsapp-template-modal
-  [aberto]="modalTemplateGithubAberto()"
-  [cenarioIdInicialAoAbrir]="modalTemplateGithubCenarioInicial()"
-  [assuntoFallback]="form.get('dsGithubTemplateAssuntoWhatsapp')?.value ?? ''"
-  [mensagemFallback]="form.get('dsGithubTemplateMensagemWhatsapp')?.value ?? ''"
-  [templatesPorCenarioInicial]="templatesPorCenario()"
-  [integracao]="githubIntegracao()"
-  [carregandoIntegracao]="carregandoGithubIntegracao()"
-  (fechado)="fecharEditorTemplateGithub()"
-  (aplicado)="aplicarTemplateGithub($event)"
-  (salvarNoServidor)="onSalvarTemplateNoServidor($event)"
-/>

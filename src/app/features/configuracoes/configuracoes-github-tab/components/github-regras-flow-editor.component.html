@@ -438,7 +438,7 @@
 
                       />
 
-                      Template padrão (global)
+                      Texto padrão da API (sem personalização)
 
                     </label>
 
@@ -450,69 +450,29 @@
 
                         name="modo-mensagem-{{ optionId }}"
 
-                        [checked]="modoMensagem(col) === 'cenario'"
-
-                        (change)="alterarModoMensagem(optionId, 'cenario')"
-
-                      />
-
-                      Tipo de evento (compartilhado entre colunas)
-
-                    </label>
-
-                    <label class="flex items-center gap-2">
-
-                      <input
-
-                        type="radio"
-
-                        name="modo-mensagem-{{ optionId }}"
-
-                        [checked]="modoMensagem(col) === 'coluna'"
+                        [checked]="mensagemPersonalizadaColuna(col)"
 
                         (change)="alterarModoMensagem(optionId, 'coluna')"
 
                       />
 
-                      Texto só desta coluna
+                      Texto desta coluna
 
                     </label>
 
                   </div>
 
-                  @if (modoMensagem(col) === 'cenario') {
-
-                    <select
-
-                      class="form-input-admin text-sm w-full max-w-md"
-
-                      [value]="col.mensagem.cenarioId ?? ''"
-
-                      (change)="alterarMensagemCenario(optionId, $any($event.target).value)"
-
-                    >
-
-                      <option value="">Selecione um cenário</option>
-
-                      @for (c of cenariosEditor(); track c.id) {
-
-                        <option [value]="c.id">{{ c.label }}</option>
-
-                      }
-
-                    </select>
-
-                  }
-
-                  @if (modoMensagem(col) === 'coluna') {
+                  @if (mensagemPersonalizadaColuna(col)) {
 
                     <p class="text-xs text-[var(--color-text-muted)] mb-2">
 
-                      Use variáveis como <code class="text-[11px]">{{'{{titulo}}'}}</code>,
+                      Variáveis: <code class="text-[11px]">{{'{{nome_destinatario}}'}}</code>,
+
+                      <code class="text-[11px]">{{'{{titulo}}'}}</code>,
 
                       <code class="text-[11px]">{{'{{status}}'}}</code>,
 
-                      <code class="text-[11px]">{{'{{url}}'}}</code>. Só dispara ao entrar nesta coluna.
+                      <code class="text-[11px]">{{'{{url}}'}}</code>.
 
                     </p>
 
@@ -542,49 +502,15 @@
 
                     ></textarea>
 
-                  }
+                  } @else {
 
-                  @if (modoMensagem(col) !== 'coluna') {
+                    <p class="text-xs text-[var(--color-text-muted)] m-0">
 
-                    <p class="text-xs text-[var(--color-text-muted)] mb-2">
+                      Usa o modelo fixo da API para esta organização. Para mensagens diferentes por coluna, escolha
 
-                      @if (modoMensagem(col) === 'padrao') {
-
-                        O texto vem do template global da organização (aba Mensagem).
-
-                      } @else {
-
-                        O texto é o template salvo para o tipo de evento; o mesmo cenário em outra coluna usa o mesmo texto.
-
-                      }
+                      <strong>Texto desta coluna</strong>.
 
                     </p>
-
-                    <button
-
-                      type="button"
-
-                      class="px-3 py-2 rounded-xl border border-[var(--color-border)] text-sm flex items-center gap-2 text-[var(--color-text)] hover:bg-[var(--color-surface-muted)] disabled:opacity-45 disabled:cursor-not-allowed"
-
-                      [disabled]="!podeEditarTextoMensagem(col)"
-
-                      (click)="solicitarEditarTextoMensagem(col)"
-
-                    >
-
-                      <lucide-icon [img]="editIcon" class="w-4 h-4" />
-
-                      @if (modoMensagem(col) === 'padrao') {
-
-                        Editar template padrão
-
-                      } @else {
-
-                        Editar texto do cenário
-
-                      }
-
-                    </button>
 
                   }
 

@@ -25,7 +25,7 @@ import {
   githubIntegracaoFormSchema,
 } from './schemas/github-integracao-form.schema';
 
-const SECOES_MODULO: GithubSubAba[] = ['kanban', 'regras', 'mensagem'];
+const SECOES_MODULO: GithubSubAba[] = ['kanban', 'regras'];
 
 @Component({
   selector: 'app-github-projects-v2-modulo-page',
@@ -113,6 +113,10 @@ export class GithubProjectsV2ModuloPageComponent implements OnInit {
 
   ngOnInit(): void {
     const secao = this.route.snapshot.paramMap.get('secao');
+    if (secao === 'mensagem') {
+      void this.router.navigate(['/app/integracoes/github/modulos/projects-v2/regras'], { replaceUrl: true });
+      return;
+    }
     if (secao && !SECOES_MODULO.includes(secao as GithubSubAba)) {
       void this.router.navigate(['/app/integracoes/github/modulos/projects-v2/kanban'], { replaceUrl: true });
     }

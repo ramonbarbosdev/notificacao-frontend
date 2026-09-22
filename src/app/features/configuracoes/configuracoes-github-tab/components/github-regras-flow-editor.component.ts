@@ -49,10 +49,6 @@ import {
 
 export type GithubFlowNoEdicao = 'tipos' | 'destinatarios' | 'mensagem' | null;
 
-export type GithubFlowEditarMensagemEvento =
-  | { modo: 'padrao' }
-  | { modo: 'cenario'; cenarioId: string };
-
 @Component({
   selector: 'app-github-regras-flow-editor',
   standalone: true,
@@ -68,9 +64,8 @@ export class GithubRegrasFlowEditorComponent implements OnChanges {
   @Input() loginsGithubSugeridos: GithubLoginSugerido[] = [];
   @Input() carregandoLoginsGithub = false;
 
-  readonly irParaSecao = output<'conexao' | 'kanban' | 'mensagem'>();
+  readonly irParaSecao = output<'conexao' | 'kanban'>();
   readonly abrirEventosGerais = output<void>();
-  readonly editarMensagem = output<GithubFlowEditarMensagemEvento>();
 
   protected readonly linkIcon = Link2;
   protected readonly gridIcon = LayoutGrid;
@@ -338,28 +333,8 @@ export class GithubRegrasFlowEditorComponent implements OnChanges {
     return labelMensagem(regra, this.cenariosMap());
   }
 
-  podeEditarTextoMensagem(regra: GithubRegraColuna): boolean {
+  mensagemPersonalizadaColuna(regra: GithubRegraColuna): boolean {
     const modo = this.modoMensagem(regra);
-    if (modo === 'coluna') {
-      return false;
-    }
-    if (modo === 'padrao') {
-      return true;
-    }
-    return !!regra.mensagem.cenarioId?.trim();
-  }
-
-  solicitarEditarTextoMensagem(regra: GithubRegraColuna): void {
-    const modo = this.modoMensagem(regra);
-    if (modo === 'padrao') {
-      this.editarMensagem.emit({ modo: 'padrao' });
-      return;
-    }
-    if (modo === 'cenario') {
-      const cenarioId = regra.mensagem.cenarioId?.trim();
-      if (cenarioId) {
-        this.editarMensagem.emit({ modo: 'cenario', cenarioId });
-      }
-    }
+    return modo === 'coluna' || modo === 'cenario';
   }
 }

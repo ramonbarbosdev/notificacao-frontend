@@ -22,8 +22,6 @@ import {
   LoaderCircle,
   LucideAngularModule,
   LucideIconData,
-  MessageSquare,
-  PencilLine,
   ScrollText,
   UserCheck,
   Users,
@@ -54,19 +52,12 @@ import {
   OrganizacaoConfiguracaoFormErrors,
 } from '../../integracoes/github/schemas/github-integracao-form.schema';
 import {
-  GithubWhatsappTemplateAplicado,
-  GithubWhatsappTemplateModalComponent,
-} from '../github-whatsapp-template-modal/github-whatsapp-template-modal.component';
-import {
   GithubIntegracaoStatusItem,
   GithubIntegracaoStatusStripComponent,
 } from './components/github-integracao-status-strip.component';
 import { GithubProjectV2CardComponent } from './components/github-project-v2-card.component';
 import { GithubRegrasEventosGeraisComponent } from './components/github-regras-eventos-gerais.component';
-import {
-  GithubFlowEditarMensagemEvento,
-  GithubRegrasFlowEditorComponent,
-} from './components/github-regras-flow-editor.component';
+import { GithubRegrasFlowEditorComponent } from './components/github-regras-flow-editor.component';
 import { GithubWebhookDecisoesPanelComponent } from './components/github-webhook-decisoes-panel.component';
 import { corStatusGithubProject } from './github-status-color.util';
 
@@ -90,7 +81,6 @@ export type GithubRegrasView = 'fluxos' | 'eventos';
     RouterModule,
     LucideAngularModule,
     FormFieldComponent,
-    GithubWhatsappTemplateModalComponent,
     GithubIntegracaoStatusStripComponent,
     GithubProjectV2CardComponent,
     GithubWebhookDecisoesPanelComponent,
@@ -117,7 +107,6 @@ export class ConfiguracoesGithubTabComponent implements OnInit {
   readonly secaoAtiva = input<GithubSubAba | null>(null);
   readonly secaoChange = output<GithubSubAba>();
 
-  private readonly templateModal = viewChild(GithubWhatsappTemplateModalComponent);
   private readonly regrasFlowEditor = viewChild(GithubRegrasFlowEditorComponent);
 
   readonly githubDefaultGraphqlUrl = GITHUB_DEFAULT_GRAPHQL_URL;
@@ -127,7 +116,6 @@ export class ConfiguracoesGithubTabComponent implements OnInit {
   readonly githubDefaultInstallationTokenSkewSegundos = GITHUB_DEFAULT_INSTALLATION_TOKEN_SKEW_SEGUNDOS;
 
   protected readonly loaderIcon = LoaderCircle;
-  protected readonly editTemplateIcon = PencilLine;
   protected readonly copyIcon = Copy;
   protected readonly linkIcon = Link2;
   readonly corStatusGithub = corStatusGithubProject;
@@ -149,15 +137,10 @@ export class ConfiguracoesGithubTabComponent implements OnInit {
   readonly carregandoProjects = signal(false);
   readonly statusOpcoesKanban = signal<GithubProjectV2StatusOpcao[]>([]);
   readonly carregandoStatusOpcoes = signal(false);
-  readonly modalTemplateGithubAberto = signal(false);
-  readonly modalTemplateGithubCenarioInicial = signal<string | null>(null);
   readonly templatesPorCenario = signal<Record<string, GithubTemplatePorCenario>>({});
 
   constructor() {
     effect(() => {
-      if (this.modalTemplateGithubAberto()) {
-        return;
-      }
       const mapa = this.templatesPorCenarioServidor();
       this.templatesPorCenario.set(mapa ? { ...mapa } : {});
     });
@@ -251,14 +234,7 @@ export class ConfiguracoesGithubTabComponent implements OnInit {
       id: 'regras',
       label: 'Regras',
       icon: Bell,
-      descricaoCurta: 'Gatilhos, destinatários e status que disparam WhatsApp.',
-      escopo: 'modulo',
-    },
-    {
-      id: 'mensagem',
-      label: 'Mensagem',
-      icon: MessageSquare,
-      descricaoCurta: 'Template WhatsApp e textos por tipo de evento.',
+      descricaoCurta: 'Fluxos por coluna, gatilhos e destinatários do WhatsApp.',
       escopo: 'modulo',
     },
     {
@@ -362,7 +338,6 @@ export class ConfiguracoesGithubTabComponent implements OnInit {
       || secao === 'equipe'
       || secao === 'habilitados'
       || secao === 'regras'
-      || secao === 'mensagem'
       || secao === 'eventos'
     ) {
       this.githubSubAba.set(secao);
@@ -614,47 +589,12 @@ export class ConfiguracoesGithubTabComponent implements OnInit {
     return this.githubIntegracaoService.montarUrlWebhookAbsoluta(info.webhookUrlTemplate);
   }
 
-  abrirEditorTemplateGithub(cenarioIdInicial?: string | null): void {
-    this.modalTemplateGithubCenarioInicial.set(cenarioIdInicial ?? null);
-    this.modalTemplateGithubAberto.set(true);
-    if (!this.githubIntegracao() && !this.carregandoGithubIntegracao()) {
-      this.carregarGithubIntegracao();
-    }
-  }
-
-  editarMensagemDoFluxo(evento: GithubFlowEditarMensagemEvento): void {
-    if (evento.modo === 'padrao') {
-      this.selecionarSubAba('mensagem');
-      this.abrirEditorTemplateGithub('projects_v2_edited');
-      return;
-    }
-    this.abrirEditorTemplateGithub(evento.cenarioId);
-  }
-
-  fecharEditorTemplateGithub(): void {
-    this.modalTemplateGithubAberto.set(false);
-    this.modalTemplateGithubCenarioInicial.set(null);
-  }
-
   definirTemplatesPorCenario(mapa: Record<string, GithubTemplatePorCenario> | null | undefined): void {
     this.templatesPorCenario.set(mapa ? { ...mapa } : {});
   }
 
   obterTemplatesPorCenarioParaSalvar(): Record<string, GithubTemplatePorCenario> {
-    this.sincronizarTemplateEditorNoFormulario();
     return { ...this.templatesPorCenario() };
-  }
-
-  quantidadeTemplatesPorCenarioSalvos(): number {
-    return Object.values(this.templatesPorCenario()).filter(
-      (item) => (item.assunto?.trim() ?? '') || (item.mensagem?.trim() ?? ''),
-    ).length;
-  }
-
-  aplicarTemplateGithub(dados: GithubWhatsappTemplateAplicado): void {
-    this.publicarTemplatesPorCenario(dados.templatesPorCenario);
-    this.form.markAsDirty();
-    this.toast.success('Templates por tipo atualizados — salve as configurações');
   }
 
   /** Copia o fluxograma de regras por coluna para o campo JSON antes do PATCH. */
@@ -662,49 +602,8 @@ export class ConfiguracoesGithubTabComponent implements OnInit {
     this.regrasFlowEditor()?.persistirDocumentoAtualNoForm();
   }
 
-  /** Copia mapa do editor aberto antes do PUT. */
-  sincronizarTemplateEditorNoFormulario(): void {
-    if (!this.modalTemplateGithubAberto()) {
-      return;
-    }
-    const modal = this.templateModal();
-    if (!modal) {
-      return;
-    }
-    const dados = modal.valoresAtuais();
-    this.templatesPorCenario.set({ ...dados.templatesPorCenario });
-    this.form.markAsDirty();
-  }
-
-  onSalvarTemplateNoServidor(dados: GithubWhatsappTemplateAplicado): void {
-    this.publicarTemplatesPorCenario(dados.templatesPorCenario);
-    this.form.markAsDirty();
-    this.salvarSolicitado.emit();
-  }
-
-  private publicarTemplatesPorCenario(mapa: Record<string, GithubTemplatePorCenario>): void {
-    const copia = { ...mapa };
-    this.templatesPorCenario.set(copia);
-    this.templatesPorCenarioChange.emit(copia);
-  }
-
-  resumoGithubTemplateAssunto(): string {
-    const valor = (this.form.get('dsGithubTemplateAssuntoWhatsapp')?.value ?? '').trim();
-    if (valor) {
-      return this.truncarResumo(valor, 120);
-    }
-    const padrao = this.githubIntegracao()?.templateAssuntoPadrao;
-    return padrao ? `(padrão) ${this.truncarResumo(padrao, 100)}` : 'Usando padrão da API';
-  }
-
-  resumoGithubTemplateMensagem(): string {
-    const valor = (this.form.get('dsGithubTemplateMensagemWhatsapp')?.value ?? '').trim();
-    if (valor) {
-      return this.truncarResumo(valor, 280);
-    }
-    const padrao = this.githubIntegracao()?.templateMensagemPadrao;
-    return padrao ? `(padrão) ${this.truncarResumo(padrao, 240)}` : 'Usando padrão da API';
-  }
+  /** Mantido para compatibilidade com salvamento do módulo (sem editor global). */
+  sincronizarTemplateEditorNoFormulario(): void {}
 
   campoErro(campo: keyof OrganizacaoConfiguracaoFormData): string | null {
     return this.errosFormulario[campo] ?? null;
