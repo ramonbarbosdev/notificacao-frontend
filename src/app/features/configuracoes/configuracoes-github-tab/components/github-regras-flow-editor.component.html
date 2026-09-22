@@ -262,6 +262,26 @@
                       }
                     </select>
                   }
+                  <p class="text-xs text-[var(--color-text-muted)] m-0">
+                    @if (col.mensagem.usarTemplatePadrao) {
+                      O texto vem do template global da organização (aba Mensagem).
+                    } @else {
+                      O texto é o template salvo para o tipo de evento escolhido; vazio usa o padrão global.
+                    }
+                  </p>
+                  <button
+                    type="button"
+                    class="px-3 py-2 rounded-xl border border-[var(--color-border)] text-sm flex items-center gap-2 text-[var(--color-text)] hover:bg-[var(--color-surface-muted)] disabled:opacity-45 disabled:cursor-not-allowed"
+                    [disabled]="!podeEditarTextoMensagem(col)"
+                    (click)="solicitarEditarTextoMensagem(col)"
+                  >
+                    <lucide-icon [img]="editIcon" class="w-4 h-4" />
+                    @if (col.mensagem.usarTemplatePadrao) {
+                      Editar template padrão
+                    } @else {
+                      Editar texto do cenário
+                    }
+                  </button>
                 </div>
               }
             </div>

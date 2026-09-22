@@ -9,7 +9,7 @@ import {
   signal,
 } from '@angular/core';
 import { FormGroup } from '@angular/forms';
-import { ArrowRight, Check, LayoutGrid, Link2 } from 'lucide-angular';
+import { ArrowRight, Check, LayoutGrid, Link2, PencilLine } from 'lucide-angular';
 import { LucideAngularModule } from 'lucide-angular';
 
 import {
@@ -36,6 +36,10 @@ import {
 
 export type GithubFlowNoEdicao = 'tipos' | 'destinatarios' | 'mensagem' | null;
 
+export type GithubFlowEditarMensagemEvento =
+  | { modo: 'padrao' }
+  | { modo: 'cenario'; cenarioId: string };
+
 @Component({
   selector: 'app-github-regras-flow-editor',
   standalone: true,
@@ -49,12 +53,14 @@ export class GithubRegrasFlowEditorComponent implements OnChanges {
   @Input() kanbanOk = false;
   @Input() cenariosPreview: GithubWebhookTemplateCenario[] = [];
 
-  readonly irParaSecao = output<'conexao' | 'kanban'>();
+  readonly irParaSecao = output<'conexao' | 'kanban' | 'mensagem'>();
+  readonly editarMensagem = output<GithubFlowEditarMensagemEvento>();
 
   protected readonly linkIcon = Link2;
   protected readonly gridIcon = LayoutGrid;
   protected readonly checkIcon = Check;
   protected readonly arrowIcon = ArrowRight;
+  protected readonly editIcon = PencilLine;
   protected readonly corStatus = corStatusGithubProject;
 
   readonly documento = signal<GithubRegrasPorStatusDocumento>({ versao: 1, colunas: {} });
@@ -201,5 +207,23 @@ export class GithubRegrasFlowEditorComponent implements OnChanges {
 
   mensagemLabel(regra: GithubRegraColuna): string {
     return labelMensagem(regra, this.cenariosMap());
+  }
+
+  podeEditarTextoMensagem(regra: GithubRegraColuna): boolean {
+    if (regra.mensagem.usarTemplatePadrao) {
+      return true;
+    }
+    return !!regra.mensagem.cenarioId?.trim();
+  }
+
+  solicitarEditarTextoMensagem(regra: GithubRegraColuna): void {
+    if (regra.mensagem.usarTemplatePadrao) {
+      this.editarMensagem.emit({ modo: 'padrao' });
+      return;
+    }
+    const cenarioId = regra.mensagem.cenarioId?.trim();
+    if (cenarioId) {
+      this.editarMensagem.emit({ modo: 'cenario', cenarioId });
+    }
   }
 }

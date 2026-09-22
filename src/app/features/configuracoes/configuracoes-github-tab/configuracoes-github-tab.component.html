@@ -656,6 +656,7 @@
             [kanbanOk]="githubKanbanPronto()"
             [cenariosPreview]="githubIntegracao()?.cenariosPreview ?? []"
             (irParaSecao)="selecionarSubAba($event)"
+            (editarMensagem)="editarMensagemDoFluxo($event)"
           />
         } @else {
           <app-github-regras-eventos-gerais
@@ -741,6 +742,7 @@
 
 <app-github-whatsapp-template-modal
   [aberto]="modalTemplateGithubAberto()"
+  [cenarioIdInicialAoAbrir]="modalTemplateGithubCenarioInicial()"
   [assuntoFallback]="form.get('dsGithubTemplateAssuntoWhatsapp')?.value ?? ''"
   [mensagemFallback]="form.get('dsGithubTemplateMensagemWhatsapp')?.value ?? ''"
   [templatesPorCenarioInicial]="templatesPorCenario()"

@@ -63,7 +63,10 @@ import {
 } from './components/github-integracao-status-strip.component';
 import { GithubProjectV2CardComponent } from './components/github-project-v2-card.component';
 import { GithubRegrasEventosGeraisComponent } from './components/github-regras-eventos-gerais.component';
-import { GithubRegrasFlowEditorComponent } from './components/github-regras-flow-editor.component';
+import {
+  GithubFlowEditarMensagemEvento,
+  GithubRegrasFlowEditorComponent,
+} from './components/github-regras-flow-editor.component';
 import { GithubWebhookDecisoesPanelComponent } from './components/github-webhook-decisoes-panel.component';
 import { corStatusGithubProject } from './github-status-color.util';
 
@@ -142,6 +145,7 @@ export class ConfiguracoesGithubTabComponent implements OnInit {
   readonly statusOpcoesKanban = signal<GithubProjectV2StatusOpcao[]>([]);
   readonly carregandoStatusOpcoes = signal(false);
   readonly modalTemplateGithubAberto = signal(false);
+  readonly modalTemplateGithubCenarioInicial = signal<string | null>(null);
   readonly templatesPorCenario = signal<Record<string, GithubTemplatePorCenario>>({});
 
   constructor() {
@@ -574,15 +578,26 @@ export class ConfiguracoesGithubTabComponent implements OnInit {
     return this.githubIntegracaoService.montarUrlWebhookAbsoluta(info.webhookUrlTemplate);
   }
 
-  abrirEditorTemplateGithub(): void {
+  abrirEditorTemplateGithub(cenarioIdInicial?: string | null): void {
+    this.modalTemplateGithubCenarioInicial.set(cenarioIdInicial ?? null);
     this.modalTemplateGithubAberto.set(true);
     if (!this.githubIntegracao() && !this.carregandoGithubIntegracao()) {
       this.carregarGithubIntegracao();
     }
   }
 
+  editarMensagemDoFluxo(evento: GithubFlowEditarMensagemEvento): void {
+    if (evento.modo === 'padrao') {
+      this.selecionarSubAba('mensagem');
+      this.abrirEditorTemplateGithub('projects_v2_edited');
+      return;
+    }
+    this.abrirEditorTemplateGithub(evento.cenarioId);
+  }
+
   fecharEditorTemplateGithub(): void {
     this.modalTemplateGithubAberto.set(false);
+    this.modalTemplateGithubCenarioInicial.set(null);
   }
 
   definirTemplatesPorCenario(mapa: Record<string, GithubTemplatePorCenario> | null | undefined): void {

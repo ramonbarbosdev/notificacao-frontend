@@ -51,6 +51,8 @@ export class GithubWhatsappTemplateModalComponent implements OnDestroy {
   private readonly githubIntegracaoService = inject(GithubIntegracaoService);
 
   readonly aberto = input(false);
+  /** Ao abrir o modal, seleciona este cenário quando existir no catálogo. */
+  readonly cenarioIdInicialAoAbrir = input<string | null>(null);
   readonly assuntoFallback = input('');
   readonly mensagemFallback = input('');
   readonly templatesPorCenarioInicial = input<Record<string, GithubTemplatePorCenario>>({});
@@ -89,10 +91,14 @@ export class GithubWhatsappTemplateModalComponent implements OnDestroy {
       const aberto = this.aberto();
       if (aberto && !this.abertoAnterior) {
         this.templatesPorCenario.set({ ...this.templatesPorCenarioInicial() });
+        const lista = this.integracao()?.cenariosPreview ?? [];
+        const preferido = this.cenarioIdInicialAoAbrir()?.trim();
         const cen =
-          this.cenarioId() && this.integracao()?.cenariosPreview?.some((c) => c.id === this.cenarioId())
-            ? this.cenarioId()
-            : (this.integracao()?.cenariosPreview?.[0]?.id ?? '');
+          preferido && lista.some((c) => c.id === preferido)
+            ? preferido
+            : this.cenarioId() && lista.some((c) => c.id === this.cenarioId())
+              ? this.cenarioId()
+              : (lista[0]?.id ?? '');
         this.cenarioId.set(cen);
         this.carregarCenarioNoEditor(cen);
         this.preview.set(null);
