@@ -23,6 +23,20 @@ export class OrganizacaoConfiguracaoService {
     return this.http.put<OrganizacaoConfiguracao>(`${this.base}/configuracoes`, dados);
   }
 
+  ativarEnvioMensagens(): Observable<OrganizacaoConfiguracao> {
+    return this.http.patch<OrganizacaoConfiguracao>(
+      `${this.base}/configuracoes/envio-mensagens/ativar`,
+      {},
+    );
+  }
+
+  desativarEnvioMensagens(): Observable<OrganizacaoConfiguracao> {
+    return this.http.patch<OrganizacaoConfiguracao>(
+      `${this.base}/configuracoes/envio-mensagens/desativar`,
+      {},
+    );
+  }
+
   listarAuditoria(params: {
     page: number;
     size: number;

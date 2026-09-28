@@ -789,6 +789,7 @@ export interface OrganizacaoConfiguracao {
   githubHttpConnectTimeoutMs?: number | null;
   githubHttpReadTimeoutMs?: number | null;
   githubInstallationTokenSkewSegundos?: number | null;
+  envioMensagensHabilitado: boolean;
   dtCriacao?: string | null;
   dtAtualizacao?: string | null;
 }
@@ -1044,6 +1045,7 @@ export type OrganizacaoConfiguracaoRequest = Omit<
   | 'webhookInboundSecretConfigurado'
   | 'githubGraphqlTokenConfigurado'
   | 'githubAppPrivateKeyConfigurado'
+  | 'envioMensagensHabilitado'
 > & {
   webhookInboundSecret?: string | null;
   githubGraphqlToken?: string | null;
