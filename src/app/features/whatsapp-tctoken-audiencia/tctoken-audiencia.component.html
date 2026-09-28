@@ -1,0 +1,217 @@
+<div class="ui-page-wrap flex flex-col gap-6">
+  <div class="ui-topbar">
+    <div>
+      <h1 class="ui-page-title m-0">Monitoração WhatsApp</h1>
+      <p class="text-[var(--color-text-muted)] text-sm mt-1 m-0">
+        Quem recebe notificação (GitHub ou fila WhatsApp, {{ scan()?.filaLookbackDias ?? 60 }} dias) e quantos dias
+        restam antes do token de conversa expirar (~{{ scan()?.vidaDiasToken ?? 28 }} dias).
+      </p>
+      <details class="mt-3 text-sm text-[var(--color-text-muted)]">
+        <summary class="cursor-pointer font-medium text-[var(--color-text)] inline-flex items-center gap-1">
+          <lucide-icon [img]="helpIcon" class="w-4 h-4" />
+          Como funciona
+        </summary>
+        <ul class="mt-2 space-y-1 list-disc pl-5">
+          <li>
+            Entram responsáveis GitHub ativos e destinatários com notificação WhatsApp na fila nos últimos
+            {{ scan()?.filaLookbackDias ?? 60 }} dias.
+          </li>
+          <li>
+            Idade e dias restantes vêm do gateway para números <strong>em uso</strong>: GitHub ativo ou com envio
+            WhatsApp nos últimos 30 dias (configurável). Demais entradas da fila aparecem na lista, sem consulta ao
+            gateway.
+          </li>
+          <li>
+            Com sessão conectada, a API enriquece automaticamente (no máximo a cada 5 min). Use Atualizar para forçar.
+          </li>
+          <li>
+            Isso não é opt-in de produto: se o token expirar, alertas podem parar de ser entregues.
+          </li>
+        </ul>
+      </details>
+    </div>
+    <div class="flex flex-wrap items-center gap-2">
+      <div class="ui-session-chip">
+        <span class="ui-status-dot" [class.ui-status-dot--off]="!sessaoConectada()"></span>
+        {{ sessaoConectada() ? 'Sessão conectada' : 'Sessão desconectada' }}
+      </div>
+      <button
+        type="button"
+        class="ui-btn ui-btn-primary !py-2 !px-4 text-xs"
+        (click)="carregar(true)"
+        [disabled]="carregandoRefresh() || !sessaoConectada()"
+        [title]="!sessaoConectada() ? 'Conecte o WhatsApp para consultar idade do token no gateway' : ''"
+      >
+        <lucide-icon [img]="refreshIcon" class="w-3.5 h-3.5" [class.animate-spin]="carregandoRefresh()" />
+        Atualizar
+      </button>
+      <a routerLink="/app/whatsapp" class="ui-btn ui-btn-ghost !py-2 !px-3 text-xs no-underline">
+        <lucide-icon [img]="arrowLeftIcon" class="w-3.5 h-3.5" />
+        Voltar
+      </a>
+    </div>
+  </div>
+
+  <p class="text-xs text-[var(--color-text-subtle)] m-0">
+    Última varredura: {{ rotuloUltimaVarredura() }} · job automático a cada 6 h
+  </p>
+
+  @if (erro()) {
+    <div class="rounded-xl border border-[var(--color-danger-border)] bg-[var(--color-danger-bg)] px-4 py-3">
+      <p class="text-[var(--color-danger)] text-sm m-0">{{ erro() }}</p>
+    </div>
+  }
+
+  @if (aguardandoVarreduraGateway()) {
+    <div class="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] px-4 py-3">
+      <p class="text-sm m-0 text-[var(--color-text)]">
+        Sessão desconectada: conecte o WhatsApp e clique Atualizar para ver dias restantes dos números em uso.
+      </p>
+    </div>
+  }
+
+  @if (!scan()?.gatewayOnline && scan()?.varreduraGatewayCompleta) {
+    <div class="rounded-xl border border-[var(--color-warning-border)] bg-[var(--color-warning-bg)] px-4 py-3">
+      <p class="text-sm m-0 app-text-warning">
+        WhatsApp desconectado: idade do token não foi consultada live no gateway. Reconecte e clique Atualizar.
+      </p>
+    </div>
+  }
+
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+    <div class="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
+      <p class="text-xs text-[var(--color-text-muted)] m-0">Total monitorados</p>
+      <p class="text-2xl font-bold text-[var(--color-text)] mt-1 m-0">
+        {{ carregando() ? '—' : scan()?.kpis?.total ?? 0 }}
+      </p>
+    </div>
+    <div class="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
+      <p class="text-xs text-[var(--color-text-muted)] m-0">Próximos (≤{{ scan()?.janelaAlertaDias ?? 7 }} dias)</p>
+      <p class="text-2xl font-bold app-text-warning mt-1 m-0">
+        {{ carregando() ? '—' : scan()?.kpis?.proximoExpirar ?? 0 }}
+      </p>
+    </div>
+    <div class="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
+      <p class="text-xs text-[var(--color-text-muted)] m-0">Sem token</p>
+      <p class="text-2xl font-bold text-[var(--color-text)] mt-1 m-0">
+        {{ carregando() ? '—' : scan()?.kpis?.ausente ?? 0 }}
+      </p>
+    </div>
+    <div class="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
+      <p class="text-xs text-[var(--color-text-muted)] m-0">Expirados</p>
+      <p class="text-2xl font-bold text-[var(--color-danger)] mt-1 m-0">
+        {{ carregando() ? '—' : scan()?.kpis?.expirados ?? 0 }}
+      </p>
+    </div>
+  </div>
+
+  <div
+    class="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 flex flex-col sm:flex-row gap-3"
+    [formGroup]="filtros"
+  >
+    <div class="relative flex-1">
+      <lucide-icon [img]="searchIcon" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-subtle)]" />
+      <input
+        type="search"
+        formControlName="busca"
+        placeholder="Busca telefone…"
+        class="w-full pl-9 pr-3 py-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-base)] text-sm"
+      />
+    </div>
+    <select formControlName="origem" class="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-base)] px-3 py-2 text-sm">
+      <option value="">Origem: todos</option>
+      <option value="GITHUB">Só GitHub</option>
+      <option value="FILA">Só Fila</option>
+      <option value="AMBOS">GitHub + Fila</option>
+    </select>
+    <select formControlName="situacao" class="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-base)] px-3 py-2 text-sm">
+      <option value="">Situação: todos</option>
+      <option value="PROXIMO_EXPIRAR">Próximo de expirar</option>
+      <option value="EXPIRADO">Expirado</option>
+      <option value="AUSENTE">Sem token</option>
+      <option value="OK">OK</option>
+    </select>
+  </div>
+
+  @if (carregando() && !scan()) {
+    <div class="flex items-center justify-center py-16 text-[var(--color-text-muted)] gap-2">
+      <lucide-icon [img]="loaderIcon" class="w-5 h-5 animate-spin" />
+      Carregando audiência…
+    </div>
+  } @else if ((scan()?.linhas?.length ?? 0) === 0) {
+    <div class="rounded-2xl border border-dashed border-[var(--color-border)] p-8 text-center text-sm text-[var(--color-text-muted)]">
+      Nenhum número na audiência (GitHub ativo ou fila recente).
+    </div>
+  } @else if (linhasFiltradas().length === 0) {
+    <div class="rounded-2xl border border-dashed border-[var(--color-border)] p-8 text-center text-sm text-[var(--color-text-muted)]">
+      Nenhum resultado com os filtros atuais.
+    </div>
+  } @else {
+    <div class="hidden md:block overflow-x-auto rounded-2xl border border-[var(--color-border)]">
+      <table class="w-full text-sm">
+        <thead class="bg-[var(--color-surface-muted)] text-[var(--color-text-muted)]">
+          <tr>
+            <th class="text-left font-medium px-4 py-3">Telefone</th>
+            <th class="text-left font-medium px-4 py-3">Nome</th>
+            <th class="text-left font-medium px-4 py-3">Origens</th>
+            <th class="text-left font-medium px-4 py-3">Idade token</th>
+            <th class="text-left font-medium px-4 py-3">Restam ({{ scan()?.vidaDiasToken ?? 28 }}d)</th>
+            <th class="text-left font-medium px-4 py-3">Situação</th>
+            <th class="text-left font-medium px-4 py-3">Liberado envio</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (linha of linhasFiltradas(); track linha.telefone) {
+            <tr class="border-t border-[var(--color-border)]">
+              <td class="px-4 py-3 font-mono text-xs" [title]="linha.telefone">
+                {{ linha.telefoneMascarado }}
+              </td>
+              <td class="px-4 py-3">{{ linha.nomeExibicao }}</td>
+              <td class="px-4 py-3">
+                <div class="flex flex-wrap gap-1">
+                  @if (linha.origens.includes('GITHUB')) {
+                    <span class="text-xs px-2 py-0.5 rounded-full bg-[var(--color-surface-muted)]">GitHub</span>
+                  }
+                  @if (linha.origens.includes('FILA')) {
+                    <span class="text-xs px-2 py-0.5 rounded-full bg-[var(--color-surface-muted)]">Fila</span>
+                  }
+                </div>
+              </td>
+              <td class="px-4 py-3">{{ linha.consultadoNoGateway ? formatarDias(linha.idadeDias) : '—' }}</td>
+              <td
+                class="px-4 py-3"
+                [class.text-[var(--color-danger)]]="linha.consultadoNoGateway && expiraCritico(linha)"
+              >
+                {{ linha.consultadoNoGateway ? formatarDias(linha.expiraEmDias) : '—' }}
+              </td>
+              <td class="px-4 py-3 font-medium" [ngClass]="classeSituacao(linha.situacao)">
+                {{ linha.consultadoNoGateway ? linha.situacaoRotulo : '—' }}
+              </td>
+              <td class="px-4 py-3">{{ rotuloLiberado(linha) }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <div class="md:hidden space-y-3">
+      @for (linha of linhasFiltradas(); track linha.telefone) {
+        <div class="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 space-y-2">
+          <div class="flex justify-between gap-2">
+            <span class="font-mono text-xs" [title]="linha.telefone">{{ linha.telefoneMascarado }}</span>
+            <span class="text-xs font-semibold" [ngClass]="classeSituacao(linha.situacao)">{{ linha.situacaoRotulo }}</span>
+          </div>
+          <p class="text-sm m-0">{{ linha.nomeExibicao }}</p>
+          <p class="text-xs text-[var(--color-text-muted)] m-0">{{ rotuloOrigens(linha.origens) }}</p>
+          <div class="flex flex-wrap gap-3 text-xs">
+            <span>Idade: {{ linha.consultadoNoGateway ? formatarDias(linha.idadeDias) : '—' }}</span>
+            <span [class.text-[var(--color-danger)]]="linha.consultadoNoGateway && expiraCritico(linha)">
+              Restam: {{ linha.consultadoNoGateway ? formatarDias(linha.expiraEmDias) : '—' }}
+            </span>
+            <span>Liberado: {{ rotuloLiberado(linha) }}</span>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>
