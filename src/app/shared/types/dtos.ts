@@ -118,6 +118,15 @@ export interface TcTokenAudienciaScanResponse {
   linhas: TcTokenAudienciaLinhaResponse[];
 }
 
+export interface TcTokenAudienciaPedirConfirmacaoRequest {
+  telefone: string;
+  mensagem?: string | null;
+  /** Admin: ignora elegibilidade (situação/gateway) e dedupe de 7 dias. */
+  modoTeste?: boolean | null;
+}
+
+export type TcTokenAudienciaPedirConfirmacaoResponse = EnviarNotificacaoResponse;
+
 export interface WhatsappCloudConfigRequest {
   phoneNumberId: string;
   wabaId?: string | null;

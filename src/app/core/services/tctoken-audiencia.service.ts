@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { TcTokenAudienciaScanResponse } from '../../shared/types/dtos';
+import { TcTokenAudienciaPedirConfirmacaoRequest, TcTokenAudienciaPedirConfirmacaoResponse, TcTokenAudienciaScanResponse } from '../../shared/types/dtos';
 
 @Injectable({ providedIn: 'root' })
 export class TcTokenAudienciaService {
@@ -15,5 +15,9 @@ export class TcTokenAudienciaService {
       params = params.set('refresh', '1');
     }
     return this.http.get<TcTokenAudienciaScanResponse>(this.base, { params });
+  }
+
+  pedirConfirmacao(body: TcTokenAudienciaPedirConfirmacaoRequest): Observable<TcTokenAudienciaPedirConfirmacaoResponse> {
+    return this.http.post<TcTokenAudienciaPedirConfirmacaoResponse>(`${this.base}/pedir-confirmacao`, body);
   }
 }

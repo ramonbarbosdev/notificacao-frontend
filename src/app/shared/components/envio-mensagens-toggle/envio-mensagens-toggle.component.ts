@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, OnInit, inject, input, signal } from '@angular/core';
+import { Component, OnInit, inject, input, output, signal } from '@angular/core';
 import { LoaderCircle, LucideAngularModule, PauseCircle, PlayCircle } from 'lucide-angular';
 
 import { AuthService } from '../../../core/auth/auth.service';
@@ -21,6 +21,9 @@ export class EnvioMensagensToggleComponent implements OnInit {
 
   /** banner = card completo; compact = chip + botão na barra superior */
   readonly variant = input<'banner' | 'compact'>('banner');
+
+  /** Emite sempre que o status de envio da org é carregado ou alterado. */
+  readonly habilitadoAlterado = output<boolean>();
 
   protected readonly loaderIcon = LoaderCircle;
   protected readonly pauseIcon = PauseCircle;
@@ -44,7 +47,9 @@ export class EnvioMensagensToggleComponent implements OnInit {
     this.erro.set(null);
     this.configService.buscar().subscribe({
       next: (config) => {
-        this.habilitado.set(config.envioMensagensHabilitado !== false);
+        const ativo = config.envioMensagensHabilitado !== false;
+        this.habilitado.set(ativo);
+        this.habilitadoAlterado.emit(ativo);
         this.carregando.set(false);
       },
       error: (err: HttpErrorResponse) => {
@@ -78,7 +83,9 @@ export class EnvioMensagensToggleComponent implements OnInit {
     this.erro.set(null);
     chamada.subscribe({
       next: (config) => {
-        this.habilitado.set(config.envioMensagensHabilitado !== false);
+        const habilitado = config.envioMensagensHabilitado !== false;
+        this.habilitado.set(habilitado);
+        this.habilitadoAlterado.emit(habilitado);
         this.alterando.set(false);
         this.toast.success(ativo ? 'Envios WhatsApp desativados' : 'Envios WhatsApp reativados');
       },
