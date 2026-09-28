@@ -29,6 +29,7 @@ import {
   WhatsappStatusResponse,
 } from '../../shared/types/dtos';
 import { ehWhatsappConectado, extrairMensagemErro } from '../whatsapp/whatsapp.helpers';
+import { EnvioMensagensToggleComponent } from '../../shared/components/envio-mensagens-toggle/envio-mensagens-toggle.component';
 
 type FiltroOrigem = '' | 'GITHUB' | 'FILA' | 'AMBOS';
 type FiltroSituacao = '' | TcTokenAudienciaSituacao;
@@ -36,7 +37,7 @@ type FiltroSituacao = '' | TcTokenAudienciaSituacao;
 @Component({
   selector: 'app-tctoken-audiencia',
   standalone: true,
-  imports: [CommonModule, RouterModule, ReactiveFormsModule, LucideAngularModule],
+  imports: [CommonModule, RouterModule, ReactiveFormsModule, LucideAngularModule, EnvioMensagensToggleComponent],
   templateUrl: './tctoken-audiencia.component.html',
 })
 export class TcTokenAudienciaComponent implements OnInit, OnDestroy {

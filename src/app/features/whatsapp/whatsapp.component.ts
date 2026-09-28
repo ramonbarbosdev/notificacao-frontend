@@ -50,6 +50,7 @@ import {
 import { formatPhone, normalizeBrazilWhatsappMobile } from '../../shared/helper/phone.utils';
 import { formatDateTimePtBr } from '../../shared/helper/date.utils';
 import { ContatoTelefoneSugestoesComponent } from '../../shared/components/contato-telefone-sugestoes/contato-telefone-sugestoes.component';
+import { EnvioMensagensToggleComponent } from '../../shared/components/envio-mensagens-toggle/envio-mensagens-toggle.component';
 import {
   ehErroConsentimento,
   ehStatusDeTentativa,
@@ -72,6 +73,7 @@ type ModoEnvioWhatsapp = 'unitario' | 'lote';
     RouterModule,
     LucideAngularModule,
     ContatoTelefoneSugestoesComponent,
+    EnvioMensagensToggleComponent,
   ],
   templateUrl: './whatsapp.component.html',
 })

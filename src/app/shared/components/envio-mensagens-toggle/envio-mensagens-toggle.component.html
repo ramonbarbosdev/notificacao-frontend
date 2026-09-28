@@ -1,0 +1,98 @@
+@if (variant() === 'banner') {
+  <section
+    class="mb-6 bg-[var(--color-surface)] border rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
+    [class.border-[var(--color-success-border)]]="habilitado()"
+    [class.border-[var(--color-danger-border)]]="!habilitado()"
+  >
+    <div>
+      <div class="flex items-center gap-2 flex-wrap">
+        <h2 class="text-[var(--color-text)] font-semibold text-base m-0">Envios WhatsApp</h2>
+        @if (carregando()) {
+          <span class="text-xs text-[var(--color-text-muted)]">Carregando…</span>
+        } @else if (habilitado()) {
+          <span
+            class="px-2 py-0.5 rounded-full text-xs font-medium bg-[var(--color-success-bg)] text-[var(--color-success)] border border-[var(--color-success-border)]"
+          >
+            Ativos
+          </span>
+        } @else {
+          <span
+            class="px-2 py-0.5 rounded-full text-xs font-medium bg-[var(--color-danger-bg)] text-[var(--color-danger)] border border-[var(--color-danger-border)]"
+          >
+            Pausados
+          </span>
+        }
+      </div>
+      <p class="text-sm text-[var(--color-text-muted)] mt-1 mb-0">
+        @if (habilitado()) {
+          A fila e os envios manuais podem ser processados normalmente.
+        } @else {
+          Envios bloqueados para a organização. A fila aguarda até você reativar.
+        }
+      </p>
+      @if (erro()) {
+        <p class="text-xs text-[var(--color-danger)] mt-2 mb-0">{{ erro() }}</p>
+      }
+    </div>
+    @if (isAdmin()) {
+      <button
+        type="button"
+        (click)="alternar()"
+        [disabled]="alterando() || carregando()"
+        class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold border shrink-0 disabled:opacity-50"
+        [class.border-[var(--color-danger-border)]]="habilitado()"
+        [class.text-[var(--color-danger)]]="habilitado()"
+        [class.border-[var(--color-success-border)]]="!habilitado()"
+        [class.text-[var(--color-success)]]="!habilitado()"
+      >
+        <lucide-icon [img]="alterando() ? loaderIcon : habilitado() ? pauseIcon : playIcon" class="w-4 h-4" [class.animate-spin]="alterando()" />
+        @if (alterando()) {
+          Alterando…
+        } @else if (habilitado()) {
+          Desativar envios
+        } @else {
+          Reativar envios
+        }
+      </button>
+    } @else if (!carregando()) {
+      <span class="text-xs text-[var(--color-text-muted)]">Somente administradores alteram envios.</span>
+    }
+  </section>
+} @else {
+  <div class="flex flex-wrap items-center gap-2">
+    @if (carregando()) {
+      <span class="ui-session-chip text-xs">
+        <lucide-icon [img]="loaderIcon" class="w-3.5 h-3.5 animate-spin" />
+        Envios…
+      </span>
+    } @else {
+      <span
+        class="ui-session-chip text-xs"
+        [class.!border-[var(--color-danger-border)]]="!habilitado()"
+      >
+        <span class="ui-status-dot" [class.ui-status-dot--off]="!habilitado()"></span>
+        {{ habilitado() ? 'Envios ativos' : 'Envios pausados' }}
+      </span>
+      @if (isAdmin()) {
+        <button
+          type="button"
+          (click)="alternar()"
+          [disabled]="alterando()"
+          class="ui-btn ui-btn-ghost !py-2 !px-3 text-xs"
+        >
+          <lucide-icon [img]="alterando() ? loaderIcon : habilitado() ? pauseIcon : playIcon" class="w-3.5 h-3.5" [class.animate-spin]="alterando()" />
+          @if (alterando()) {
+            …
+          } @else if (habilitado()) {
+            Pausar envios
+          } @else {
+            Reativar envios
+          }
+        </button>
+      }
+    }
+  </div>
+  @if (erro()) {
+    <p class="text-xs text-[var(--color-danger)] mt-1 mb-0 w-full">{{ erro() }}</p>
+  }
+}

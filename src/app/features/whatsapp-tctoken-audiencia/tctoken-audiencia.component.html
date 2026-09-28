@@ -31,6 +31,7 @@
       </details>
     </div>
     <div class="flex flex-wrap items-center gap-2">
+      <app-envio-mensagens-toggle variant="compact" />
       <div class="ui-session-chip">
         <span class="ui-status-dot" [class.ui-status-dot--off]="!sessaoConectada()"></span>
         {{ sessaoConectada() ? 'Sessão conectada' : 'Sessão desconectada' }}
