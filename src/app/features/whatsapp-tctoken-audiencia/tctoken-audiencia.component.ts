@@ -46,6 +46,7 @@ import {
 } from '../../shared/types/dtos';
 import { ehWhatsappConectado, extrairMensagemErro } from '../whatsapp/whatsapp.helpers';
 import { EnvioMensagensToggleComponent } from '../../shared/components/envio-mensagens-toggle/envio-mensagens-toggle.component';
+import { TcTokenConfirmacaoMotorComponent } from '../../shared/components/tctoken-confirmacao-motor/tctoken-confirmacao-motor.component';
 
 type FiltroOrigem = '' | 'GITHUB' | 'FILA' | 'AMBOS';
 type FiltroSituacao = '' | TcTokenAudienciaSituacao;
@@ -53,7 +54,14 @@ type FiltroSituacao = '' | TcTokenAudienciaSituacao;
 @Component({
   selector: 'app-tctoken-audiencia',
   standalone: true,
-  imports: [CommonModule, RouterModule, ReactiveFormsModule, LucideAngularModule, EnvioMensagensToggleComponent],
+  imports: [
+    CommonModule,
+    RouterModule,
+    ReactiveFormsModule,
+    LucideAngularModule,
+    EnvioMensagensToggleComponent,
+    TcTokenConfirmacaoMotorComponent,
+  ],
   templateUrl: './tctoken-audiencia.component.html',
 })
 export class TcTokenAudienciaComponent implements OnInit, OnDestroy {
@@ -92,6 +100,7 @@ export class TcTokenAudienciaComponent implements OnInit, OnDestroy {
   readonly scan = signal<TcTokenAudienciaScanResponse | null>(null);
   readonly statusSessao = signal<WhatsappStatusResponse | null>(null);
   readonly envioMensagensHabilitado = signal(true);
+  readonly mensagemTemplateOrg = signal<string | null>(null);
 
   readonly linhaDiagnosticoAberta = signal<TcTokenAudienciaLinhaResponse | null>(null);
   readonly diagnosticoContato = signal<WhatsappDiagnosticoContatoResponse | null>(null);
@@ -259,7 +268,9 @@ export class TcTokenAudienciaComponent implements OnInit, OnDestroy {
 
   abrirModalConfirmacao(linha: TcTokenAudienciaLinhaResponse): void {
     this.linhaConfirmacaoModal.set(linha);
-    this.mensagemConfirmacao.set(montarMensagemPedirConfirmacao(linha));
+    this.mensagemConfirmacao.set(
+      montarMensagemPedirConfirmacao(linha, null, this.mensagemTemplateOrg()),
+    );
     this.confirmacaoModoTeste.set(!this.podePedirConfirmacao(linha));
     this.enviandoConfirmacao.set(false);
   }

@@ -840,6 +840,9 @@ export interface OrganizacaoConfiguracao {
   githubHttpReadTimeoutMs?: number | null;
   githubInstallationTokenSkewSegundos?: number | null;
   envioMensagensHabilitado: boolean;
+  tctokenConfirmacaoAutomaticaHabilitado?: boolean | null;
+  tctokenConfirmacaoAutomaticaDiasAntes?: number | null;
+  tctokenConfirmacaoMensagemPadrao?: string | null;
   dtCriacao?: string | null;
   dtAtualizacao?: string | null;
 }

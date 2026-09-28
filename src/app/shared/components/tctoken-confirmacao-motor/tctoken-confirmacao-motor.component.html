@@ -1,0 +1,114 @@
+<section
+  class="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 flex flex-col gap-4"
+>
+  <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+    <div>
+      <h2 class="text-[var(--color-text)] font-semibold text-base m-0">Motor de confirmação automática</h2>
+      <p class="text-sm text-[var(--color-text-muted)] mt-1 mb-0">
+        Enfileira pedidos de confirmação para responsáveis GitHub com opt-in ativo quando faltam até
+        {{ diasAntes() }} dia(s) para expirar (independente da coluna “Próximo de expirar”). Máximo 1 envio a cada 7
+        dias por número.
+      </p>
+    </div>
+    @if (isAdmin()) {
+      <button
+        type="button"
+        class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold border shrink-0 disabled:opacity-50"
+        [class.border-[var(--color-success-border)]]="!habilitado()"
+        [class.text-[var(--color-success)]]="!habilitado()"
+        [class.border-[var(--color-danger-border)]]="habilitado()"
+        [class.text-[var(--color-danger)]]="habilitado()"
+        (click)="alternarMotor()"
+        [disabled]="alterandoMotor() || carregando()"
+      >
+        <lucide-icon
+          [img]="alterandoMotor() ? loaderIcon : habilitado() ? pauseIcon : playIcon"
+          class="w-4 h-4"
+          [class.animate-spin]="alterandoMotor()"
+        />
+        @if (alterandoMotor()) {
+          Alterando…
+        } @else if (habilitado()) {
+          Desligar motor
+        } @else {
+          Ligar motor
+        }
+      </button>
+    }
+  </div>
+
+  @if (carregando()) {
+    <p class="text-sm text-[var(--color-text-muted)] m-0 flex items-center gap-2">
+      <lucide-icon [img]="loaderIcon" class="w-4 h-4 animate-spin" />
+      Carregando configuração…
+    </p>
+  } @else {
+    <div class="flex flex-wrap items-center gap-2">
+      <span
+        class="px-2 py-0.5 rounded-full text-xs font-medium border"
+        [class.bg-[var(--color-success-bg)]]="habilitado()"
+        [class.text-[var(--color-success)]]="habilitado()"
+        [class.border-[var(--color-success-border)]]="habilitado()"
+        [class.bg-[var(--color-surface-muted)]]="!habilitado()"
+        [class.text-[var(--color-text-muted)]]="!habilitado()"
+        [class.border-[var(--color-border)]]="!habilitado()"
+      >
+        {{ habilitado() ? 'Motor ligado' : 'Motor desligado' }}
+      </span>
+      @if (!isAdmin()) {
+        <span class="text-xs text-[var(--color-text-muted)]">Somente administradores alteram o motor.</span>
+      }
+    </div>
+
+    <div class="grid gap-4 lg:grid-cols-[minmax(0,8rem)_1fr]">
+      <label class="flex flex-col gap-1 text-sm">
+        <span class="text-[var(--color-text-muted)]">Dias antes de expirar</span>
+        <input
+          type="number"
+          min="1"
+          max="28"
+          class="ui-input w-full"
+          [disabled]="!isAdmin() || salvando()"
+          [ngModel]="diasAntes()"
+          (ngModelChange)="diasAntes.set($event)"
+        />
+        <span class="text-[10px] text-[var(--color-text-subtle)]">Entre 1 e 28</span>
+      </label>
+
+      <label class="flex flex-col gap-1 text-sm min-w-0">
+        <span class="text-[var(--color-text-muted)]">Mensagem padrão (template)</span>
+        <textarea
+          rows="4"
+          class="ui-input w-full font-mono text-xs resize-y min-h-[5rem]"
+          placeholder="Em branco: texto padrão do sistema"
+          [disabled]="!isAdmin() || salvando()"
+          [ngModel]="mensagemPadrao()"
+          (ngModelChange)="mensagemPadrao.set($event)"
+        ></textarea>
+        <span class="text-[10px] text-[var(--color-text-subtle)]">
+          Placeholders:
+          <code class="text-[10px]">{{ placeholderLogin }}</code>,
+          <code class="text-[10px]">{{ placeholderDias }}</code>
+          — usados no motor automático e no preview do pedido manual.
+        </span>
+      </label>
+    </div>
+
+    @if (isAdmin()) {
+      <div class="flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          class="ui-btn ui-btn-primary !py-2 !px-4 text-xs"
+          (click)="salvar()"
+          [disabled]="salvando() || !formularioValido()"
+        >
+          <lucide-icon [img]="salvando() ? loaderIcon : checkIcon" class="w-3.5 h-3.5" [class.animate-spin]="salvando()" />
+          Salvar dias e mensagem
+        </button>
+        @if (erro()) {
+          <span class="text-xs text-[var(--color-danger)]">{{ erro() }}</span>
+        }
+      </div>
+    }
+  }
+</section>

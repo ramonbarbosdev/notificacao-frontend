@@ -33,6 +33,11 @@
             <strong>Copiar link wa.me</strong>.
           </li>
           <li>
+            O <strong>motor automático</strong> enfileira confirmações para GitHub com opt-in (job ~24 h), usando o
+            limite de dias configurado abaixo — independente do KPI “Próximo de expirar”. O template de mensagem vale
+            para o motor e para o texto inicial do pedido manual.
+          </li>
+          <li>
             Administradores podem usar <strong>modo teste</strong> no modal quando o envio normal está bloqueado: envia
             mesmo assim, sem o limite de 7 dias (mensagem prefixada <code class="text-[10px]">[TESTE ADMIN]</code>).
           </li>
@@ -68,6 +73,8 @@
   <p class="text-xs text-[var(--color-text-subtle)] m-0">
     Última varredura: {{ rotuloUltimaVarredura() }} · job automático a cada 6 h
   </p>
+
+  <app-tctoken-confirmacao-motor (templateAlterado)="mensagemTemplateOrg.set($event)" />
 
   @if (!isAdmin()) {
     <p class="text-xs text-[var(--color-text-muted)] m-0 rounded-xl border border-dashed border-[var(--color-border)] px-4 py-2">

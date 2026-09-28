@@ -37,6 +37,34 @@ export class OrganizacaoConfiguracaoService {
     );
   }
 
+  ativarTctokenConfirmacaoAutomatica(): Observable<OrganizacaoConfiguracao> {
+    return this.http.patch<OrganizacaoConfiguracao>(
+      `${this.base}/configuracoes/tctoken-confirmacao-automatica/ativar`,
+      {},
+    );
+  }
+
+  desativarTctokenConfirmacaoAutomatica(): Observable<OrganizacaoConfiguracao> {
+    return this.http.patch<OrganizacaoConfiguracao>(
+      `${this.base}/configuracoes/tctoken-confirmacao-automatica/desativar`,
+      {},
+    );
+  }
+
+  atualizarTctokenConfirmacaoDiasAntes(diasAntesExpirar: number): Observable<OrganizacaoConfiguracao> {
+    return this.http.patch<OrganizacaoConfiguracao>(
+      `${this.base}/configuracoes/tctoken-confirmacao-automatica/dias-antes`,
+      { diasAntesExpirar },
+    );
+  }
+
+  atualizarTctokenConfirmacaoMensagemPadrao(mensagemPadrao: string): Observable<OrganizacaoConfiguracao> {
+    return this.http.patch<OrganizacaoConfiguracao>(
+      `${this.base}/configuracoes/tctoken-confirmacao-automatica/mensagem-padrao`,
+      { mensagemPadrao },
+    );
+  }
+
   listarAuditoria(params: {
     page: number;
     size: number;
