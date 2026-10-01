@@ -21,15 +21,15 @@
       <ul class="tutorial-nav__list">
         @for (topico of topicos; track trackTopico($index, topico)) {
           <li>
-            <button
-              type="button"
+            <a
               class="tutorial-nav__item"
-              [class.tutorial-nav__item--active]="topicoAtivoId() === topico.id"
-              (click)="selecionarTopico(topico.id)"
+              [routerLink]="[topico.id]"
+              [relativeTo]="navRoute"
+              routerLinkActive="tutorial-nav__item--active"
             >
               <span class="tutorial-nav__item-title">{{ topico.titulo }}</span>
               <span class="tutorial-nav__item-resumo">{{ topico.resumo }}</span>
-            </button>
+            </a>
           </li>
         }
       </ul>

@@ -91,14 +91,18 @@
 }
 
 .tutorial-nav__item {
+  display: block;
   width: 100%;
   text-align: left;
+  text-decoration: none;
+  color: inherit;
   border: 1px solid transparent;
   border-radius: 0.75rem;
   padding: 0.625rem 0.75rem;
   background: transparent;
   cursor: pointer;
   transition: background 0.15s, border-color 0.15s;
+  box-sizing: border-box;
 
   &:hover {
     background: color-mix(in srgb, var(--color-primary) 6%, transparent);

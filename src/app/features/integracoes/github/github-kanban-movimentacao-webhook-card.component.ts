@@ -4,7 +4,15 @@ import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { startWith } from 'rxjs';
-import { LoaderCircle, LucideAngularModule } from 'lucide-angular';
+import {
+  Ban,
+  Bot,
+  Check,
+  Layers,
+  LoaderCircle,
+  LucideAngularModule,
+  MessageCircle,
+} from 'lucide-angular';
 
 import { GithubIntegracaoService } from '../../../core/services/github-integracao.service';
 import { ToastService } from '../../../core/services/toast.service';
@@ -46,101 +54,231 @@ function flagsFromDestino(destino: GithubKanbanDestinoNotificacao): {
   selector: 'app-github-kanban-movimentacao-webhook-card',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, LucideAngularModule],
+  styles: [
+    `
+      :host {
+        display: block;
+      }
+
+      .destino-grid {
+        display: grid;
+        gap: 0.5rem;
+      }
+
+      @media (min-width: 640px) {
+        .destino-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+
+      .destino-opcao {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.75rem;
+        padding: 0.75rem 0.875rem;
+        border-radius: 10px;
+        border: 1px solid var(--color-border-soft);
+        background: var(--color-surface-muted);
+        cursor: pointer;
+        transition:
+          border-color 150ms ease,
+          background 150ms ease,
+          box-shadow 150ms ease;
+      }
+
+      .destino-opcao:hover {
+        border-color: var(--color-border);
+      }
+
+      .destino-opcao--ativo {
+        border-color: color-mix(in srgb, var(--color-primary) 55%, var(--color-border));
+        background: var(--color-success-bg);
+        box-shadow: inset 0 0 0 1px var(--color-success-border);
+      }
+
+      .destino-opcao__radio {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+      }
+
+      .destino-opcao__icon {
+        flex-shrink: 0;
+        width: 2rem;
+        height: 2rem;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--color-surface);
+        border: 1px solid var(--color-border-soft);
+        color: var(--color-text-muted);
+      }
+
+      .destino-opcao--ativo .destino-opcao__icon {
+        color: var(--color-primary);
+        border-color: color-mix(in srgb, var(--color-primary) 35%, var(--color-border-soft));
+      }
+
+      .destino-opcao__titulo {
+        display: block;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--color-text);
+        line-height: 1.3;
+      }
+
+      .destino-opcao__desc {
+        display: block;
+        font-size: 11.5px;
+        color: var(--color-text-faint);
+        line-height: 1.45;
+        margin-top: 0.2rem;
+      }
+
+      .webhook-panel {
+        border-radius: 10px;
+        border: 1px solid var(--color-border-soft);
+        background: var(--color-surface-muted);
+        padding: 1rem;
+      }
+
+      .auth-ok {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        font-size: 11px;
+        color: var(--color-primary);
+        margin-top: 0.375rem;
+      }
+    `,
+  ],
   template: `
-    <section
-      class="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-5 space-y-4"
-    >
-      <div>
-        <h2 class="text-lg font-semibold text-[var(--color-text)]">
-          Destino das notificações (movimentação no kanban)
-        </h2>
-        <p class="text-sm text-[var(--color-text-muted)] mt-1">
-          Quando um card mudar de coluna no Project v2, escolha se a API envia WhatsApp aos responsáveis,
-          chama um webhook externo (bot/automação), os dois ou nenhum. O WhatsApp direto vale para todo o
-          fluxo GitHub desta integração; o webhook externo só dispara na mudança de coluna.
+    <div class="ui-card">
+      <div class="ui-card-head">
+        <span class="ui-eyebrow">Project v2</span>
+        <h2 class="ui-card-title">Destino ao mover card no kanban</h2>
+        <p class="ui-hint m-0 mt-2 max-w-2xl">
+          Define o que a API faz quando a coluna do card mudar. O WhatsApp segue as regras deste módulo;
+          o bot recebe um POST JSON só nessa movimentação.
         </p>
       </div>
 
       @if (carregando()) {
-        <p class="text-sm text-[var(--color-text-muted)] flex items-center gap-2">
+        <div class="ui-card-body flex items-center gap-2 text-sm text-[var(--color-text-muted)]">
           <lucide-icon [img]="loaderIcon" class="w-4 h-4 animate-spin" />
           Carregando…
-        </p>
+        </div>
       } @else {
-        <form [formGroup]="form" class="space-y-4" (ngSubmit)="salvar()">
-          <fieldset class="space-y-2 border-0 p-0 m-0">
-            <legend class="text-sm font-medium text-[var(--color-text)] mb-2">Modo de envio</legend>
-            @for (opcao of opcoesDestino; track opcao.valor) {
-              <label class="flex items-start gap-2 text-sm cursor-pointer">
-                <input
-                  type="radio"
-                  formControlName="destinoNotificacao"
-                  [value]="opcao.valor"
-                  class="mt-0.5"
-                />
-                <span>
-                  <span class="font-medium text-[var(--color-text)]">{{ opcao.titulo }}</span>
-                  <span class="block text-xs text-[var(--color-text-muted)]">{{ opcao.descricao }}</span>
-                </span>
-              </label>
-            }
-          </fieldset>
-
-          @if (exibirCamposWebhook()) {
-            <div class="space-y-4 pt-2 border-t border-[var(--color-border)]">
-              <div>
-                <label class="block text-sm font-medium mb-1">URL do webhook (bot)</label>
-                <input
-                  type="url"
-                  class="input-admin w-full"
-                  formControlName="kanbanMovimentacaoWebhookUrl"
-                  placeholder="https://…"
-                  autocomplete="off"
-                />
-              </div>
-
-              <div>
-                <label class="block text-sm font-medium mb-1">Header Authorization</label>
-                <input
-                  type="password"
-                  class="input-admin w-full"
-                  formControlName="kanbanMovimentacaoWebhookAuthorization"
-                  [placeholder]="
-                    authConfigurado() ? 'Deixe em branco para manter o valor salvo' : 'Bearer …'
-                  "
-                  autocomplete="new-password"
-                />
-                @if (authConfigurado()) {
-                  <p class="text-xs text-[var(--color-text-muted)] mt-1">Authorization já configurado.</p>
+        <form [formGroup]="form" (ngSubmit)="salvar()">
+          <div class="ui-card-body space-y-4">
+            <div>
+              <span class="ui-field-label">Modo de envio</span>
+              <div class="destino-grid" role="radiogroup" aria-label="Modo de envio">
+                @for (opcao of opcoesDestino; track opcao.valor) {
+                  <label
+                    class="destino-opcao"
+                    [class.destino-opcao--ativo]="destinoAtual() === opcao.valor"
+                  >
+                    <input
+                      type="radio"
+                      class="destino-opcao__radio"
+                      formControlName="destinoNotificacao"
+                      [value]="opcao.valor"
+                    />
+                    <span class="destino-opcao__icon" aria-hidden="true">
+                      <lucide-icon [img]="opcao.icon" class="w-4 h-4" />
+                    </span>
+                    <span>
+                      <span class="destino-opcao__titulo">{{ opcao.titulo }}</span>
+                      <span class="destino-opcao__desc">{{ opcao.descricao }}</span>
+                    </span>
+                  </label>
                 }
               </div>
             </div>
-          }
 
-          <div class="flex flex-wrap gap-2 justify-end">
             @if (exibirCamposWebhook()) {
-              <button
-                type="button"
-                class="btn-secondary-admin"
-                [disabled]="testando() || salvando()"
-                (click)="testar()"
-              >
-                @if (testando()) {
-                  <lucide-icon [img]="loaderIcon" class="w-4 h-4 animate-spin inline" />
-                }
-                Enviar evento de teste
-              </button>
+              <div class="webhook-panel space-y-3">
+                <div>
+                  <span class="ui-eyebrow">Bot externo</span>
+                  <p class="text-xs text-[var(--color-text-muted)] m-0 mt-0.5">
+                    URL e credencial usados no POST assíncrono (Authorization criptografado no servidor).
+                  </p>
+                </div>
+                <div>
+                  <label class="ui-field-label" for="kanban-webhook-url">URL do webhook</label>
+                  <input
+                    id="kanban-webhook-url"
+                    type="url"
+                    class="form-input-admin w-full font-mono text-xs"
+                    formControlName="kanbanMovimentacaoWebhookUrl"
+                    placeholder="https://…"
+                    autocomplete="off"
+                  />
+                </div>
+                <div>
+                  <label class="ui-field-label" for="kanban-webhook-auth">Header Authorization</label>
+                  <input
+                    id="kanban-webhook-auth"
+                    type="password"
+                    class="form-input-admin w-full font-mono text-xs"
+                    formControlName="kanbanMovimentacaoWebhookAuthorization"
+                    [placeholder]="
+                      authConfigurado() ? 'Deixe em branco para manter o valor salvo' : 'Bearer …'
+                    "
+                    autocomplete="new-password"
+                  />
+                  @if (authConfigurado()) {
+                    <span class="auth-ok">
+                      <lucide-icon [img]="checkIcon" class="w-3.5 h-3.5" />
+                      Credencial já salva
+                    </span>
+                  }
+                </div>
+              </div>
             }
-            <button type="submit" class="btn-primary-admin" [disabled]="salvando() || form.pristine">
-              @if (salvando()) {
-                <lucide-icon [img]="loaderIcon" class="w-4 h-4 animate-spin inline" />
+          </div>
+
+          <div class="ui-card-footer flex-wrap gap-3">
+            <span class="text-[11px] leading-snug max-w-md">
+              Salvar aqui não altera kanban/regras abaixo — só este destino de notificação.
+            </span>
+            <div class="flex flex-wrap gap-2 shrink-0">
+              @if (exibirCamposWebhook()) {
+                <button
+                  type="button"
+                  class="ui-btn ui-btn-ghost !flex-none !min-w-0 !py-2 !px-3 text-xs"
+                  [disabled]="testando() || salvando()"
+                  (click)="testar()"
+                >
+                  @if (testando()) {
+                    <lucide-icon [img]="loaderIcon" class="w-3.5 h-3.5 animate-spin" />
+                  }
+                  Testar webhook
+                </button>
               }
-              Salvar
-            </button>
+              <button
+                type="submit"
+                class="ui-btn ui-btn-primary !flex-none !min-w-0 !py-2 !px-4 text-xs"
+                [disabled]="salvando() || form.pristine"
+              >
+                @if (salvando()) {
+                  <lucide-icon [img]="loaderIcon" class="w-3.5 h-3.5 animate-spin" />
+                }
+                Salvar destino
+              </button>
+            </div>
           </div>
         </form>
       }
-    </section>
+    </div>
   `,
 })
 export class GithubKanbanMovimentacaoWebhookCardComponent implements OnInit {
@@ -149,6 +287,7 @@ export class GithubKanbanMovimentacaoWebhookCardComponent implements OnInit {
   private readonly toast = inject(ToastService);
 
   protected readonly loaderIcon = LoaderCircle;
+  protected readonly checkIcon = Check;
 
   readonly carregando = signal(true);
   readonly salvando = signal(false);
@@ -159,26 +298,31 @@ export class GithubKanbanMovimentacaoWebhookCardComponent implements OnInit {
     valor: GithubKanbanDestinoNotificacao;
     titulo: string;
     descricao: string;
+    icon: typeof MessageCircle;
   }[] = [
     {
       valor: 'whatsapp',
       titulo: 'Somente WhatsApp',
-      descricao: 'Mensagens pela fila da API (templates e regras do módulo Project v2).',
+      descricao: 'Fila da API com templates e regras do módulo.',
+      icon: MessageCircle,
     },
     {
       valor: 'webhook',
-      titulo: 'Somente webhook externo (bot)',
-      descricao: 'POST JSON na URL configurada; não enfileira WhatsApp.',
+      titulo: 'Somente bot',
+      descricao: 'POST na URL do bot; sem mensagem WhatsApp.',
+      icon: Bot,
     },
     {
       valor: 'ambos',
-      titulo: 'WhatsApp e webhook',
-      descricao: 'Os dois canais na mesma movimentação (quando as regras permitirem).',
+      titulo: 'WhatsApp e bot',
+      descricao: 'Os dois canais na mesma mudança de coluna.',
+      icon: Layers,
     },
     {
       valor: 'nenhum',
       titulo: 'Nenhum',
-      descricao: 'Não envia WhatsApp nem chama o webhook externo.',
+      descricao: 'Não envia WhatsApp nem chama o bot.',
+      icon: Ban,
     },
   ];
 
@@ -188,7 +332,7 @@ export class GithubKanbanMovimentacaoWebhookCardComponent implements OnInit {
     kanbanMovimentacaoWebhookAuthorization: [''],
   });
 
-  private readonly destinoAtual = toSignal(
+  readonly destinoAtual = toSignal(
     this.form.controls.destinoNotificacao.valueChanges.pipe(
       startWith(this.form.controls.destinoNotificacao.value),
     ),

@@ -1,20 +1,35 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { map } from 'rxjs';
 import { BookOpen, Check, ChevronRight, Copy, LucideAngularModule } from 'lucide-angular';
 
 import { environment } from '../../../environments/environment';
 import { ToastService } from '../../core/services/toast.service';
-import { TUTORIAL_TOPICOS, TutorialCodeLanguage, TutorialSection, TutorialTopico } from './tutorial.data';
+import {
+  TUTORIAL_TOPICO_PADRAO_ID,
+  TUTORIAL_TOPICOS,
+  TutorialCodeLanguage,
+  TutorialSection,
+  TutorialTopico,
+  tutorialTopicoValido,
+} from './tutorial.data';
 
 @Component({
   selector: 'app-tutorial',
   standalone: true,
-  imports: [CommonModule, LucideAngularModule],
+  imports: [CommonModule, RouterModule, LucideAngularModule],
   templateUrl: './tutorial.component.html',
   styleUrl: './tutorial.component.scss',
 })
 export class TutorialComponent {
   private readonly toast = inject(ToastService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+
+  /** Rota pai `documentacao` — links das seções são irmãos (`/documentacao/:topicoId`). */
+  protected readonly navRoute = this.route.parent ?? this.route;
 
   protected readonly bookIcon = BookOpen;
   protected readonly copyIcon = Copy;
@@ -22,21 +37,44 @@ export class TutorialComponent {
   protected readonly chevronIcon = ChevronRight;
 
   readonly topicos = TUTORIAL_TOPICOS;
-  readonly topicoAtivoId = signal(TUTORIAL_TOPICOS[0].id);
   readonly copiadoId = signal<string | null>(null);
   readonly abaExemploAtiva = signal<Record<string, number>>({});
 
-  readonly topicoAtivo = computed(() =>
-    this.topicos.find((t) => t.id === this.topicoAtivoId()) ?? this.topicos[0],
+  private readonly topicoSlug = toSignal(
+    this.route.paramMap.pipe(map((params) => params.get('topicoId'))),
+    { initialValue: null as string | null },
   );
+
+  readonly topicoAtivo = computed(() => {
+    const id = this.topicoSlug();
+    if (id && tutorialTopicoValido(id)) {
+      return this.topicos.find((t) => t.id === id) ?? this.topicos[0];
+    }
+    return this.topicos[0];
+  });
+
+  readonly topicoAtivoId = computed(() => this.topicoAtivo().id);
 
   readonly apiUrl = environment.apiUrl;
 
-  selecionarTopico(id: string): void {
-    this.topicoAtivoId.set(id);
-    if (typeof window !== 'undefined') {
+  constructor() {
+    effect(() => {
+      const id = this.topicoSlug();
+      if (id && !tutorialTopicoValido(id)) {
+        void this.router.navigate([TUTORIAL_TOPICO_PADRAO_ID], {
+          relativeTo: this.navRoute,
+          replaceUrl: true,
+        });
+      }
+    });
+
+    effect(() => {
+      const id = this.topicoAtivoId();
+      if (!id || typeof window === 'undefined') {
+        return;
+      }
       window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
+    });
   }
 
   secaoComAbas(secao: TutorialSection): boolean {

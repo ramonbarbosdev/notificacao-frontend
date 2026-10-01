@@ -716,3 +716,9 @@ async function runBot() {
     ],
   },
 ];
+
+export const TUTORIAL_TOPICO_PADRAO_ID = TUTORIAL_TOPICOS[0]?.id ?? 'visao-geral';
+
+export function tutorialTopicoValido(id: string | null | undefined): boolean {
+  return id != null && TUTORIAL_TOPICOS.some((t) => t.id === id);
+}

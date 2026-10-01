@@ -40,8 +40,18 @@ export const routes: Routes = [
       },
       {
         path: 'documentacao',
-        loadComponent: () =>
-          import('./features/site/site-documentacao.component').then((m) => m.SiteDocumentacaoComponent),
+        children: [
+          {
+            path: '',
+            pathMatch: 'full',
+            redirectTo: 'visao-geral',
+          },
+          {
+            path: ':topicoId',
+            loadComponent: () =>
+              import('./features/site/site-documentacao.component').then((m) => m.SiteDocumentacaoComponent),
+          },
+        ],
       },
     ],
   },
@@ -148,12 +158,22 @@ export const routes: Routes = [
         path: 'documentacao',
         canActivate: [roleGuard],
         data: { roles: ['ADMIN', 'USER'] },
-        loadComponent: () =>
-          import('./features/tutorial/tutorial.component').then((m) => m.TutorialComponent),
+        children: [
+          {
+            path: '',
+            pathMatch: 'full',
+            redirectTo: 'visao-geral',
+          },
+          {
+            path: ':topicoId',
+            loadComponent: () =>
+              import('./features/tutorial/tutorial.component').then((m) => m.TutorialComponent),
+          },
+        ],
       },
       {
         path: 'tutorial',
-        redirectTo: 'documentacao',
+        redirectTo: 'documentacao/visao-geral',
         pathMatch: 'full',
       },
       {
@@ -309,7 +329,7 @@ export const routes: Routes = [
   { path: 'whatsapp', redirectTo: '/app/whatsapp' },
   { path: 'notificacoes', redirectTo: '/app/whatsapp' },
   { path: 'templates', redirectTo: '/app/templates' },
-  { path: 'tutorial', redirectTo: '/documentacao' },
+  { path: 'tutorial', redirectTo: '/documentacao/visao-geral' },
   { path: 'historico', redirectTo: '/app/historico' },
   { path: 'fila', redirectTo: '/app/fila' },
   { path: 'configuracoes', redirectTo: '/app/configuracoes' },
