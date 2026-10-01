@@ -515,25 +515,25 @@ var data = await response.Content.ReadFromJsonAsync<JsonElement>();`,
         ],
       },
       {
-        titulo: 'Endpoints liberados com API Key (hoje)',
+        titulo: 'Autenticação do bot (API Key + scope)',
         paragrafos: [
           'Header em todas as chamadas: X-API-KEY: nak_prefixo.segredo (chave completa).',
+          'O bot usa API Key normal da organização com scope NOTIFICACOES_ENVIAR (o mesmo do webhook GitHub e do POST /app/notificacoes/enviar).',
+          'Rotas de leitura em /app/integracao/github/** exigem esse scope; alteração de configuração (PATCH) continua só para ADMIN no painel.',
           'Base: {API_URL}/app/...',
         ],
         lista: [
           'GET /app/integracao/status — saúde geral + WhatsApp',
           'GET /app/integracao/whatsapp/status — status da sessão',
-          'GET /app/integracao/github/webhook — URL do webhook GitHub, frase opt-in, link wa.me, catálogo de variáveis de template',
           'GET /app/integracao/webhook/generico — webhook JSON genérico (opcional)',
           'POST /app/notificacoes/enviar — envio via fila (recomendado para o bot)',
           'POST /app/integracao/whatsapp/enviar-mensagem — envio direto ao gateway (testes / baixo volume)',
           'GET /app/notificacoes/fila e GET /app/notificacoes/{id} — com scope NOTIFICACOES_CONSULTAR',
+          'Tudo sob /app/integracao/github/** — hub, projects, GraphQL, responsáveis, decisões, preview (ver seção GitHub)',
         ],
-        dica:
-          'Rotas de leitura do kanban e lista de responsáveis existem na API, mas hoje exigem login ADMIN no painel (JWT), não só API Key. Veja a seção abaixo antes de implementar o bot.',
       },
       {
-        titulo: 'Leitura do GitHub (JWT admin ou evolução futura com API Key)',
+        titulo: 'Leitura GitHub (scope NOTIFICACOES_ENVIAR)',
         paragrafos: [
           'A API usa o token GitHub já salvo na organização. O bot não envia PAT próprio no header.',
           'Não há endpoint para listar todos os cards do board de uma vez; use combinação de webhook (nodeId) + consulta por item, ou aguarde extensão da API.',
@@ -628,8 +628,8 @@ Content-Type: application/json`,
         lista: [
           '1. GET /app/integracao/status — abortar se WhatsApp desconectado',
           '2. GET /app/integracao/github/webhook — feature ligada, variáveis de template se for montar texto igual ao painel',
-          '3. (Admin/JWT ou futura API Key) GET project/vinculo + graphql/consulta por cada nodeId que o bot rastreia',
-          '4. (Admin/JWT) GET github/responsaveis — filtrar logins ativos',
+          '3. GET /app/integracao/github/project/vinculo + POST graphql/consulta por cada nodeId que o bot rastreia',
+          '4. GET /app/integracao/github/responsaveis — filtrar logins ativos',
           '5. Montar mensagem (ou POST template/preview com cenarioId, ex. projects_v2_edited)',
           '6. POST /app/notificacoes/enviar por destinatário, com referenciaExterna única',
           '7. Opcional: GET /app/notificacoes/fila?... para confirmar ENVIADA ou erro',
@@ -664,8 +664,8 @@ async function runBot() {
     throw new Error('GITHUB_WEBHOOK desabilitado para esta org');
   }
 
-  // Leitura de cards / responsáveis: rotas /app/integracao/github/*
-  // exigem JWT admin hoje — implemente no painel ou peça abertura para API Key.
+  const vinculo = await apiGet('/app/integracao/github/project/vinculo');
+  const responsaveis = await apiGet('/app/integracao/github/responsaveis');
 
   const telefone = '5571994686855'; // resolvido pelo seu mapa login → telefone
   await fetch(\`\${apiUrl}/app/notificacoes/enviar\`, {
@@ -707,7 +707,7 @@ async function runBot() {
         titulo: 'Erros e limites',
         lista: [
           '401 — API Key inválida ou ausente',
-          '403 — rota exige JWT admin (ex. GET github/responsaveis só com API Key pode falhar até liberação em SecurityConfiguracao)',
+          '403 — API Key sem scope NOTIFICACOES_ENVIAR ou tentativa de PATCH/DELETE GitHub sem ROLE_ADMIN',
           '409 — token GitHub não configurado ou expirado (consultas GraphQL / projects)',
           '429 — limite de envio do plano',
           'BLOQUEADA na fila — consentimento WhatsApp ou contato inválido',
