@@ -206,6 +206,8 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
 
   readonly webhookInboundHabilitadoNoPlano = () => this.featureFlags.habilitado('WEBHOOK');
   readonly webhookInboundSecretConfigurado = signal(false);
+  readonly envioMensagensHabilitado = signal(true);
+  readonly alterandoEnvioMensagens = signal(false);
   campoErro(campo: keyof OrganizacaoConfiguracaoFormData): string | null {
     return this.errosFormulario()[campo] ?? null;
   }
@@ -298,6 +300,7 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
     this.configService.buscar().subscribe({
       next: (config) => {
         this.webhookInboundSecretConfigurado.set(!!config.webhookInboundSecretConfigurado);
+        this.envioMensagensHabilitado.set(config.envioMensagensHabilitado !== false);
         this.form.patchValue(this.patchConfigForm(config));
         if (!this.isAdmin()) this.form.disable();
         this.carregando.set(false);
@@ -518,6 +521,44 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
   alternarWebhook(webhook: WebhookDTO): void {
     const chamada = webhook.ativo ? this.webhookService.inativar(webhook.idWebhook) : this.webhookService.ativar(webhook.idWebhook);
     chamada.subscribe({ next: () => this.carregarWebhooks() });
+  }
+
+  alternarEnvioMensagens(): void {
+    if (!this.isAdmin() || this.alterandoEnvioMensagens()) {
+      return;
+    }
+
+    const habilitado = this.envioMensagensHabilitado();
+    if (
+      habilitado
+      && !confirm(
+        'Desativar o envio de mensagens para esta organizacao? '
+          + 'Novos envios serao bloqueados e itens na fila ficarao aguardando ate reativar.',
+      )
+    ) {
+      return;
+    }
+
+    const chamada = habilitado
+      ? this.configService.desativarEnvioMensagens()
+      : this.configService.ativarEnvioMensagens();
+
+    this.alterandoEnvioMensagens.set(true);
+    this.erro.set(null);
+    chamada.subscribe({
+      next: (config) => {
+        this.envioMensagensHabilitado.set(config.envioMensagensHabilitado !== false);
+        this.alterandoEnvioMensagens.set(false);
+        this.toast.success(
+          habilitado ? 'Envio de mensagens desativado' : 'Envio de mensagens reativado',
+        );
+      },
+      error: (err: HttpErrorResponse) => {
+        this.alterandoEnvioMensagens.set(false);
+        this.erro.set(this.mensagemErro(err, 'Erro ao alterar envio de mensagens.'));
+        this.toast.error('Erro ao alterar envio', this.erro() ?? undefined);
+      },
+    });
   }
 
   removerWebhook(idWebhook: number): void {

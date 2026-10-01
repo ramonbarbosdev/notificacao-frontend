@@ -124,6 +124,15 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'whatsapp/tctoken-audiencia',
+        canActivate: [roleGuard],
+        data: { roles: ['ADMIN', 'USER'] },
+        loadComponent: () =>
+          import('./features/whatsapp-tctoken-audiencia/tctoken-audiencia.component').then(
+            (m) => m.TcTokenAudienciaComponent,
+          ),
+      },
+      {
         path: 'notificacoes',
         redirectTo: 'whatsapp',
         pathMatch: 'full',

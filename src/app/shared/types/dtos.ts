@@ -77,6 +77,56 @@ export interface WhatsappStatusResponse {
   operacional?: SessaoOperacionalContexto | null;
 }
 
+export type TcTokenAudienciaOrigem = 'GITHUB' | 'FILA';
+
+export type TcTokenAudienciaSituacao = 'OK' | 'PROXIMO_EXPIRAR' | 'EXPIRADO' | 'AUSENTE';
+
+export interface TcTokenAudienciaKpisResponse {
+  total: number;
+  proximoExpirar: number;
+  ausente: number;
+  expirados: number;
+  ok: number;
+}
+
+export interface TcTokenAudienciaLinhaResponse {
+  telefone: string;
+  telefoneMascarado: string;
+  nomeExibicao: string;
+  origens: TcTokenAudienciaOrigem[];
+  idadeDias: number | null;
+  expiraEmDias: number | null;
+  situacao: TcTokenAudienciaSituacao;
+  situacaoRotulo: string;
+  prontoParaEnvio: boolean | null;
+  liberadoIndisponivel: boolean;
+  jidComToken: string | null;
+  consultadoNoGateway: boolean;
+}
+
+export interface TcTokenAudienciaScanResponse {
+  sucesso: boolean;
+  erro: string | null;
+  idOrganizacao: number;
+  atualizadoEm: string;
+  gatewayOnline: boolean;
+  vidaDiasToken: number;
+  janelaAlertaDias: number;
+  filaLookbackDias: number;
+  varreduraGatewayCompleta: boolean;
+  kpis: TcTokenAudienciaKpisResponse;
+  linhas: TcTokenAudienciaLinhaResponse[];
+}
+
+export interface TcTokenAudienciaPedirConfirmacaoRequest {
+  telefone: string;
+  mensagem?: string | null;
+  /** Admin: ignora elegibilidade (situação/gateway) e dedupe de 7 dias. */
+  modoTeste?: boolean | null;
+}
+
+export type TcTokenAudienciaPedirConfirmacaoResponse = EnviarNotificacaoResponse;
+
 export interface WhatsappCloudConfigRequest {
   phoneNumberId: string;
   wabaId?: string | null;
@@ -789,6 +839,10 @@ export interface OrganizacaoConfiguracao {
   githubHttpConnectTimeoutMs?: number | null;
   githubHttpReadTimeoutMs?: number | null;
   githubInstallationTokenSkewSegundos?: number | null;
+  envioMensagensHabilitado: boolean;
+  tctokenConfirmacaoAutomaticaHabilitado?: boolean | null;
+  tctokenConfirmacaoAutomaticaDiasAntes?: number | null;
+  tctokenConfirmacaoMensagemPadrao?: string | null;
   dtCriacao?: string | null;
   dtAtualizacao?: string | null;
 }
@@ -1044,6 +1098,7 @@ export type OrganizacaoConfiguracaoRequest = Omit<
   | 'webhookInboundSecretConfigurado'
   | 'githubGraphqlTokenConfigurado'
   | 'githubAppPrivateKeyConfigurado'
+  | 'envioMensagensHabilitado'
 > & {
   webhookInboundSecret?: string | null;
   githubGraphqlToken?: string | null;
