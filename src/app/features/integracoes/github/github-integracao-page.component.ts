@@ -13,6 +13,7 @@ import { GithubTemplatePorCenario, OrganizacaoConfiguracao, OrganizacaoConfigura
 import { getZodFieldErrors } from '../../../shared/helper/zod-form.helper';
 import { extrairMensagemErroHttp } from '../../../shared/labels/notificacao.labels';
 import { ConfiguracoesGithubTabComponent } from '../../configuracoes/configuracoes-github-tab/configuracoes-github-tab.component';
+import { GithubKanbanMovimentacaoWebhookCardComponent } from './github-kanban-movimentacao-webhook-card.component';
 import { validarDocumentoRegras } from '../../configuracoes/configuracoes-github-tab/github-regras-flow.util';
 import { parseRegrasPorStatus } from '../../configuracoes/configuracoes-github-tab/github-regras-por-status.util';
 import {
@@ -24,7 +25,13 @@ import {
 @Component({
   selector: 'app-github-integracao-page',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, LucideAngularModule, ConfiguracoesGithubTabComponent],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    LucideAngularModule,
+    ConfiguracoesGithubTabComponent,
+    GithubKanbanMovimentacaoWebhookCardComponent,
+  ],
   templateUrl: './github-integracao-page.component.html',
 })
 export class GithubIntegracaoPageComponent implements OnInit {

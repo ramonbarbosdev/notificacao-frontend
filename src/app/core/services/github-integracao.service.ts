@@ -21,6 +21,8 @@ import {
   GithubIntegracaoProjectsV2PatchRequest,
   GithubIntegracaoIssueCommentModuloResponse,
   GithubIntegracaoModuloStatus,
+  GithubIntegracaoKanbanMovimentacaoWebhookPatchRequest,
+  GithubIntegracaoKanbanMovimentacaoWebhookResponse,
 } from '../../shared/types/dtos';
 
 @Injectable({ providedIn: 'root' })
@@ -64,6 +66,28 @@ export class GithubIntegracaoService {
 
   buscarInstrucoesWebhook(): Observable<GithubWebhookIntegracaoResponse> {
     return this.http.get<GithubWebhookIntegracaoResponse>(`${this.base}/webhook`);
+  }
+
+  obterKanbanMovimentacaoWebhook(): Observable<GithubIntegracaoKanbanMovimentacaoWebhookResponse> {
+    return this.http.get<GithubIntegracaoKanbanMovimentacaoWebhookResponse>(
+      `${this.base}/kanban-movimentacao-webhook`,
+    );
+  }
+
+  patchKanbanMovimentacaoWebhook(
+    body: GithubIntegracaoKanbanMovimentacaoWebhookPatchRequest,
+  ): Observable<GithubIntegracaoKanbanMovimentacaoWebhookResponse> {
+    return this.http.patch<GithubIntegracaoKanbanMovimentacaoWebhookResponse>(
+      `${this.base}/kanban-movimentacao-webhook`,
+      body,
+    );
+  }
+
+  testarKanbanMovimentacaoWebhook(): Observable<{ dispatched: boolean; tipo: string }> {
+    return this.http.post<{ dispatched: boolean; tipo: string }>(
+      `${this.base}/kanban-movimentacao-webhook/teste`,
+      {},
+    );
   }
 
   listarResponsaveis(): Observable<GithubResponsavel[]> {

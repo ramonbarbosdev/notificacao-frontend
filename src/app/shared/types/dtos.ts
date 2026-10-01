@@ -865,6 +865,21 @@ export interface GithubIntegracaoHubResponse {
   modulos: GithubIntegracaoModuloStatus[];
 }
 
+export interface GithubIntegracaoKanbanMovimentacaoWebhookResponse {
+  idOrganizacao: number;
+  kanbanMovimentacaoWebhookUrl: string | null;
+  kanbanMovimentacaoWebhookHabilitado: boolean;
+  kanbanMovimentacaoWebhookAuthorizationConfigurado: boolean;
+  githubWhatsappDiretoHabilitado: boolean;
+}
+
+export type GithubIntegracaoKanbanMovimentacaoWebhookPatchRequest = Partial<{
+  kanbanMovimentacaoWebhookUrl: string | null;
+  kanbanMovimentacaoWebhookAuthorization: string | null;
+  kanbanMovimentacaoWebhookHabilitado: boolean;
+  githubWhatsappDiretoHabilitado: boolean;
+}>;
+
 export interface GithubIntegracaoCompartilhadoResponse {
   idOrganizacao: number;
   dsGithubFraseAtivacaoWhatsapp: string | null;
