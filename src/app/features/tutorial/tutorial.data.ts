@@ -485,4 +485,234 @@ var data = await response.Content.ReadFromJsonAsync<JsonElement>();`,
       },
     ],
   },
+  {
+    id: 'bot-github-whatsapp',
+    titulo: 'Bot GitHub + WhatsApp',
+    resumo:
+      'Orquestrador com API Key: ler Project v2, mapear devs com opt-in e enviar mensagens (fila ou gateway).',
+    secoes: [
+      {
+        titulo: 'Papel do bot',
+        paragrafos: [
+          'Use um bot quando a lógica não cabe só no webhook nativo do GitHub (relatórios periódicos, regras customizadas, cruzamento com outros sistemas).',
+          'O bot autentica com X-API-KEY da organização. Ele não substitui o GitHub App: credenciais (App/PAT) e project vinculado ficam configurados no painel (Integrações → GitHub).',
+          'O WhatsApp de origem é sempre a sessão conectada na organização — o bot apenas enfileira ou dispara mensagens por essa sessão.',
+        ],
+        lista: [
+          'Webhook automático (GitHub → API → WhatsApp): eventos em tempo real com regras por coluna no painel — ver GET /app/integracao/github/webhook.',
+          'Bot: consulta estado, decide destinatários e chama envio — este guia.',
+        ],
+      },
+      {
+        titulo: 'Pré-requisitos na organização',
+        lista: [
+          'Feature GITHUB_WEBHOOK habilitada (super admin)',
+          'Sessão WhatsApp conectada (GET /app/integracao/status → whatsappConectado: true)',
+          'GitHub App instalado na org ou PAT com leitura de Projects (configurado no painel)',
+          'Project v2 vinculado (dsGithubProjectV2NodeId) — via painel ou primeiro webhook',
+          'API Key com NOTIFICACOES_ENVIAR; opcional NOTIFICACOES_CONSULTAR para acompanhar a fila',
+          'Devs com opt-in WhatsApp (frase de ativação + login GitHub) — ver seção Destinatários',
+        ],
+      },
+      {
+        titulo: 'Endpoints liberados com API Key (hoje)',
+        paragrafos: [
+          'Header em todas as chamadas: X-API-KEY: nak_prefixo.segredo (chave completa).',
+          'Base: {API_URL}/app/...',
+        ],
+        lista: [
+          'GET /app/integracao/status — saúde geral + WhatsApp',
+          'GET /app/integracao/whatsapp/status — status da sessão',
+          'GET /app/integracao/github/webhook — URL do webhook GitHub, frase opt-in, link wa.me, catálogo de variáveis de template',
+          'GET /app/integracao/webhook/generico — webhook JSON genérico (opcional)',
+          'POST /app/notificacoes/enviar — envio via fila (recomendado para o bot)',
+          'POST /app/integracao/whatsapp/enviar-mensagem — envio direto ao gateway (testes / baixo volume)',
+          'GET /app/notificacoes/fila e GET /app/notificacoes/{id} — com scope NOTIFICACOES_CONSULTAR',
+        ],
+        dica:
+          'Rotas de leitura do kanban e lista de responsáveis existem na API, mas hoje exigem login ADMIN no painel (JWT), não só API Key. Veja a seção abaixo antes de implementar o bot.',
+      },
+      {
+        titulo: 'Leitura do GitHub (JWT admin ou evolução futura com API Key)',
+        paragrafos: [
+          'A API usa o token GitHub já salvo na organização. O bot não envia PAT próprio no header.',
+          'Não há endpoint para listar todos os cards do board de uma vez; use combinação de webhook (nodeId) + consulta por item, ou aguarde extensão da API.',
+        ],
+        lista: [
+          'GET /app/integracao/github — hub e módulos habilitados',
+          'GET /app/integracao/github/modulos/projects-v2 — regras, fluxo por coluna, templates',
+          'GET /app/integracao/github/projects?orgLogin= — lista projects da org',
+          'GET /app/integracao/github/project/vinculo — project vinculado + opções de Status + listas de disparo',
+          'GET /app/integracao/github/project/status-opcoes?projectNodeId= — nomes das colunas (Status)',
+          'POST /app/integracao/github/graphql/consulta — detalhes de um card/issue/PR por nodeId',
+          'GET /app/integracao/github/webhook/decisoes?pagina=0&tamanho=20 — auditoria do webhook (debug)',
+          'POST /app/integracao/github/webhook/template/preview — validar texto sem enviar WhatsApp',
+        ],
+        exemplos: [
+          {
+            label: 'GraphQL consulta — request',
+            language: 'json',
+            code: `{
+  "nodeId": "I_kwDOEKnzAs7jK9xQ",
+  "contentType": "Issue"
+}`,
+          },
+          {
+            label: 'GraphQL consulta — HTTP',
+            language: 'http',
+            code: `POST /app/integracao/github/graphql/consulta
+X-API-KEY: nak_prefixo.segredo
+Content-Type: application/json`,
+          },
+        ],
+      },
+      {
+        titulo: 'Destinatários (login GitHub → WhatsApp)',
+        paragrafos: [
+          'Quem recebe alertas GitHub precisa ter feito opt-in: abrir linkWhatsappAtivacao (retornado em GET /app/integracao/github/webhook), enviar a frase configurada e informar o login GitHub.',
+          'GET /app/integracao/github/responsaveis lista vínculos (githubLogin, habilitado, ativo). O telefone vem mascarado por privacidade — a API não devolve número completo para integradores.',
+          'Para enviar com POST /app/notificacoes/enviar o campo destinatario deve ser telefone E.164 (só dígitos). O bot precisa resolver login → telefone por regra de negócio própria (ex.: base sincronizada no opt-in) ou usar apenas logins já mapeados no seu sistema.',
+          'Respeite habilitado e ativo na lista de responsáveis antes de enviar. Opt-in é obrigatório no fluxo webhook nativo; envios pela fila podem ainda respeitar consentimento da organização.',
+        ],
+        exemplos: [
+          {
+            label: 'Responsável (campos principais)',
+            language: 'json',
+            code: `{
+  "idGithubResponsavel": 12,
+  "githubLogin": "octocat",
+  "whatsappMascarado": "55719****6855",
+  "habilitado": true,
+  "ativo": true
+}`,
+          },
+        ],
+      },
+      {
+        titulo: 'Enviar mensagens (recomendado: fila)',
+        paragrafos: [
+          'Prefira POST /app/notificacoes/enviar: rate limit da org, histórico, retentativas e referenciaExterna para idempotência (ex.: bot-digest-2026-04-01-octocat-card-123).',
+          'POST /app/integracao/whatsapp/enviar-mensagem envia direto (telefone + mensagem), útil para smoke test após conectar o WhatsApp.',
+        ],
+        exemplos: [
+          {
+            label: 'Enviar via fila — JSON',
+            language: 'json',
+            code: `{
+  "canal": "WHATSAPP",
+  "destinatario": "5571994686855",
+  "assunto": "GitHub — Em revisão",
+  "mensagem": "Olá! O card *API-42* entrou em Em revisão.\\nhttps://github.com/org/repo/issues/42",
+  "referenciaExterna": "bot-coluna-revisao-I_kwDOxxx"
+}`,
+          },
+          {
+            label: 'Envio direto gateway — JSON',
+            language: 'json',
+            code: `{
+  "telefone": "5571994686855",
+  "mensagem": "Teste do bot GitHub"
+}`,
+          },
+          {
+            label: 'Envio direto — HTTP',
+            language: 'http',
+            code: `POST /app/integracao/whatsapp/enviar-mensagem
+X-API-KEY: nak_prefixo.segredo
+Content-Type: application/json`,
+          },
+        ],
+      },
+      {
+        titulo: 'Fluxo sugerido para o bot (cron ou fila externa)',
+        lista: [
+          '1. GET /app/integracao/status — abortar se WhatsApp desconectado',
+          '2. GET /app/integracao/github/webhook — feature ligada, variáveis de template se for montar texto igual ao painel',
+          '3. (Admin/JWT ou futura API Key) GET project/vinculo + graphql/consulta por cada nodeId que o bot rastreia',
+          '4. (Admin/JWT) GET github/responsaveis — filtrar logins ativos',
+          '5. Montar mensagem (ou POST template/preview com cenarioId, ex. projects_v2_edited)',
+          '6. POST /app/notificacoes/enviar por destinatário, com referenciaExterna única',
+          '7. Opcional: GET /app/notificacoes/fila?... para confirmar ENVIADA ou erro',
+        ],
+      },
+      {
+        titulo: 'Exemplo TypeScript (esqueleto)',
+        modoExemplos: 'lista',
+        exemplos: [
+          {
+            label: 'TypeScript',
+            language: 'typescript',
+            code: `const apiUrl = '{API_URL}';
+const apiKey = process.env.NOTIFICACAO_API_KEY!;
+
+async function apiGet(path: string) {
+  const res = await fetch(\`\${apiUrl}\${path}\`, {
+    headers: { 'X-API-KEY': apiKey },
+  });
+  if (!res.ok) throw new Error(\`\${path} → \${res.status}\`);
+  return res.json();
+}
+
+async function runBot() {
+  const status = await apiGet('/app/integracao/status');
+  if (!status.whatsappConectado) {
+    throw new Error('WhatsApp desconectado na organização');
+  }
+
+  const meta = await apiGet('/app/integracao/github/webhook');
+  if (!meta.featureHabilitada) {
+    throw new Error('GITHUB_WEBHOOK desabilitado para esta org');
+  }
+
+  // Leitura de cards / responsáveis: rotas /app/integracao/github/*
+  // exigem JWT admin hoje — implemente no painel ou peça abertura para API Key.
+
+  const telefone = '5571994686855'; // resolvido pelo seu mapa login → telefone
+  await fetch(\`\${apiUrl}/app/notificacoes/enviar\`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-API-KEY': apiKey,
+    },
+    body: JSON.stringify({
+      canal: 'WHATSAPP',
+      destinatario: telefone,
+      assunto: 'Bot GitHub',
+      mensagem: 'Resumo do seu kanban…',
+      referenciaExterna: 'bot-run-' + new Date().toISOString().slice(0, 10),
+    }),
+  });
+}`,
+          },
+        ],
+        dica:
+          'Para eventos em tempo real sem polling, configure o GitHub App para POST /api/webhooks/github?key={API_KEY} e use o bot só para lógica complementar.',
+      },
+      {
+        titulo: 'Webhook GitHub (referência rápida)',
+        paragrafos: [
+          'URL: POST {API_URL}/webhooks/github?key={API_KEY_COMPLETA} (ou header X-API-KEY).',
+          'Webhook secret no GitHub App = mesma API Key completa (scope NOTIFICACOES_ENVIAR).',
+          'Headers esperados: X-GitHub-Event, X-GitHub-Delivery, X-Hub-Signature-256.',
+        ],
+        exemplos: [
+          {
+            label: 'Metadados no painel/bot',
+            language: 'http',
+            code: 'GET /app/integracao/github/webhook',
+          },
+        ],
+      },
+      {
+        titulo: 'Erros e limites',
+        lista: [
+          '401 — API Key inválida ou ausente',
+          '403 — rota exige JWT admin (ex. GET github/responsaveis só com API Key pode falhar até liberação em SecurityConfiguracao)',
+          '409 — token GitHub não configurado ou expirado (consultas GraphQL / projects)',
+          '429 — limite de envio do plano',
+          'BLOQUEADA na fila — consentimento WhatsApp ou contato inválido',
+        ],
+      },
+    ],
+  },
 ];
