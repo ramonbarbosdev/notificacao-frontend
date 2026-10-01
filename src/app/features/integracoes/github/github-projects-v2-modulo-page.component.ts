@@ -19,6 +19,7 @@ import {
 } from '../../configuracoes/configuracoes-github-tab/configuracoes-github-tab.component';
 import { validarDocumentoRegras } from '../../configuracoes/configuracoes-github-tab/github-regras-flow.util';
 import { parseRegrasPorStatus } from '../../configuracoes/configuracoes-github-tab/github-regras-por-status.util';
+import { GithubKanbanMovimentacaoWebhookCardComponent } from './github-kanban-movimentacao-webhook-card.component';
 import {
   GithubIntegracaoFormData,
   GithubIntegracaoFormErrors,
@@ -36,6 +37,7 @@ const SECOES_MODULO: GithubSubAba[] = ['kanban', 'regras'];
     ReactiveFormsModule,
     LucideAngularModule,
     ConfiguracoesGithubTabComponent,
+    GithubKanbanMovimentacaoWebhookCardComponent,
   ],
   templateUrl: './github-projects-v2-modulo-page.component.html',
 })

@@ -23,6 +23,10 @@
     </div>
   }
 
+  <div class="mb-6">
+    <app-github-kanban-movimentacao-webhook-card />
+  </div>
+
   <form [formGroup]="form" class="space-y-6" (ngSubmit)="salvar()">
     <app-configuracoes-github-tab
       escopo="modulo"
