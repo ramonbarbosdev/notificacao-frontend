@@ -212,6 +212,33 @@ function flagsFromDestino(destino: GithubKanbanDestinoNotificacao): {
                     URL e credencial usados no POST assíncrono (Authorization criptografado no servidor).
                   </p>
                 </div>
+                <div class="grid gap-3 sm:grid-cols-2">
+                  <div>
+                    <label class="ui-field-label" for="kanban-webhook-modo">Envio ao bot</label>
+                    <select
+                      id="kanban-webhook-modo"
+                      class="form-input-admin w-full text-sm"
+                      formControlName="kanbanMovimentacaoWebhookModoEnvio"
+                    >
+                      <option value="LOTE">Lote (economiza chamadas)</option>
+                      <option value="IMEDIATO">Imediato (1 POST por movimentação)</option>
+                    </select>
+                  </div>
+                  @if (form.controls.kanbanMovimentacaoWebhookModoEnvio.value === 'LOTE') {
+                    <div>
+                      <label class="ui-field-label" for="kanban-webhook-intervalo">Intervalo do lote (min)</label>
+                      <input
+                        id="kanban-webhook-intervalo"
+                        type="number"
+                        min="5"
+                        max="1440"
+                        class="form-input-admin w-full"
+                        formControlName="kanbanMovimentacaoWebhookIntervaloMinutos"
+                      />
+                      <p class="ui-hint m-0 mt-1">Padrão 30 — só envia se houver movimentações novas.</p>
+                    </div>
+                  }
+                </div>
                 <div>
                   <label class="ui-field-label" for="kanban-webhook-url">URL do webhook</label>
                   <input
@@ -330,6 +357,8 @@ export class GithubKanbanMovimentacaoWebhookCardComponent implements OnInit {
     destinoNotificacao: ['whatsapp' as GithubKanbanDestinoNotificacao],
     kanbanMovimentacaoWebhookUrl: [''],
     kanbanMovimentacaoWebhookAuthorization: [''],
+    kanbanMovimentacaoWebhookModoEnvio: ['LOTE' as 'IMEDIATO' | 'LOTE'],
+    kanbanMovimentacaoWebhookIntervaloMinutos: [30],
   });
 
   readonly destinoAtual = toSignal(
@@ -359,6 +388,8 @@ export class GithubKanbanMovimentacaoWebhookCardComponent implements OnInit {
           ),
           kanbanMovimentacaoWebhookUrl: cfg.kanbanMovimentacaoWebhookUrl ?? '',
           kanbanMovimentacaoWebhookAuthorization: '',
+          kanbanMovimentacaoWebhookModoEnvio: cfg.kanbanMovimentacaoWebhookModoEnvio ?? 'LOTE',
+          kanbanMovimentacaoWebhookIntervaloMinutos: cfg.kanbanMovimentacaoWebhookIntervaloMinutos ?? 30,
         });
         this.form.markAsPristine();
         this.carregando.set(false);
@@ -382,6 +413,8 @@ export class GithubKanbanMovimentacaoWebhookCardComponent implements OnInit {
       kanbanMovimentacaoWebhookHabilitado: flags.kanbanMovimentacaoWebhookHabilitado,
       githubWhatsappDiretoHabilitado: flags.githubWhatsappDiretoHabilitado,
       kanbanMovimentacaoWebhookUrl: (v.kanbanMovimentacaoWebhookUrl ?? '').trim() || null,
+      kanbanMovimentacaoWebhookModoEnvio: v.kanbanMovimentacaoWebhookModoEnvio ?? 'LOTE',
+      kanbanMovimentacaoWebhookIntervaloMinutos: v.kanbanMovimentacaoWebhookIntervaloMinutos ?? 30,
     };
     if (authDirty && (v.kanbanMovimentacaoWebhookAuthorization ?? '').trim()) {
       body['kanbanMovimentacaoWebhookAuthorization'] = v.kanbanMovimentacaoWebhookAuthorization!.trim();

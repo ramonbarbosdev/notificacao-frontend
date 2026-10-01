@@ -689,6 +689,36 @@ async function runBot() {
           'Para eventos em tempo real sem polling, configure o GitHub App para POST /api/webhooks/github?key={API_KEY} e use o bot só para lógica complementar.',
       },
       {
+        titulo: 'Webhook externo de movimentação (bot / automação)',
+        paragrafos: [
+          'Configure em Integrações → GitHub → Módulos → Project v2: destino Somente bot ou WhatsApp+bot.',
+          'Modo LOTE (padrão): a API acumula mudanças de coluna e envia um POST JSON a cada N minutos (ex.: 30), só se houver itens novos — ideal para economizar tokens no seu bot.',
+          'Modo IMEDIATO: um POST por movimentação. O payload inclui título, colunas de/para, logins e nomes (movido_por_detalhe, responsaveis_detalhe) para evitar consultar o GitHub a cada evento.',
+          'No lote, o corpo traz tipo=lote, periodo_inicio/fim e movimentacoes[].',
+        ],
+        exemplos: [
+          {
+            label: 'Config PATCH (admin painel ou API)',
+            language: 'json',
+            code: `{
+  "kanbanMovimentacaoWebhookHabilitado": true,
+  "githubWhatsappDiretoHabilitado": false,
+  "kanbanMovimentacaoWebhookModoEnvio": "LOTE",
+  "kanbanMovimentacaoWebhookIntervaloMinutos": 30,
+  "kanbanMovimentacaoWebhookUrl": "https://seu-bot/…",
+  "kanbanMovimentacaoWebhookAuthorization": "Bearer …"
+}`,
+          },
+          {
+            label: 'HTTP',
+            language: 'http',
+            code: `GET /app/integracao/github/kanban-movimentacao-webhook
+PATCH /app/integracao/github/kanban-movimentacao-webhook
+POST /app/integracao/github/kanban-movimentacao-webhook/teste`,
+          },
+        ],
+      },
+      {
         titulo: 'Webhook GitHub (referência rápida)',
         paragrafos: [
           'URL: POST {API_URL}/webhooks/github?key={API_KEY_COMPLETA} (ou header X-API-KEY).',

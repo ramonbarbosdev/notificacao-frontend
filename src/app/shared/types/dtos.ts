@@ -871,6 +871,8 @@ export interface GithubIntegracaoKanbanMovimentacaoWebhookResponse {
   kanbanMovimentacaoWebhookHabilitado: boolean;
   kanbanMovimentacaoWebhookAuthorizationConfigurado: boolean;
   githubWhatsappDiretoHabilitado: boolean;
+  kanbanMovimentacaoWebhookModoEnvio: 'IMEDIATO' | 'LOTE';
+  kanbanMovimentacaoWebhookIntervaloMinutos: number;
 }
 
 export type GithubIntegracaoKanbanMovimentacaoWebhookPatchRequest = Partial<{
@@ -878,6 +880,8 @@ export type GithubIntegracaoKanbanMovimentacaoWebhookPatchRequest = Partial<{
   kanbanMovimentacaoWebhookAuthorization: string | null;
   kanbanMovimentacaoWebhookHabilitado: boolean;
   githubWhatsappDiretoHabilitado: boolean;
+  kanbanMovimentacaoWebhookModoEnvio: 'IMEDIATO' | 'LOTE';
+  kanbanMovimentacaoWebhookIntervaloMinutos: number;
 }>;
 
 export interface GithubIntegracaoCompartilhadoResponse {
