@@ -38,6 +38,11 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/site/site-contact.component').then((m) => m.SiteContactComponent),
       },
+      {
+        path: 'documentacao',
+        loadComponent: () =>
+          import('./features/site/site-documentacao.component').then((m) => m.SiteDocumentacaoComponent),
+      },
     ],
   },
 
@@ -295,8 +300,7 @@ export const routes: Routes = [
   { path: 'whatsapp', redirectTo: '/app/whatsapp' },
   { path: 'notificacoes', redirectTo: '/app/whatsapp' },
   { path: 'templates', redirectTo: '/app/templates' },
-  { path: 'tutorial', redirectTo: '/app/documentacao' },
-  { path: 'documentacao', redirectTo: '/app/documentacao' },
+  { path: 'tutorial', redirectTo: '/documentacao' },
   { path: 'historico', redirectTo: '/app/historico' },
   { path: 'fila', redirectTo: '/app/fila' },
   { path: 'configuracoes', redirectTo: '/app/configuracoes' },

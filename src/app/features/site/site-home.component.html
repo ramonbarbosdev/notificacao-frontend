@@ -9,6 +9,7 @@
         Acessar plataforma
         <lucide-icon [img]="arrowIcon" class="w-4 h-4 ml-2 inline-block" />
       </a>
+      <a routerLink="/documentacao" class="site-btn-ghost">Documentação da API</a>
       <a routerLink="/plataforma" class="site-btn-ghost">Conhecer recursos</a>
     </div>
   </div>
@@ -32,11 +33,12 @@
       <p>Isolamento por tenant, planos, feature flags e configurações independentes.</p>
     </article>
 
-    <article class="site-card">
+    <a routerLink="/documentacao" class="site-card site-card--link">
       <lucide-icon [img]="shieldIcon" class="w-6 h-6 text-[var(--color-primary)] mb-3" />
       <h3>API e segurança</h3>
-      <p>Integração por API key, auditoria e credenciais criptografadas no servidor.</p>
-    </article>
+      <p>Integração por API key, exemplos de envio e referência M2M — sem precisar entrar na plataforma.</p>
+      <span class="text-sm font-medium text-[var(--color-primary)] mt-2 inline-block">Ver documentação →</span>
+    </a>
   </div>
 
   <div class="mt-12 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6 sm:p-8">

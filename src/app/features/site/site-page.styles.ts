@@ -69,6 +69,18 @@ export const SITE_PAGE_STYLES = [
       color: var(--color-text-muted);
     }
 
+    .site-card--link {
+      display: block;
+      text-decoration: none;
+      color: inherit;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .site-card--link:hover {
+      border-color: color-mix(in srgb, var(--color-primary) 45%, var(--color-border));
+      box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-primary) 20%, transparent);
+    }
+
     .site-list {
       margin: 1rem 0 0;
       padding-left: 1.25rem;

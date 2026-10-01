@@ -8,6 +8,7 @@ export const SITE_NAV_ITEMS: SiteNavItem[] = [
   { label: 'Sobre', path: '/sobre' },
   { label: 'Plataforma', path: '/plataforma' },
   { label: 'Integrações', path: '/integracoes' },
+  { label: 'Documentação API', path: '/documentacao' },
   { label: 'Contato', path: '/contato' },
 ];
 
