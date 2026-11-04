@@ -521,6 +521,42 @@ var data = await response.Content.ReadFromJsonAsync<JsonElement>();`,
         ],
       },
       {
+        titulo: 'Header de autorização (opcional)',
+        paragrafos: [
+          'Use quando o destino (ex.: agente de IA) responde HTTP 401 sem Bearer token.',
+          'No painel: Configurações → Webhooks → cadastro de saída → campo Header de autorização. Informe o valor completo (ex.: Bearer chave), não só o token. Armazenamento criptografado; na tela o valor fica mascarado e a API nunca devolve o texto.',
+          'Na edição, deixe o campo vazio para manter o valor salvo.',
+        ],
+        exemplos: [
+          {
+            label: 'Como a plataforma monta o POST (Node — referência)',
+            language: 'javascript',
+            code: `const headers = {
+  'Content-Type': 'application/json',
+  'X-Webhook-Event': evento,
+  'X-Webhook-Secret': secretDescriptografado,
+};
+if (authorizationHeader) {
+  headers['Authorization'] = authorizationHeader; // ex.: "Bearer chave"
+}
+await fetch(url, { method: 'POST', headers, body: JSON.stringify(envelope) });`,
+          },
+          {
+            label: 'Implementação na API (Java / Spring RestClient)',
+            language: 'java',
+            code: `var spec = restClient.post()
+    .uri(webhook.getUrl())
+    .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+    .header("X-Webhook-Event", evento.name())
+    .header("X-Webhook-Secret", secret);
+if (StringUtils.hasText(authorization)) {
+  spec = spec.header(HttpHeaders.AUTHORIZATION, authorization);
+}
+spec.body(envelope).retrieve().toBodilessEntity();`,
+          },
+        ],
+      },
+      {
         titulo: 'Webhook de saída — eventos disparados hoje',
         lista: [
           'WHATSAPP_MENSAGEM_RECEBIDA — contato mandou mensagem na sessão WhatsApp conectada',
