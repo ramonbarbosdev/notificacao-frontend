@@ -6,6 +6,7 @@ import { z } from 'zod';
 import { Router, RouterModule, ActivatedRoute } from '@angular/router';
 import {
   Check,
+  Copy,
   KeyRound,
   LoaderCircle,
   LucideAngularModule,
@@ -20,6 +21,7 @@ import { OrganizacaoConfiguracaoService } from '../../core/services/organizacao-
 import { AlertaOperacionalService } from '../../core/services/alerta-operacional.service';
 import { WebhookService } from '../../core/services/webhook.service';
 import { WhatsappService } from '../../core/services/whatsapp.service';
+import { IntegracaoWebhookService } from '../../core/services/integracao-webhook.service';
 import { ToastService } from '../../core/services/toast.service';
 import {
   ApiKey,
@@ -31,6 +33,7 @@ import {
   RecursoFeature,
   Webhook as WebhookDTO,
   WebhookEvento,
+  WebhookGenericoIntegracaoResponse,
   WhatsappStatusResponse,
 } from '../../shared/types/dtos';
 import { EmptyStateComponent } from '../../shared/components/empty-state/empty-state.component';
@@ -87,6 +90,7 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
   private readonly apiKeyService = inject(ApiKeyService);
   private readonly webhookService = inject(WebhookService);
   private readonly whatsappService = inject(WhatsappService);
+  private readonly integracaoWebhookService = inject(IntegracaoWebhookService);
   private readonly toast = inject(ToastService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
@@ -96,6 +100,7 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
   protected readonly loaderIcon = LoaderCircle;
   protected readonly checkIcon = Check;
   protected readonly keyIcon = KeyRound;
+  protected readonly copyIcon = Copy;
   protected readonly webhookIcon = Webhook;
   readonly abas: {
     id: AbaConfiguracao;
@@ -205,7 +210,10 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
   readonly isAdmin = () => this.authService.role() === 'ADMIN';
 
   readonly webhookInboundHabilitadoNoPlano = () => this.featureFlags.habilitado('WEBHOOK');
+  readonly webhookGenericoHabilitadoNoPlano = () => this.featureFlags.habilitado('WEBHOOK_GENERICO');
   readonly webhookInboundSecretConfigurado = signal(false);
+  readonly webhookGenerico = signal<WebhookGenericoIntegracaoResponse | null>(null);
+  readonly carregandoWebhookGenerico = signal(false);
   readonly envioMensagensHabilitado = signal(true);
   readonly alterandoEnvioMensagens = signal(false);
   campoErro(campo: keyof OrganizacaoConfiguracaoFormData): string | null {
@@ -291,6 +299,7 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
     this.aba.set(aba);
     if (aba === 'apiKeys') this.carregarApiKeys();
     if (aba === 'webhooks') this.carregarWebhooks();
+    if (aba === 'whatsapp') this.carregarWebhookGenerico();
     if (aba === 'notificacoes') this.carregarAlertasOperacionais();
   }
 
@@ -563,6 +572,37 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
 
   removerWebhook(idWebhook: number): void {
     this.webhookService.remover(idWebhook).subscribe({ next: () => this.carregarWebhooks() });
+  }
+
+  carregarWebhookGenerico(): void {
+    if (!this.webhookGenericoHabilitadoNoPlano()) {
+      this.webhookGenerico.set(null);
+      return;
+    }
+    this.carregandoWebhookGenerico.set(true);
+    this.integracaoWebhookService.buscarInstrucoesWebhookGenerico().subscribe({
+      next: (info) => {
+        this.webhookGenerico.set(info);
+        this.carregandoWebhookGenerico.set(false);
+      },
+      error: () => {
+        this.webhookGenerico.set(null);
+        this.carregandoWebhookGenerico.set(false);
+      },
+    });
+  }
+
+  urlWebhookGenericoAbsoluta(): string | null {
+    const info = this.webhookGenerico();
+    if (!info?.webhookUrlTemplate) return null;
+    return this.integracaoWebhookService.montarUrlWebhookAbsoluta(info.webhookUrlTemplate);
+  }
+
+  copiarTexto(texto: string, mensagemSucesso = 'Copiado'): void {
+    navigator.clipboard.writeText(texto).then(
+      () => this.toast.success(mensagemSucesso),
+      () => this.toast.error('Não foi possível copiar'),
+    );
   }
 
   private mensagemErro(err: HttpErrorResponse, fallback: string): string {

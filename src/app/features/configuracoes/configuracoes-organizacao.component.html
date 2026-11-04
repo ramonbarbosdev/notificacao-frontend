@@ -184,7 +184,7 @@
                   <div>
                     <h3 class="text-[var(--color-text)] font-semibold m-0">Integração externa (webhook inbound)</h3>
                     <p class="text-xs text-[var(--color-text-muted)] mt-1 m-0">
-                      Mensagens recebidas no WhatsApp serão encaminhadas para a URL informada (ex.: sistema de horas extras).
+                      Quando o bot <strong>gerar</strong> uma URL (ex.: n8n, Make), cole aqui. A plataforma envia mensagens recebidas no WhatsApp para essa URL.
                     </p>
                   </div>
                   <label class="config-toggle">Habilitar encaminhamento
@@ -216,6 +216,54 @@
                       />
                     </app-form-field>
                   </div>
+                </div>
+              }
+
+              @if (webhookGenericoHabilitadoNoPlano()) {
+                <div class="border-t border-[var(--color-border)] pt-5 space-y-4">
+                  <div>
+                    <h3 class="text-[var(--color-text)] font-semibold m-0">Webhook para bot externo</h3>
+                    <p class="text-xs text-[var(--color-text-muted)] mt-1 m-0">
+                      Quando o bot pedir a <strong>URL do webhook da plataforma</strong>, copie abaixo (mesmo padrão do GitHub).
+                    </p>
+                  </div>
+                  @if (carregandoWebhookGenerico()) {
+                    <div class="flex items-center gap-2 text-sm text-[var(--color-text-muted)]">
+                      <lucide-icon [img]="loaderIcon" class="w-4 h-4 animate-spin" />
+                      Carregando URL…
+                    </div>
+                  } @else if (webhookGenerico(); as wh) {
+                    @if (!wh.featureHabilitada) {
+                      <div class="app-alert-warning border rounded-xl px-4 py-3 text-sm">
+                        A feature webhook genérico não está habilitada para esta organização. Super admin deve ativar em Feature Flags.
+                      </div>
+                    } @else {
+                      <p class="text-xs text-[var(--color-text-muted)] leading-relaxed">{{ wh.autenticacao }}</p>
+                      @if (urlWebhookGenericoAbsoluta(); as urlWebhook) {
+                        <code class="block text-xs break-all bg-[var(--color-bg-base)] rounded-xl px-4 py-3 border border-[var(--color-border)]">{{ urlWebhook }}</code>
+                        <p class="text-xs text-[var(--color-text-muted)] leading-relaxed">
+                          Substitua <code>&#123;suaApiKeyCompleta&#125;</code> pela API Key (scope NOTIFICACOES_ENVIAR) ou use header <code>X-API-KEY</code>.
+                        </p>
+                        <button
+                          type="button"
+                          (click)="copiarTexto(urlWebhook, 'URL copiada')"
+                          class="px-4 py-2 rounded-xl bg-[var(--color-primary)] text-[var(--color-bg-base)] text-sm font-medium inline-flex items-center gap-2"
+                        >
+                          <lucide-icon [img]="copyIcon" class="w-4 h-4" />
+                          Copiar URL do webhook
+                        </button>
+                      }
+                      <details class="border border-[var(--color-border)] rounded-xl overflow-hidden">
+                        <summary class="px-4 py-3 cursor-pointer text-sm font-medium text-[var(--color-text)] bg-[var(--color-bg-base)]/40">
+                          Exemplo de corpo JSON (POST)
+                        </summary>
+                        <pre class="p-4 text-xs overflow-x-auto border-t border-[var(--color-border)] m-0">{{ wh.corpoJsonExemplo }}</pre>
+                      </details>
+                      @if (wh.observacoes) {
+                        <p class="text-xs text-[var(--color-text-subtle)] m-0">{{ wh.observacoes }}</p>
+                      }
+                    }
+                  }
                 </div>
               }
             </section>

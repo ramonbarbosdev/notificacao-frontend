@@ -1093,6 +1093,14 @@ export interface GithubProjectV2VinculoResponse {
   mensagem: string | null;
 }
 
+export interface WebhookGenericoIntegracaoResponse {
+  featureHabilitada: boolean;
+  webhookUrlTemplate: string;
+  autenticacao: string;
+  corpoJsonExemplo: string;
+  observacoes: string;
+}
+
 export interface GithubWebhookIntegracaoResponse {
   featureHabilitada: boolean;
   webhookUrlTemplate: string;

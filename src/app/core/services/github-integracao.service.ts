@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
+import { montarUrlWebhookAbsoluta } from '../../shared/helper/webhook-url.util';
 import {
   GithubGraphqlConsultaRequest,
   GithubGraphqlConsultaResponse,
@@ -147,12 +148,6 @@ export class GithubIntegracaoService {
 
   /** Monta URL absoluta a partir do template retornado pela API (ex.: /api/webhooks/github?key=...). */
   montarUrlWebhookAbsoluta(webhookUrlTemplate: string): string {
-    const template = webhookUrlTemplate.startsWith('/') ? webhookUrlTemplate : `/${webhookUrlTemplate}`;
-    const api = environment.apiUrl.replace(/\/$/, '');
-    if (template.startsWith('/api')) {
-      const origin = api.replace(/\/api$/, '');
-      return `${origin}${template}`;
-    }
-    return `${api}${template}`;
+    return montarUrlWebhookAbsoluta(webhookUrlTemplate);
   }
 }
