@@ -88,6 +88,7 @@ export const TUTORIAL_TOPICOS: TutorialTopico[] = [
           'Sessão WhatsApp da organização conectada (painel → WhatsApp)',
           'Destinatário em E.164 sem + (ex.: 5571994686855 — DDI 55 + DDD + celular com 9º dígito)',
           'Consentimento do contato registrado, quando a organização exige opt-in',
+          'Bots externos: ver tópico Webhooks externos (entrada na plataforma e encaminhamento WhatsApp inbound)',
         ],
       },
       {
@@ -486,6 +487,183 @@ var data = await response.Content.ReadFromJsonAsync<JsonElement>();`,
     ],
   },
   {
+    id: 'webhooks-externos',
+    titulo: 'Webhooks externos',
+    resumo:
+      'URL para o bot enviar eventos à plataforma, encaminhamento de WhatsApp inbound para o seu servidor e referência GitHub.',
+    secoes: [
+      {
+        titulo: 'Duas direções',
+        paragrafos: [
+          'Integração com bot ou automação (n8n, Make, serviço próprio) envolve URLs diferentes — não confunda os papéis.',
+          'Plataforma ← bot: seu sistema faz POST na URL do webhook genérico (ou GitHub) para enfileirar WhatsApp ou registrar eventos.',
+          'Plataforma → bot: quando alguém manda mensagem no WhatsApp conectado, a API faz POST na URL que você cadastrou (webhook inbound). Essa URL é gerada pelo seu bot, não pela Notificação API.',
+        ],
+        lista: [
+          'Bot pede “cole a URL do webhook da plataforma” → seção Webhook genérico abaixo (ou GitHub App).',
+          'Bot mostra uma URL para você copiar → cole em Configurações → WhatsApp → Integração externa (webhook inbound).',
+        ],
+      },
+      {
+        titulo: 'Webhook genérico (bot → plataforma)',
+        paragrafos: [
+          'Qualquer sistema com API Key pode POST JSON (ou text/plain) para entrar na fila de notificações WhatsApp.',
+          'Feature WEBHOOK_GENERICO deve estar habilitada na organização (super admin → Feature Flags).',
+          'No painel autenticado: Configurações → WhatsApp → Webhook para bot externo — botão Copiar URL do webhook (mesmo padrão do GitHub).',
+          'Metadados e exemplo de corpo: GET /app/integracao/webhook/generico (JWT ou X-API-KEY).',
+        ],
+        exemplos: [
+          {
+            label: 'URL do webhook (substitua a API Key)',
+            language: 'bash',
+            code: '{API_URL}/webhooks/generico?key=nak_prefixo.segredo_completo',
+          },
+          {
+            label: 'HTTP — alternativa com header',
+            language: 'http',
+            code: `POST /webhooks/generico
+Host: (seu host da API)
+Content-Type: application/json
+X-API-KEY: nak_prefixo.segredo_completo`,
+          },
+        ],
+        dica: 'A rota /webhooks/* não usa JWT: autenticação só por API Key (query key= ou header X-API-KEY). Scope obrigatório: NOTIFICACOES_ENVIAR.',
+      },
+      {
+        titulo: 'Autenticação e headers (genérico)',
+        lista: [
+          'X-API-KEY ou query key= — API Key completa (nak_prefixo.segredo)',
+          'Content-Type: application/json ou text/plain',
+          'X-Webhook-Signature-256 (opcional): sha256=<hmac-sha256 do body>, secret = mesma API Key',
+          'X-Webhook-Delivery (opcional): id de entrega; vira referência se o body não tiver referenciaExterna',
+        ],
+      },
+      {
+        titulo: 'Corpo JSON (genérico)',
+        paragrafos: [
+          'Aliases aceitos: titulo (assunto), message / text (mensagem).',
+          'Sem destinatario: com webhookRegistrarFilaSemDestinatario true (padrão), registra item bloqueado na fila; com false, retorna sucesso false sem criar item.',
+        ],
+        exemplos: [
+          {
+            label: 'JSON',
+            language: 'json',
+            code: `{
+  "destinatario": "5571999999999",
+  "assunto": "Alerta sistema X",
+  "mensagem": "Texto da notificacao",
+  "referenciaExterna": "pedido-123"
+}`,
+          },
+          {
+            label: 'Response (200)',
+            language: 'json',
+            code: `{
+  "sucesso": true,
+  "idNotificacao": 42,
+  "canal": "WHATSAPP",
+  "status": "PENDENTE"
+}`,
+          },
+          {
+            label: 'cURL',
+            language: 'bash',
+            code: `curl -X POST "{API_URL}/webhooks/generico?key=nak_prefixo.segredo" \\
+  -H "Content-Type: application/json" \\
+  -d '{"destinatario":"5571999999999","mensagem":"Olá pelo webhook"}'`,
+          },
+        ],
+      },
+      {
+        titulo: 'Webhook inbound WhatsApp (plataforma → bot)',
+        paragrafos: [
+          'Após registrar a mensagem na conversa, a API encaminha um POST assíncrono para a URL configurada na organização.',
+          'Feature WEBHOOK no plano; configurar em Configurações → WhatsApp → Integração externa (webhook inbound): URL, secret e habilitar encaminhamento.',
+          'Em produção a URL cadastrada deve ser HTTPS. Falhas de entrega são apenas logadas (sem fila de retry automática).',
+        ],
+        lista: [
+          'Header X-Webhook-Secret: mesmo secret configurado no painel',
+          'Content-Type: application/json',
+          'Responda 2xx rapidamente; processamento pesado deve ser assíncrono no seu bot',
+        ],
+        exemplos: [
+          {
+            label: 'Payload recebido pelo bot',
+            language: 'json',
+            code: `{
+  "idOrganizacao": 1,
+  "telefone": "5571999999999",
+  "preview": "Texto ou trecho da mensagem",
+  "idMensagemExterna": "id-no-gateway",
+  "tipo": "texto",
+  "nmContato": "Nome no WhatsApp",
+  "recebidaEm": "2026-11-04T15:30:00"
+}`,
+          },
+          {
+            label: 'Exemplo handler (Node)',
+            language: 'javascript',
+            code: `app.post('/webhooks/whatsapp/inbound', (req, res) => {
+  if (req.headers['x-webhook-secret'] !== process.env.WEBHOOK_SECRET) {
+    return res.sendStatus(401);
+  }
+  const { telefone, preview, tipo } = req.body;
+  // enfileirar processamento…
+  res.sendStatus(204);
+});`,
+          },
+        ],
+        dica: 'Configuração também via PUT /app/configuracoes (admin) ou GET/PUT /app/integracao/whatsapp/webhook-inbound com GLOBAL_API_KEY.',
+      },
+      {
+        titulo: 'Webhook GitHub (GitHub → plataforma)',
+        paragrafos: [
+          'Eventos do GitHub App entram pela URL abaixo; secret do webhook no GitHub = mesma API Key completa.',
+          'Detalhes de template, colunas e opt-in: tópico Bot GitHub + WhatsApp e GET /app/integracao/github/webhook.',
+        ],
+        exemplos: [
+          {
+            label: 'URL no GitHub App',
+            language: 'bash',
+            code: '{API_URL}/webhooks/github?key=nak_prefixo.segredo_completo',
+          },
+          {
+            label: 'Headers esperados (GitHub)',
+            language: 'http',
+            code: `X-GitHub-Event: projects_v2_item
+X-GitHub-Delivery: uuid
+X-Hub-Signature-256: sha256=...`,
+          },
+        ],
+      },
+      {
+        titulo: 'Webhook kanban → bot (movimentação Project v2)',
+        paragrafos: [
+          'Opcional: além do WhatsApp direto, a API pode POST na URL do seu bot quando um card muda de coluna (Status).',
+          'Configure kanbanMovimentacaoWebhookUrl e Authorization em PATCH /app/integracao/github/kanban-movimentacao-webhook.',
+          'Modo LOTE: um POST agregado a cada N minutos; IMEDIATO: um POST por movimentação. Ver tópico Bot GitHub + WhatsApp.',
+        ],
+        exemplos: [
+          {
+            label: 'HTTP (configuração)',
+            language: 'http',
+            code: `GET /app/integracao/github/kanban-movimentacao-webhook
+PATCH /app/integracao/github/kanban-movimentacao-webhook
+POST /app/integracao/github/kanban-movimentacao-webhook/teste`,
+          },
+        ],
+      },
+      {
+        titulo: 'Rotas internas (não use no bot)',
+        lista: [
+          '/webhooks/whatsapp/gateway — gateway Baileys → API',
+          '/webhooks/whatsapp/meta — Meta Cloud → API',
+        ],
+        dica: 'Aba Configurações → Webhooks (eventos NOTIFICACAO_*) cadastra URLs para eventos da plataforma; o disparo automático ainda não está implementado — use inbound WhatsApp ou webhooks genérico/GitHub/kanban acima.',
+      },
+    ],
+  },
+  {
     id: 'bot-github-whatsapp',
     titulo: 'Bot GitHub + WhatsApp',
     resumo:
@@ -499,7 +677,7 @@ var data = await response.Content.ReadFromJsonAsync<JsonElement>();`,
           'O WhatsApp de origem é sempre a sessão conectada na organização — o bot apenas enfileira ou dispara mensagens por essa sessão.',
         ],
         lista: [
-          'Webhook automático (GitHub → API → WhatsApp): eventos em tempo real com regras por coluna no painel — ver GET /app/integracao/github/webhook.',
+          'Webhook automático (GitHub → API → WhatsApp): eventos em tempo real com regras por coluna no painel — ver GET /app/integracao/github/webhook e tópico Webhooks externos.',
           'Bot: consulta estado, decide destinatários e chama envio — este guia.',
         ],
       },
