@@ -215,6 +215,7 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
     nome: ['', [Validators.required]],
     url: ['', [Validators.required]],
     secret: [''],
+    authorizationHeader: [''],
     eventos: [[] as WebhookEvento[], [Validators.required]],
     ativo: [true],
   });
@@ -570,12 +571,19 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
 
   editarWebhook(webhook: WebhookDTO): void {
     this.webhookEditando.set(webhook);
-    this.webhookForm.patchValue({ ...webhook, secret: '' });
+    this.webhookForm.patchValue({ ...webhook, secret: '', authorizationHeader: '' });
   }
 
   novoWebhook(): void {
     this.webhookEditando.set(null);
-    this.webhookForm.reset({ nome: '', url: '', secret: '', eventos: [], ativo: true });
+    this.webhookForm.reset({
+      nome: '',
+      url: '',
+      secret: '',
+      authorizationHeader: '',
+      eventos: [],
+      ativo: true,
+    });
   }
 
   salvarWebhook(): void {
@@ -585,6 +593,7 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
       nome: dados.nome!,
       url: dados.url!,
       secret: dados.secret || null,
+      authorizationHeader: dados.authorizationHeader?.trim() || null,
       eventos: dados.eventos ?? [],
       ativo: !!dados.ativo,
     };

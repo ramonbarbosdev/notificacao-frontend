@@ -214,6 +214,18 @@
                       <app-form-field label="Secret" helper="Header X-Webhook-Secret">
                         <input formControlName="secret" type="password" class="form-input-admin" autocomplete="new-password" />
                       </app-form-field>
+                      <app-form-field
+                        label="Header Authorization"
+                        [helper]="webhookEditando()?.authorizationHeaderConfigurado ? 'Vazio = manter atual' : 'Opcional — ex.: Bearer seu-token'"
+                      >
+                        <input
+                          formControlName="authorizationHeader"
+                          type="password"
+                          class="form-input-admin"
+                          autocomplete="new-password"
+                          placeholder="Bearer …"
+                        />
+                      </app-form-field>
                       <label class="config-toggle self-end">Ativo <input type="checkbox" formControlName="ativo" /></label>
                     </div>
                     <div class="flex flex-wrap gap-2">

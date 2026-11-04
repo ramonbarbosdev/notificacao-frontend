@@ -1180,6 +1180,7 @@ export interface Webhook {
   nome: string;
   url: string;
   secretConfigurado: boolean;
+  authorizationHeaderConfigurado: boolean;
   eventos: WebhookEvento[];
   ativo: boolean;
   dtCriacao?: string | null;
@@ -1190,6 +1191,7 @@ export interface WebhookRequest {
   nome: string;
   url: string;
   secret?: string | null;
+  authorizationHeader?: string | null;
   eventos: WebhookEvento[];
   ativo: boolean;
 }

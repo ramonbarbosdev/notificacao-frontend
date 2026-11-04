@@ -509,12 +509,13 @@ var data = await response.Content.ReadFromJsonAsync<JsonElement>();`,
         paragrafos: [
           'Use quando o bot precisa reagir a mensagens WhatsApp inbound ou a mudanças na fila sem polling.',
           'Requisito: feature WEBHOOK habilitada na organização (super admin → Feature Flags).',
-          'Cadastro: painel → Configurações → Webhooks de saída → informe URL do seu bot, secret e marque os eventos.',
+          'Cadastro: painel → Configurações → Webhooks de saída → informe URL do seu bot, secret, Authorization (se o bot exigir) e marque os eventos.',
           'A plataforma envia POST assíncrono; falhas de entrega são registradas no log de entregas (sem retry automático hoje). Responda HTTP 2xx rapidamente no bot.',
         ],
         lista: [
           'Header X-Webhook-Event — nome do evento (ex.: WHATSAPP_MENSAGEM_RECEBIDA)',
           'Header X-Webhook-Secret — mesmo secret definido ao salvar o webhook no painel',
+          'Header Authorization (opcional) — valor completo cadastrado no painel (ex.: Bearer seu-token); enviado em todo POST de saída',
           'Body JSON — envelope: evento, ocorridoEm, idOrganizacao, dados',
           'Metadados (painel/API Key): GET /app/integracao/webhook/saida',
         ],
@@ -588,7 +589,8 @@ var data = await response.Content.ReadFromJsonAsync<JsonElement>();`,
             code: `POST https://seu-bot.exemplo.com/api/webhooks/notificacao
 Content-Type: application/json
 X-Webhook-Event: WHATSAPP_MENSAGEM_RECEBIDA
-X-Webhook-Secret: seu-secret-configurado-no-painel`,
+X-Webhook-Secret: seu-secret-configurado-no-painel
+Authorization: Bearer seu-token-opcional`,
           },
         ],
       },
