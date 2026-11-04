@@ -88,7 +88,7 @@ export const TUTORIAL_TOPICOS: TutorialTopico[] = [
           'Sessão WhatsApp da organização conectada (painel → WhatsApp)',
           'Destinatário em E.164 sem + (ex.: 5571994686855 — DDI 55 + DDD + celular com 9º dígito)',
           'Consentimento do contato registrado, quando a organização exige opt-in',
-          'Bots externos: ver tópico Webhooks externos (entrada na plataforma e encaminhamento WhatsApp inbound)',
+          'Bots externos: ver tópico Webhooks externos — entrada (genérico) e saída (POST no seu bot)',
         ],
       },
       {
@@ -490,19 +490,117 @@ var data = await response.Content.ReadFromJsonAsync<JsonElement>();`,
     id: 'webhooks-externos',
     titulo: 'Webhooks externos',
     resumo:
-      'URL para o bot enviar eventos à plataforma, encaminhamento de WhatsApp inbound para o seu servidor e referência GitHub.',
+      'Entrada: bot envia para a plataforma (genérico/GitHub). Saída: plataforma POST no seu bot (WhatsApp recebido, fila).',
     secoes: [
       {
         titulo: 'Duas direções',
         paragrafos: [
-          'Integração com bot ou automação (n8n, Make, serviço próprio) envolve URLs diferentes — não confunda os papéis.',
-          'Plataforma ← bot: seu sistema faz POST na URL do webhook genérico (ou GitHub) para enfileirar WhatsApp ou registrar eventos.',
-          'Plataforma → bot: quando alguém manda mensagem no WhatsApp conectado, a API faz POST na URL que você cadastrou (webhook inbound). Essa URL é gerada pelo seu bot, não pela Notificação API.',
+          'Integração com bot ou automação (n8n, Make, serviço próprio) usa URLs diferentes — não confunda os papéis.',
+          'Entrada (bot → plataforma): seu sistema faz POST em /webhooks/generico ou /webhooks/github para enfileirar WhatsApp.',
+          'Saída (plataforma → bot): a API faz POST na URL que você cadastrou quando ocorre um evento (mensagem WhatsApp recebida, notificação na fila, etc.).',
         ],
         lista: [
-          'Bot pede “cole a URL do webhook da plataforma” → seção Webhook genérico abaixo (ou GitHub App).',
-          'Bot mostra uma URL para você copiar → cole em Configurações → WhatsApp → Integração externa (webhook inbound).',
+          'Bot pede “URL do webhook da plataforma” → webhook genérico ou GitHub (seções abaixo).',
+          'Bot gera URL para receber eventos → cadastre em Configurações → Webhooks de saída (recomendado) ou WhatsApp → webhook inbound (URL única).',
         ],
+      },
+      {
+        titulo: 'Webhook de saída — visão geral',
+        paragrafos: [
+          'Use quando o bot precisa reagir a mensagens WhatsApp inbound ou a mudanças na fila sem polling.',
+          'Requisito: feature WEBHOOK habilitada na organização (super admin → Feature Flags).',
+          'Cadastro: painel → Configurações → Webhooks de saída → informe URL do seu bot, secret e marque os eventos.',
+          'A plataforma envia POST assíncrono; falhas de entrega são logadas (sem retry automático hoje). Responda HTTP 2xx rapidamente no bot.',
+        ],
+        lista: [
+          'Header X-Webhook-Event — nome do evento (ex.: WHATSAPP_MENSAGEM_RECEBIDA)',
+          'Header X-Webhook-Secret — mesmo secret definido ao salvar o webhook no painel',
+          'Body JSON — envelope: evento, ocorridoEm, idOrganizacao, dados',
+          'Metadados (painel/API Key): GET /app/integracao/webhook/saida',
+        ],
+      },
+      {
+        titulo: 'Webhook de saída — eventos disparados hoje',
+        lista: [
+          'WHATSAPP_MENSAGEM_RECEBIDA — contato mandou mensagem na sessão WhatsApp conectada',
+          'NOTIFICACAO_CRIADA — notificação aceita e enfileirada (POST /app/notificacoes/enviar, webhook genérico, etc.)',
+          'NOTIFICACAO_ENVIADA — mensagem entregue ao gateway/provedor WhatsApp',
+          'NOTIFICACAO_FALHOU — falha definitiva na fila (tentativas esgotadas ou erro não reenviável)',
+        ],
+        paragrafos: [
+          'Cadastrados na UI mas ainda sem POST automático: NOTIFICACAO_ENTREGUE, NOTIFICACAO_LIDA, WHATSAPP_DESCONECTADO, WHATSAPP_QR_ATUALIZADO, CONTATO_BLOQUEADO.',
+          'Webhooks criados antes de mar/2026: edite e salve de novo informando o secret (obrigatório para disparo).',
+        ],
+      },
+      {
+        titulo: 'Webhook de saída — exemplos de payload',
+        exemplos: [
+          {
+            label: 'WHATSAPP_MENSAGEM_RECEBIDA',
+            language: 'json',
+            code: `{
+  "evento": "WHATSAPP_MENSAGEM_RECEBIDA",
+  "ocorridoEm": "2026-11-04T15:30:00",
+  "idOrganizacao": 1,
+  "dados": {
+    "idOrganizacao": 1,
+    "telefone": "5571999999999",
+    "preview": "Olá, preciso de ajuda",
+    "idMensagemExterna": "msg-gateway-abc",
+    "tipo": "texto",
+    "nmContato": "Cliente",
+    "recebidaEm": "2026-11-04T15:30:00"
+  }
+}`,
+          },
+          {
+            label: 'NOTIFICACAO_CRIADA / ENVIADA / FALHOU (dados)',
+            language: 'json',
+            code: `{
+  "evento": "NOTIFICACAO_ENVIADA",
+  "ocorridoEm": "2026-11-04T15:31:00",
+  "idOrganizacao": 1,
+  "dados": {
+    "idNotificacao": 42,
+    "canal": "WHATSAPP",
+    "status": "ENVIADA",
+    "destinatario": "5571999999999",
+    "assunto": "Pedido confirmado",
+    "erro": null
+  }
+}`,
+          },
+          {
+            label: 'HTTP recebido pelo seu servidor',
+            language: 'http',
+            code: `POST https://seu-bot.exemplo.com/api/webhooks/notificacao
+Content-Type: application/json
+X-Webhook-Event: WHATSAPP_MENSAGEM_RECEBIDA
+X-Webhook-Secret: seu-secret-configurado-no-painel`,
+          },
+        ],
+      },
+      {
+        titulo: 'Webhook de saída — handler de exemplo',
+        modoExemplos: 'lista',
+        exemplos: [
+          {
+            label: 'Node (Express)',
+            language: 'javascript',
+            code: `app.post('/api/webhooks/notificacao', (req, res) => {
+  if (req.headers['x-webhook-secret'] !== process.env.WEBHOOK_SECRET) {
+    return res.sendStatus(401);
+  }
+  const evento = req.headers['x-webhook-event'];
+  const { dados } = req.body ?? {};
+  if (evento === 'WHATSAPP_MENSAGEM_RECEBIDA') {
+    console.log('WhatsApp de', dados.telefone, ':', dados.preview);
+  }
+  res.sendStatus(204);
+});`,
+          },
+        ],
+        dica: 'Vários webhooks de saída podem coexistir (URLs diferentes ou mesma URL com eventos distintos). Para uma única URL fixa sem envelope, use Configurações → WhatsApp → webhook inbound (payload plano em dados).',
       },
       {
         titulo: 'Webhook genérico (bot → plataforma)',
@@ -575,7 +673,7 @@ X-API-KEY: nak_prefixo.segredo_completo`,
         ],
       },
       {
-        titulo: 'Webhook inbound WhatsApp (plataforma → bot)',
+        titulo: 'Webhook inbound WhatsApp (plataforma → bot, URL única)',
         paragrafos: [
           'Após registrar a mensagem na conversa, a API encaminha um POST assíncrono para a URL configurada na organização.',
           'Feature WEBHOOK no plano; configurar em Configurações → WhatsApp → Integração externa (webhook inbound): URL, secret e habilitar encaminhamento.',
@@ -659,7 +757,7 @@ POST /app/integracao/github/kanban-movimentacao-webhook/teste`,
           '/webhooks/whatsapp/gateway — gateway Baileys → API',
           '/webhooks/whatsapp/meta — Meta Cloud → API',
         ],
-        dica: 'Aba Configurações → Webhooks (eventos NOTIFICACAO_*) cadastra URLs para eventos da plataforma; o disparo automático ainda não está implementado — use inbound WhatsApp ou webhooks genérico/GitHub/kanban acima.',
+        dica: 'Use Webhooks de saída (Configurações → Webhooks) para vários destinos e filtros por evento; use webhook inbound na aba WhatsApp se preferir uma única URL com payload plano (sem envelope evento/ocorridoEm).',
       },
     ],
   },

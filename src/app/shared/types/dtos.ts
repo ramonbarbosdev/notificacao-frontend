@@ -702,7 +702,8 @@ export type WebhookEvento =
   | 'NOTIFICACAO_FALHOU'
   | 'CONTATO_BLOQUEADO'
   | 'WHATSAPP_DESCONECTADO'
-  | 'WHATSAPP_QR_ATUALIZADO';
+  | 'WHATSAPP_QR_ATUALIZADO'
+  | 'WHATSAPP_MENSAGEM_RECEBIDA';
 
 export interface ConfiguracaoGlobal {
   idConfiguracaoGlobal: number;

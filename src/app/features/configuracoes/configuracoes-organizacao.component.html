@@ -178,91 +178,116 @@
                 <label class="config-toggle">Simular digitando <input type="checkbox" formControlName="whatsappSimularDigitando" /></label>
               </div>
               <p class="text-xs text-[var(--color-text-subtle)]">Use limites conservadores para reduzir bloqueios e melhorar entregabilidade.</p>
+            </section>
+          }
+
+          @case ('webhooks') {
+            <section class="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-6 space-y-8">
+              <div class="flex flex-wrap items-center justify-between gap-3">
+                <h2 class="text-[var(--color-text)] font-semibold m-0">Webhooks</h2>
+                <a
+                  [href]="docWebhooksUrl"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="text-sm font-medium text-[var(--color-primary-soft)]"
+                >
+                  Tutorial público →
+                </a>
+              </div>
 
               @if (webhookInboundHabilitadoNoPlano()) {
-                <div class="border-t border-[var(--color-border)] pt-5 space-y-4">
-                  <div>
-                    <h3 class="text-[var(--color-text)] font-semibold m-0">Integração externa (webhook inbound)</h3>
-                    <p class="text-xs text-[var(--color-text-muted)] mt-1 m-0">
-                      Quando o bot <strong>gerar</strong> uma URL (ex.: n8n, Make), cole aqui. A plataforma envia mensagens recebidas no WhatsApp para essa URL.
-                    </p>
+                <div class="space-y-4">
+                  <h3 class="text-sm font-semibold text-[var(--color-text)] m-0">Saída — eventos (POST no seu bot)</h3>
+                  <div class="flex flex-wrap items-center justify-between gap-2">
+                    <button type="button" (click)="novoWebhook()" class="px-3 py-2 rounded-xl border border-[var(--color-border)] text-sm text-[var(--color-text)]">
+                      Novo webhook
+                    </button>
                   </div>
-                  <label class="config-toggle">Habilitar encaminhamento
+                  <div [formGroup]="webhookForm" class="space-y-3 border border-[var(--color-border)] rounded-xl p-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <app-form-field label="Nome">
+                        <input formControlName="nome" class="form-input-admin" />
+                      </app-form-field>
+                      <app-form-field label="URL do bot">
+                        <input formControlName="url" class="form-input-admin" placeholder="https://..." />
+                      </app-form-field>
+                      <app-form-field label="Secret" helper="Header X-Webhook-Secret">
+                        <input formControlName="secret" type="password" class="form-input-admin" autocomplete="new-password" />
+                      </app-form-field>
+                      <label class="config-toggle self-end">Ativo <input type="checkbox" formControlName="ativo" /></label>
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                      @for (evento of eventos; track evento.value) {
+                        <label class="px-3 py-2 rounded-xl border border-[var(--color-border)] text-xs text-[var(--color-text)]">
+                          <input type="checkbox" [checked]="webhookForm.controls.eventos.value?.includes(evento.value)" (change)="toggleEvento(evento.value)" />
+                          {{ evento.label }}
+                        </label>
+                      }
+                    </div>
+                    <button type="button" (click)="salvarWebhook()" class="px-4 py-2 rounded-xl bg-[var(--color-primary)] text-[var(--color-bg-base)] text-sm font-semibold w-fit">
+                      Salvar cadastro
+                    </button>
+                  </div>
+                  <div class="space-y-2">
+                    @for (webhook of webhooks(); track webhook.idWebhook) {
+                      <div class="border border-[var(--color-border)] rounded-xl px-4 py-3 flex flex-wrap items-center justify-between gap-2">
+                        <div class="min-w-0">
+                          <p class="text-sm font-semibold text-[var(--color-text)] m-0">{{ webhook.nome }}</p>
+                          <p class="text-xs text-[var(--color-text-muted)] truncate m-0">{{ webhook.url }}</p>
+                        </div>
+                        <div class="flex gap-3 shrink-0">
+                          <button type="button" (click)="editarWebhook(webhook)" class="text-xs font-semibold text-[var(--color-primary-soft)]">Editar</button>
+                          <button type="button" (click)="alternarWebhook(webhook)" class="text-xs font-semibold text-[var(--color-text-muted)]">{{ webhook.ativo ? 'Inativar' : 'Ativar' }}</button>
+                          <button type="button" (click)="removerWebhook(webhook.idWebhook)" class="text-xs font-semibold text-[var(--color-danger)]">Remover</button>
+                        </div>
+                      </div>
+                    } @empty {
+                      <app-empty-state title="Nenhum webhook de saída" description="Cadastre a URL do bot e os eventos." />
+                    }
+                  </div>
+                </div>
+
+                <div class="space-y-3 border-t border-[var(--color-border)] pt-6">
+                  <h3 class="text-sm font-semibold text-[var(--color-text)] m-0">Saída — WhatsApp (URL única)</h3>
+                  <label class="config-toggle text-sm">Encaminhar inbound
                     <input type="checkbox" formControlName="webhookInboundHabilitado" />
                   </label>
                   <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <app-form-field
-                      label="URL do webhook"
-                      helper="Endpoint que receberá as mensagens inbound"
-                      [error]="campoErro('webhookInboundUrl')"
-                    >
-                      <input
-                        formControlName="webhookInboundUrl"
-                        class="form-input-admin"
-                        placeholder="https://horas-extras.exemplo.com/api/webhooks/whatsapp/inbound"
-                      />
+                    <app-form-field label="URL" [error]="campoErro('webhookInboundUrl')">
+                      <input formControlName="webhookInboundUrl" class="form-input-admin" placeholder="https://..." />
                     </app-form-field>
                     <app-form-field
                       label="Secret"
-                      [helper]="webhookInboundSecretConfigurado() ? 'Deixe em branco para manter o secret atual' : 'Mesmo valor configurado no sistema externo'"
+                      [helper]="webhookInboundSecretConfigurado() ? 'Vazio = manter atual' : ''"
                       [error]="campoErro('webhookInboundSecret')"
                     >
-                      <input
-                        formControlName="webhookInboundSecret"
-                        type="password"
-                        class="form-input-admin"
-                        placeholder="••••••••"
-                        autocomplete="new-password"
-                      />
+                      <input formControlName="webhookInboundSecret" type="password" class="form-input-admin" autocomplete="new-password" />
                     </app-form-field>
                   </div>
                 </div>
               }
 
               @if (webhookGenericoHabilitadoNoPlano()) {
-                <div class="border-t border-[var(--color-border)] pt-5 space-y-4">
-                  <div>
-                    <h3 class="text-[var(--color-text)] font-semibold m-0">Webhook para bot externo</h3>
-                    <p class="text-xs text-[var(--color-text-muted)] mt-1 m-0">
-                      Quando o bot pedir a <strong>URL do webhook da plataforma</strong>, copie abaixo (mesmo padrão do GitHub).
-                    </p>
-                  </div>
+                <div class="space-y-3 border-t border-[var(--color-border)] pt-6">
+                  <h3 class="text-sm font-semibold text-[var(--color-text)] m-0">Entrada — webhook genérico (bot → plataforma)</h3>
+                  <label class="config-toggle text-sm text-[var(--color-text)]">
+                    Registrar na fila sem destinatário
+                    <input type="checkbox" formControlName="webhookRegistrarFilaSemDestinatario" />
+                  </label>
                   @if (carregandoWebhookGenerico()) {
-                    <div class="flex items-center gap-2 text-sm text-[var(--color-text-muted)]">
-                      <lucide-icon [img]="loaderIcon" class="w-4 h-4 animate-spin" />
-                      Carregando URL…
-                    </div>
-                  } @else if (webhookGenerico(); as wh) {
-                    @if (!wh.featureHabilitada) {
-                      <div class="app-alert-warning border rounded-xl px-4 py-3 text-sm">
-                        A feature webhook genérico não está habilitada para esta organização. Super admin deve ativar em Feature Flags.
-                      </div>
-                    } @else {
-                      <p class="text-xs text-[var(--color-text-muted)] leading-relaxed">{{ wh.autenticacao }}</p>
-                      @if (urlWebhookGenericoAbsoluta(); as urlWebhook) {
-                        <code class="block text-xs break-all bg-[var(--color-bg-base)] rounded-xl px-4 py-3 border border-[var(--color-border)]">{{ urlWebhook }}</code>
-                        <p class="text-xs text-[var(--color-text-muted)] leading-relaxed">
-                          Substitua <code>&#123;suaApiKeyCompleta&#125;</code> pela API Key (scope NOTIFICACOES_ENVIAR) ou use header <code>X-API-KEY</code>.
-                        </p>
-                        <button
-                          type="button"
-                          (click)="copiarTexto(urlWebhook, 'URL copiada')"
-                          class="px-4 py-2 rounded-xl bg-[var(--color-primary)] text-[var(--color-bg-base)] text-sm font-medium inline-flex items-center gap-2"
-                        >
-                          <lucide-icon [img]="copyIcon" class="w-4 h-4" />
-                          Copiar URL do webhook
-                        </button>
-                      }
-                      <details class="border border-[var(--color-border)] rounded-xl overflow-hidden">
-                        <summary class="px-4 py-3 cursor-pointer text-sm font-medium text-[var(--color-text)] bg-[var(--color-bg-base)]/40">
-                          Exemplo de corpo JSON (POST)
-                        </summary>
-                        <pre class="p-4 text-xs overflow-x-auto border-t border-[var(--color-border)] m-0">{{ wh.corpoJsonExemplo }}</pre>
-                      </details>
-                      @if (wh.observacoes) {
-                        <p class="text-xs text-[var(--color-text-subtle)] m-0">{{ wh.observacoes }}</p>
-                      }
-                    }
+                    <p class="text-sm text-[var(--color-text-muted)] m-0">Carregando URL…</p>
+                  } @else if (webhookGenerico()?.featureHabilitada && urlWebhookGenericoAbsoluta(); as urlWebhook) {
+                    <code class="block text-xs break-all bg-[var(--color-bg-base)] rounded-xl px-4 py-3 border border-[var(--color-border)]">{{ urlWebhook }}</code>
+                    <button
+                      type="button"
+                      (click)="copiarTexto(urlWebhook, 'URL copiada')"
+                      class="px-4 py-2 rounded-xl border border-[var(--color-border)] text-sm inline-flex items-center gap-2"
+                    >
+                      <lucide-icon [img]="copyIcon" class="w-4 h-4" />
+                      Copiar URL
+                    </button>
+                  } @else if (webhookGenerico() && !webhookGenerico()!.featureHabilitada) {
+                    <p class="text-xs text-[var(--color-text-muted)] m-0">Feature WEBHOOK_GENERICO desabilitada.</p>
                   }
                 </div>
               }
@@ -286,19 +311,6 @@
           @case ('notificacoes') {
             <section class="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-6">
               <h2 class="text-[var(--color-text)] font-semibold mb-2">Notificações</h2>
-              <p class="text-sm text-[var(--color-text-muted)] mb-4">
-                Políticas de reenvio e prioridade padrão da fila de notificações.
-              </p>
-              <div class="border border-[var(--color-border)] rounded-xl p-4 space-y-2 mb-4">
-                <h3 class="text-sm font-semibold text-[var(--color-text)]">Webhooks (GitHub / genérico)</h3>
-                <label class="config-toggle text-sm text-[var(--color-text)]">
-                  Registrar na fila sem responsável ou destinatário
-                  <input type="checkbox" formControlName="webhookRegistrarFilaSemDestinatario" />
-                </label>
-                <p class="text-xs text-[var(--color-text-muted)]">
-                  Mesma opção da aba GitHub. Desligue para não criar item na fila quando faltar opt-in ou número WhatsApp.
-                </p>
-              </div>
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <label class="config-toggle md:col-span-2">Retry automático <input type="checkbox" formControlName="retryAutomatico" /></label>
                 <app-form-field label="Tentativas de retry" helper="Quantas vezes reenviar após falha" [error]="campoErro('retryTentativas')">
@@ -347,7 +359,7 @@
           }
         }
 
-        @if (['geral','whatsapp','templates','notificacoes'].includes(aba())) {
+        @if (['geral','whatsapp','webhooks','templates','notificacoes'].includes(aba())) {
           <div
             class="flex justify-end pt-2"
           >
@@ -449,58 +461,6 @@
               }
               </tbody>
             </table>
-          </div>
-        </section>
-      }
-
-      @if (aba() === 'webhooks') {
-        <section class="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-6 space-y-6">
-          <div class="flex items-center justify-between">
-            <h2 class="text-[var(--color-text)] font-semibold">Webhooks</h2>
-            <button type="button" (click)="novoWebhook()" class="px-3 py-2 rounded-xl border border-[var(--color-border)] text-sm text-[var(--color-text)]">Novo Webhook</button>
-          </div>
-          <div [formGroup]="webhookForm" class="space-y-3">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <app-form-field label="Nome">
-                <input formControlName="nome" class="form-input-admin" placeholder="Webhook produção" />
-              </app-form-field>
-              <app-form-field label="URL">
-                <input formControlName="url" class="form-input-admin" placeholder="https://api.exemplo.com/webhooks" />
-              </app-form-field>
-              <app-form-field label="Secret" helper="Deixe em branco para manter o atual">
-                <input formControlName="secret" type="password" class="form-input-admin" placeholder="••••••••" autocomplete="new-password" />
-              </app-form-field>
-              <label class="config-toggle self-end">Ativo <input type="checkbox" formControlName="ativo" /></label>
-            </div>
-            <div class="flex flex-wrap gap-2">
-              @for (evento of eventos; track evento.value) {
-                <label class="px-3 py-2 rounded-xl border border-[var(--color-border)] text-xs text-[var(--color-text)]">
-                  <input type="checkbox" [checked]="webhookForm.controls.eventos.value?.includes(evento.value)" (change)="toggleEvento(evento.value)" />
-                  {{ evento.label }}
-                </label>
-              }
-            </div>
-            <button type="button" (click)="salvarWebhook()" class="px-4 py-3 rounded-xl bg-[var(--color-primary)] text-[var(--color-bg-base)] text-sm font-semibold">Salvar webhook</button>
-          </div>
-          <div class="space-y-3">
-            @for (webhook of webhooks(); track webhook.idWebhook) {
-              <div class="border border-[var(--color-border)] rounded-xl p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-                <div>
-                  <p class="text-[var(--color-text)] font-semibold">{{ webhook.nome }}</p>
-                  <p class="text-xs text-[var(--color-text-muted)]">{{ webhook.url }}</p>
-                </div>
-                <div class="flex gap-3">
-                  <button type="button" (click)="editarWebhook(webhook)" class="text-xs font-semibold text-[var(--color-primary-soft)]">Editar</button>
-                  <button type="button" (click)="alternarWebhook(webhook)" class="text-xs font-semibold text-[var(--color-text-muted)]">{{ webhook.ativo ? 'Inativar' : 'Ativar' }}</button>
-                  <button type="button" (click)="removerWebhook(webhook.idWebhook)" class="text-xs font-semibold text-[var(--color-danger)]">Remover</button>
-                </div>
-              </div>
-            } @empty {
-              <app-empty-state
-                title="Nenhum webhook"
-                description="Cadastre um webhook para receber eventos da plataforma em tempo real."
-              />
-            }
           </div>
         </section>
       }

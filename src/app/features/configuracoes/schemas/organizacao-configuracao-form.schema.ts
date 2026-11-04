@@ -5,6 +5,7 @@ import { normalizeBrazilWhatsappMobile } from '../../../shared/helper/phone.util
 export type AbaConfiguracaoOrganizacao =
   | 'geral'
   | 'whatsapp'
+  | 'webhooks'
   | 'templates'
   | 'notificacoes';
 
@@ -69,13 +70,6 @@ export const orgConfigWhatsappBaseSchema = z.object({
   whatsappModoEnvio: z.enum(['SEGURO', 'BALANCEADO', 'AGRESSIVO'], {
     error: 'Selecione o modo de envio.',
   }),
-  webhookInboundHabilitado: z.boolean(),
-  webhookInboundUrl: z
-    .string()
-    .trim()
-    .optional()
-    .default(''),
-  webhookInboundSecret: z.string().optional().default(''),
 });
 
 export const orgConfigWhatsappSchema = orgConfigWhatsappBaseSchema.superRefine((value, ctx) => {
@@ -86,23 +80,32 @@ export const orgConfigWhatsappSchema = orgConfigWhatsappBaseSchema.superRefine((
       message: 'O delay maximo deve ser maior ou igual ao minimo.',
     });
   }
-
-  if (value.webhookInboundHabilitado) {
-    if (!value.webhookInboundUrl) {
-      ctx.addIssue({
-        code: 'custom',
-        path: ['webhookInboundUrl'],
-        message: 'Informe a URL do webhook inbound.',
-      });
-    } else if (!z.string().url().safeParse(value.webhookInboundUrl).success) {
-      ctx.addIssue({
-        code: 'custom',
-        path: ['webhookInboundUrl'],
-        message: 'Informe uma URL valida para o webhook inbound.',
-      });
-    }
-  }
 });
+
+export const orgConfigWebhooksSchema = z
+  .object({
+    webhookInboundHabilitado: z.boolean(),
+    webhookInboundUrl: z.string().trim().optional().default(''),
+    webhookInboundSecret: z.string().optional().default(''),
+    webhookRegistrarFilaSemDestinatario: z.boolean(),
+  })
+  .superRefine((value, ctx) => {
+    if (value.webhookInboundHabilitado) {
+      if (!value.webhookInboundUrl) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['webhookInboundUrl'],
+          message: 'Informe a URL do webhook inbound.',
+        });
+      } else if (!z.string().url().safeParse(value.webhookInboundUrl).success) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['webhookInboundUrl'],
+          message: 'Informe uma URL valida para o webhook inbound.',
+        });
+      }
+    }
+  });
 
 export const orgConfigTemplatesSchema = z.object({
   templatesVersionamento: z.boolean(),
@@ -147,6 +150,7 @@ export const orgConfigNotificacoesSchema = orgConfigNotificacoesBaseSchema.super
 export type OrganizacaoConfiguracaoFormData =
   z.infer<typeof orgConfigGeralSchema> &
   z.infer<typeof orgConfigWhatsappBaseSchema> &
+  z.infer<typeof orgConfigWebhooksSchema> &
   z.infer<typeof orgConfigTemplatesSchema> &
   z.infer<typeof orgConfigNotificacoesBaseSchema>;
 export type OrganizacaoConfiguracaoFormErrors = Partial<
@@ -171,9 +175,12 @@ export const CAMPOS_POR_ABA_ORG: Record<AbaConfiguracaoOrganizacao, (keyof Organ
     'whatsappLimitePorMinuto',
     'whatsappLimitePorDia',
     'whatsappModoEnvio',
+  ],
+  webhooks: [
     'webhookInboundHabilitado',
     'webhookInboundUrl',
     'webhookInboundSecret',
+    'webhookRegistrarFilaSemDestinatario',
   ],
   templates: [
     'templatesVersionamento',
@@ -187,7 +194,6 @@ export const CAMPOS_POR_ABA_ORG: Record<AbaConfiguracaoOrganizacao, (keyof Organ
     'prioridadePadrao',
     'expiracaoFilaHoras',
     'auditoriaHabilitada',
-    'webhookRegistrarFilaSemDestinatario',
   ],
 };
 
@@ -209,6 +215,8 @@ export function schemaOrganizacaoConfigPorAba(aba: AbaConfiguracaoOrganizacao) {
       return orgConfigGeralSchema;
     case 'whatsapp':
       return orgConfigWhatsappSchema;
+    case 'webhooks':
+      return orgConfigWebhooksSchema;
     case 'templates':
       return orgConfigTemplatesSchema;
     case 'notificacoes':

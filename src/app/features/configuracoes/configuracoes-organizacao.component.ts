@@ -114,7 +114,7 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
     { id: 'templates', label: 'Templates', recurso: 'TEMPLATES' },
     { id: 'notificacoes', label: 'Notificacoes', ocultoModoWhatsapp: true },
     { id: 'apiKeys', label: 'API Keys', adminOnly: true, recurso: 'API_PUBLICA' },
-    { id: 'webhooks', label: 'Webhooks', adminOnly: true, ocultoModoWhatsapp: true, recurso: 'WEBHOOK' },
+    { id: 'webhooks', label: 'Webhooks', adminOnly: true },
     { id: 'usuarios', label: 'Usuarios', adminOnly: true },
     { id: 'auditoria', label: 'Auditoria', adminOnly: true },
   ];
@@ -124,12 +124,19 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
       if (FOCO_WHATSAPP && aba.ocultoModoWhatsapp) {
         return false;
       }
+      if (aba.id === 'webhooks') {
+        return (
+          this.featureFlags.habilitado('WEBHOOK') || this.featureFlags.habilitado('WEBHOOK_GENERICO')
+        );
+      }
       if (aba.recurso && !this.featureFlags.habilitado(aba.recurso)) {
         return false;
       }
       return true;
     }),
   );
+
+  readonly docWebhooksUrl = '/documentacao/webhooks-externos';
 
   readonly aba = signal<AbaConfiguracao>('geral');
   readonly carregando = signal(false);
@@ -159,6 +166,8 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
     { value: 'NOTIFICACAO_ENTREGUE', label: 'Notificacao entregue' },
     { value: 'NOTIFICACAO_LIDA', label: 'Notificacao lida' },
     { value: 'NOTIFICACAO_FALHOU', label: 'Notificacao falhou' },
+    { value: 'WHATSAPP_MENSAGEM_RECEBIDA', label: 'WhatsApp mensagem recebida' },
+    { value: 'CONTATO_BLOQUEADO', label: 'Contato bloqueado' },
     { value: 'WHATSAPP_DESCONECTADO', label: 'WhatsApp desconectado' },
     { value: 'WHATSAPP_QR_ATUALIZADO', label: 'QR atualizado' },
   ];
@@ -279,6 +288,7 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
     const abasValidas: AbaConfiguracao[] = [
       'geral',
       'whatsapp',
+      'webhooks',
       'templates',
       'notificacoes',
       'apiKeys',
@@ -299,7 +309,10 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
     this.aba.set(aba);
     if (aba === 'apiKeys') this.carregarApiKeys();
     if (aba === 'webhooks') this.carregarWebhooks();
-    if (aba === 'whatsapp') this.carregarWebhookGenerico();
+    if (aba === 'webhooks') {
+      this.carregarWebhooks();
+      this.carregarWebhookGenerico();
+    }
     if (aba === 'notificacoes') this.carregarAlertasOperacionais();
   }
 
@@ -328,7 +341,7 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
     }
 
     const abaAtual = this.aba();
-    if (!['geral', 'whatsapp', 'templates', 'notificacoes'].includes(abaAtual)) {
+    if (!['geral', 'whatsapp', 'webhooks', 'templates', 'notificacoes'].includes(abaAtual)) {
       return;
     }
 
@@ -351,7 +364,7 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
 
     this.errosFormulario.set({});
 
-    if (abaAtual === 'whatsapp') {
+    if (abaAtual === 'webhooks') {
       const webhookInboundHabilitado = this.form.controls.webhookInboundHabilitado.value;
       const webhookInboundSecret = this.form.controls.webhookInboundSecret.value;
 
@@ -376,7 +389,7 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
       dados.nuTelefoneOperacional = normalizeBrazilWhatsappMobile(dados.nuTelefoneOperacional);
     }
 
-    if (abaAtual === 'notificacoes') {
+    if (abaAtual === 'notificacoes' || abaAtual === 'webhooks') {
       dados.webhookRegistrarFilaSemDestinatario = !!this.form.get('webhookRegistrarFilaSemDestinatario')?.value;
     }
 
