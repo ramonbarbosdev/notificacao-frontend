@@ -10,6 +10,7 @@ import {
   KeyRound,
   LoaderCircle,
   LucideAngularModule,
+  RefreshCw,
   Settings,
   Webhook,
 } from 'lucide-angular';
@@ -32,6 +33,7 @@ import {
   AlertaOperacional,
   RecursoFeature,
   Webhook as WebhookDTO,
+  WebhookEntrega,
   WebhookEvento,
   WebhookGenericoIntegracaoResponse,
   WhatsappStatusResponse,
@@ -101,6 +103,7 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
   protected readonly checkIcon = Check;
   protected readonly keyIcon = KeyRound;
   protected readonly copyIcon = Copy;
+  protected readonly refreshIcon = RefreshCw;
   protected readonly webhookIcon = Webhook;
   readonly abas: {
     id: AbaConfiguracao;
@@ -223,6 +226,12 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
   readonly webhookInboundSecretConfigurado = signal(false);
   readonly webhookGenerico = signal<WebhookGenericoIntegracaoResponse | null>(null);
   readonly carregandoWebhookGenerico = signal(false);
+  readonly webhookEntregas = signal<WebhookEntrega[]>([]);
+  readonly webhookEntregasTotal = signal(0);
+  readonly webhookEntregasPagina = signal(0);
+  readonly webhookEntregasTotalPaginas = signal(0);
+  readonly carregandoWebhookEntregas = signal(false);
+  readonly webhookEntregaExpandidoId = signal<number | null>(null);
   readonly envioMensagensHabilitado = signal(true);
   readonly alterandoEnvioMensagens = signal(false);
   campoErro(campo: keyof OrganizacaoConfiguracaoFormData): string | null {
@@ -308,10 +317,10 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
     if (this.abas.find((item) => item.id === aba)?.adminOnly && !this.isAdmin()) return;
     this.aba.set(aba);
     if (aba === 'apiKeys') this.carregarApiKeys();
-    if (aba === 'webhooks') this.carregarWebhooks();
     if (aba === 'webhooks') {
       this.carregarWebhooks();
       this.carregarWebhookGenerico();
+      this.carregarWebhookEntregas();
     }
     if (aba === 'notificacoes') this.carregarAlertasOperacionais();
   }
@@ -501,6 +510,57 @@ export class ConfiguracoesOrganizacaoComponent implements OnInit {
       next: (webhooks) => this.webhooks.set(webhooks),
       error: (err: HttpErrorResponse) => this.erro.set(this.mensagemErro(err, 'Erro ao listar webhooks.')),
     });
+  }
+
+  carregarWebhookEntregas(): void {
+    if (!this.isAdmin()) return;
+    this.carregandoWebhookEntregas.set(true);
+    this.webhookService
+      .listarEntregas({ page: this.webhookEntregasPagina(), size: 20 })
+      .subscribe({
+        next: (page) => {
+          this.webhookEntregas.set(page.data);
+          this.webhookEntregasTotal.set(page.totalElements);
+          this.webhookEntregasPagina.set(page.page);
+          this.webhookEntregasTotalPaginas.set(page.totalPages);
+          this.carregandoWebhookEntregas.set(false);
+        },
+        error: (err: HttpErrorResponse) => {
+          this.carregandoWebhookEntregas.set(false);
+          this.erro.set(this.mensagemErro(err, 'Erro ao carregar log de entregas.'));
+        },
+      });
+  }
+
+  webhookEntregasPaginaAnterior(): void {
+    if (this.webhookEntregasPagina() <= 0 || this.carregandoWebhookEntregas()) return;
+    this.webhookEntregasPagina.update((p) => p - 1);
+    this.carregarWebhookEntregas();
+  }
+
+  webhookEntregasPaginaProxima(): void {
+    if (
+      this.webhookEntregasPagina() >= this.webhookEntregasTotalPaginas() - 1
+      || this.carregandoWebhookEntregas()
+    ) {
+      return;
+    }
+    this.webhookEntregasPagina.update((p) => p + 1);
+    this.carregarWebhookEntregas();
+  }
+
+  alternarDetalheWebhookEntrega(item: WebhookEntrega): void {
+    this.webhookEntregaExpandidoId.update((id) => (id === item.id ? null : item.id));
+  }
+
+  labelCanalWebhookEntrega(canal: WebhookEntrega['canal']): string {
+    return canal === 'OUTBOUND' ? 'Saída (eventos)' : 'Saída WhatsApp (URL única)';
+  }
+
+  classeSucessoWebhookEntrega(sucesso: boolean): string {
+    return sucesso
+      ? 'border-[var(--color-success)]/40 text-[var(--color-success)]'
+      : 'border-[var(--color-danger)]/40 text-[var(--color-danger)]';
   }
 
   toggleEvento(evento: WebhookEvento): void {

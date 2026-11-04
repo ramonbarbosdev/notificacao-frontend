@@ -1194,6 +1194,21 @@ export interface WebhookRequest {
   ativo: boolean;
 }
 
+export type WebhookEntregaCanal = 'OUTBOUND' | 'INBOUND_WHATSAPP';
+
+export interface WebhookEntrega {
+  id: number;
+  idWebhook: number | null;
+  canal: WebhookEntregaCanal;
+  evento: string | null;
+  url: string;
+  httpStatus: number | null;
+  sucesso: boolean;
+  erro: string | null;
+  resumo: string | null;
+  dtCriacao: string;
+}
+
 export interface WhatsappWebhookInboundConfig {
   url: string | null;
   habilitado: boolean;

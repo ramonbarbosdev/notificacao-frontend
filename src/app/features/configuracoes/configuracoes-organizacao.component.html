@@ -291,6 +291,128 @@
                   }
                 </div>
               }
+
+              @if (webhookInboundHabilitadoNoPlano()) {
+                <div class="space-y-4 border-t border-[var(--color-border)] pt-6">
+                  <div class="flex flex-wrap items-start justify-between gap-3">
+                    <div class="space-y-1 max-w-2xl">
+                      <h3 class="text-sm font-semibold text-[var(--color-text)] m-0">Log de entregas</h3>
+                      <p class="text-xs text-[var(--color-text-muted)] m-0 leading-relaxed">
+                        Tentativas de POST para o bot (webhooks de saída e encaminhamento WhatsApp). Use para ver HTTP status e erros.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      class="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-[var(--color-border)] text-sm"
+                      [disabled]="carregandoWebhookEntregas()"
+                      (click)="carregarWebhookEntregas()"
+                    >
+                      <lucide-icon
+                        [img]="carregandoWebhookEntregas() ? loaderIcon : refreshIcon"
+                        class="w-4 h-4"
+                        [class.animate-spin]="carregandoWebhookEntregas()"
+                      />
+                      Atualizar
+                    </button>
+                  </div>
+
+                  @if (carregandoWebhookEntregas() && webhookEntregas().length === 0) {
+                    <p class="text-sm text-[var(--color-text-muted)] m-0">Carregando entregas…</p>
+                  } @else if (webhookEntregas().length === 0) {
+                    <p class="text-sm text-[var(--color-text-muted)] m-0 py-2">
+                      Nenhuma entrega registrada ainda. Dispare um evento ou receba uma mensagem WhatsApp e atualize.
+                    </p>
+                  } @else {
+                    <div class="overflow-x-auto rounded-xl border border-[var(--color-border)]">
+                      <table class="w-full text-sm text-left">
+                        <thead class="bg-[var(--color-bg-base)]/60 text-[var(--color-text-muted)]">
+                          <tr>
+                            <th class="px-3 py-2 font-medium">Quando</th>
+                            <th class="px-3 py-2 font-medium">Canal</th>
+                            <th class="px-3 py-2 font-medium">Evento</th>
+                            <th class="px-3 py-2 font-medium">HTTP</th>
+                            <th class="px-3 py-2 font-medium">Resultado</th>
+                            <th class="px-3 py-2 font-medium">Resumo</th>
+                          </tr>
+                        </thead>
+                        <tbody class="divide-y divide-[var(--color-border)]">
+                          @for (item of webhookEntregas(); track item.id) {
+                            <tr
+                              class="cursor-pointer hover:bg-[var(--color-surface-muted)]/50 transition-colors"
+                              (click)="alternarDetalheWebhookEntrega(item)"
+                            >
+                              <td class="px-3 py-2 text-xs text-[var(--color-text-muted)] whitespace-nowrap">
+                                {{ formatarData(item.dtCriacao) }}
+                              </td>
+                              <td class="px-3 py-2 text-xs text-[var(--color-text)]">
+                                {{ labelCanalWebhookEntrega(item.canal) }}
+                              </td>
+                              <td class="px-3 py-2 font-mono text-xs">{{ item.evento || '—' }}</td>
+                              <td class="px-3 py-2 text-xs">{{ item.httpStatus ?? '—' }}</td>
+                              <td class="px-3 py-2">
+                                <span
+                                  class="inline-flex px-2 py-0.5 rounded-full text-xs border {{ classeSucessoWebhookEntrega(item.sucesso) }}"
+                                >
+                                  {{ item.sucesso ? 'OK' : 'Falha' }}
+                                </span>
+                              </td>
+                              <td class="px-3 py-2 text-xs text-[var(--color-text)] max-w-md truncate">
+                                {{ item.resumo || item.erro || '—' }}
+                              </td>
+                            </tr>
+                            @if (webhookEntregaExpandidoId() === item.id) {
+                              <tr class="bg-[var(--color-bg-base)]/40">
+                                <td colspan="6" class="px-4 py-3 text-xs space-y-2">
+                                  <p class="m-0 break-all">
+                                    <span class="text-[var(--color-text-muted)]">URL:</span> {{ item.url }}
+                                  </p>
+                                  @if (item.idWebhook) {
+                                    <p class="m-0">
+                                      <span class="text-[var(--color-text-muted)]">Webhook cadastro #</span>{{ item.idWebhook }}
+                                    </p>
+                                  }
+                                  @if (item.erro) {
+                                    <p class="m-0 text-[var(--color-danger)]">{{ item.erro }}</p>
+                                  }
+                                  @if (item.resumo) {
+                                    <p class="m-0 text-[var(--color-text-muted)]">{{ item.resumo }}</p>
+                                  }
+                                </td>
+                              </tr>
+                            }
+                          }
+                        </tbody>
+                      </table>
+                    </div>
+                    <div class="flex items-center justify-between text-xs text-[var(--color-text-muted)]">
+                      <span>{{ webhookEntregasTotal() }} entrega(s)</span>
+                      <div class="flex gap-2 items-center">
+                        <button
+                          type="button"
+                          class="px-2 py-1 rounded-lg border border-[var(--color-border)] disabled:opacity-40"
+                          [disabled]="webhookEntregasPagina() <= 0 || carregandoWebhookEntregas()"
+                          (click)="webhookEntregasPaginaAnterior()"
+                        >
+                          Anterior
+                        </button>
+                        <span>
+                          Página {{ webhookEntregasPagina() + 1 }} / {{ webhookEntregasTotalPaginas() || 1 }}
+                        </span>
+                        <button
+                          type="button"
+                          class="px-2 py-1 rounded-lg border border-[var(--color-border)] disabled:opacity-40"
+                          [disabled]="
+                            webhookEntregasPagina() >= webhookEntregasTotalPaginas() - 1 || carregandoWebhookEntregas()
+                          "
+                          (click)="webhookEntregasPaginaProxima()"
+                        >
+                          Próxima
+                        </button>
+                      </div>
+                    </div>
+                  }
+                </div>
+              }
             </section>
           }
 

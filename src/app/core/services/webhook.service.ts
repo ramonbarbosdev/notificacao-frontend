@@ -1,9 +1,9 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable } from 'rxjs';
+import { map, Observable } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
-import { Webhook, WebhookRequest } from '../../shared/types/dtos';
+import { PageResult, Webhook, WebhookEntrega, WebhookRequest } from '../../shared/types/dtos';
 
 @Injectable({ providedIn: 'root' })
 export class WebhookService {
@@ -32,5 +32,29 @@ export class WebhookService {
 
   remover(idWebhook: number): Observable<void> {
     return this.http.delete<void>(`${this.base}/${idWebhook}`);
+  }
+
+  listarEntregas(params: {
+    page: number;
+    size: number;
+    sort?: string;
+  }): Observable<PageResult<WebhookEntrega>> {
+    return this.http
+      .get<any>(`${this.base}/entregas`, {
+        params: {
+          page: params.page,
+          size: params.size,
+          sort: params.sort ?? 'dtCriacao,desc',
+        },
+      })
+      .pipe(
+        map((page) => ({
+          data: page?.content ?? [],
+          totalElements: page?.totalElements ?? 0,
+          page: page?.number ?? params.page,
+          pageSize: page?.size ?? params.size,
+          totalPages: page?.totalPages ?? 0,
+        })),
+      );
   }
 }

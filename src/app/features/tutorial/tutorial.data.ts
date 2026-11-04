@@ -510,7 +510,7 @@ var data = await response.Content.ReadFromJsonAsync<JsonElement>();`,
           'Use quando o bot precisa reagir a mensagens WhatsApp inbound ou a mudanças na fila sem polling.',
           'Requisito: feature WEBHOOK habilitada na organização (super admin → Feature Flags).',
           'Cadastro: painel → Configurações → Webhooks de saída → informe URL do seu bot, secret e marque os eventos.',
-          'A plataforma envia POST assíncrono; falhas de entrega são logadas (sem retry automático hoje). Responda HTTP 2xx rapidamente no bot.',
+          'A plataforma envia POST assíncrono; falhas de entrega são registradas no log de entregas (sem retry automático hoje). Responda HTTP 2xx rapidamente no bot.',
         ],
         lista: [
           'Header X-Webhook-Event — nome do evento (ex.: WHATSAPP_MENSAGEM_RECEBIDA)',
@@ -530,6 +530,18 @@ var data = await response.Content.ReadFromJsonAsync<JsonElement>();`,
         paragrafos: [
           'Cadastrados na UI mas ainda sem POST automático: NOTIFICACAO_ENTREGUE, NOTIFICACAO_LIDA, WHATSAPP_DESCONECTADO, WHATSAPP_QR_ATUALIZADO, CONTATO_BLOQUEADO.',
           'Webhooks criados antes de mar/2026: edite e salve de novo informando o secret (obrigatório para disparo).',
+        ],
+      },
+      {
+        titulo: 'Log de entregas (diagnóstico)',
+        paragrafos: [
+          'Cada tentativa de POST para o bot (webhooks de saída cadastrados e encaminhamento WhatsApp URL única) fica registrada por organização.',
+          'Painel: Configurações → Webhooks → Log de entregas (admin). API: GET /app/configuracoes/webhooks/entregas com paginação Spring (page, size, sort=dtCriacao,desc).',
+        ],
+        lista: [
+          'Canal OUTBOUND — POST com envelope e headers X-Webhook-* para um cadastro de saída',
+          'Canal INBOUND_WHATSAPP — POST na URL única de encaminhamento WhatsApp',
+          'Colunas úteis: httpStatus, sucesso, erro, resumo (corpo truncado)',
         ],
       },
       {
